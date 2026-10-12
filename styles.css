@@ -183,3 +183,13 @@ details.fold>div{padding-bottom:16px;display:flex;flex-direction:column;gap:16px
   .sth,.st{grid-template-columns:30px 1fr 22px}.sth span:nth-child(3),.st .tg{grid-column:2/3;grid-row:2}.st .ck{grid-row:1;grid-column:3}
   .ev{grid-template-columns:1fr 60px 40px}.ev span:nth-child(3){display:none}
 }
+
+.bt{padding:8px 16px;border-radius:10px;border:1px solid var(--line2);background:var(--bg);font-size:13px;color:var(--lav)}
+.bt:hover{background:var(--hl);border-color:var(--hlb)}
+.bt.pri{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:600}
+.km .cell.ship{animation:pulse 1.4s ease-in-out infinite;color:var(--lav2)}
+.km .cell.cap{background:rgba(124,58,237,.22);color:#fff;text-shadow:0 0 14px #A78BFA}
+@keyframes pulse{0%,100%{text-shadow:0 0 0 transparent;transform:scale(1)}50%{text-shadow:0 0 16px #A78BFA;transform:scale(1.18)}}
+.frame.new{animation:pop .7s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:scale(1.6);opacity:0}to{transform:scale(1);opacity:1}}
+.lg.hot{border-color:var(--acc);background:var(--hl);animation:pop .5s ease-out}
