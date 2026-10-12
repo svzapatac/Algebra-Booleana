@@ -17,9 +17,9 @@ function vars() { return LETTERS.slice(0, st.n).split(''); }
 function renderVars() {
   $('#nOut').textContent = st.n;
   $('#vars').innerHTML = vars().map(v => {
-    const cur = st.vals[v];
-    const b = (val, lab) => `<button type="button" data-act="val" data-v="${v}" data-x="${val}" class="${cur === val || (val === '-' && cur === undefined) ? 'on' : ''}">${lab}</button>`;
-    return `<div class="var"><b>${v}</b><div class="seg">${b('0', '0')}${b('1', '1')}${b('-', '–')}</div></div>`;
+    const cur = String(st.vals[v] === undefined ? 0 : st.vals[v]);
+    const b = (val, lab) => `<button type="button" data-act="val" data-v="${v}" data-x="${val}" class="${cur === val ? 'on' : ''}">${lab}</button>`;
+    return `<div class="var"><b>${v}</b><div class="seg">${b('0', '0')}${b('1', '1')}</div></div>`;
   }).join('');
   $('#tokens').innerHTML = vars().map(v => `<button type="button" class="tok" data-act="tok" data-t="${v}">${v}</button>`).join('') +
     TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
@@ -38,7 +38,7 @@ function showErr(m) { const e = $('#err'); e.hidden = !m; e.textContent = m || '
 function writeUrl() {
   const p = new URLSearchParams();
   p.set('e', st.expr); p.set('n', st.n);
-  p.set('v', vars().map(v => st.vals[v] === undefined ? '-' : st.vals[v]).join(''));
+  p.set('v', vars().map(v => st.vals[v] === undefined ? 0 : st.vals[v]).join(''));
   try { history.replaceState(null, '', '?' + p.toString()); } catch (e) {}
 }
 function readUrl() {
@@ -55,7 +55,7 @@ function readUrl() {
 function run(keepOpen) {
   st.expr = $('#expr').value.trim();
   showErr('');
-  const values = {}; vars().forEach(v => { if (st.vals[v] !== undefined) values[v] = st.vals[v]; });
+  const values = {}; vars().forEach(v => { values[v] = st.vals[v] === undefined ? 0 : st.vals[v]; });
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
@@ -270,7 +270,7 @@ document.addEventListener('click', e => {
     Object.keys(st.vals).forEach(k => { if (!vars().includes(k)) delete st.vals[k]; });
     renderVars();
   } else if (a === 'val') {
-    if (t.dataset.x === '-') delete st.vals[t.dataset.v]; else st.vals[t.dataset.v] = +t.dataset.x;
+    st.vals[t.dataset.v] = +t.dataset.x;
     renderVars(); if (st.res) run(true);
   } else if (a === 'tok') insertToken(t.dataset.t);
   else if (a === 'ex') {
