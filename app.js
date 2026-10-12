@@ -271,7 +271,7 @@ document.addEventListener('click', e => {
     renderVars();
   } else if (a === 'val') {
     st.vals[t.dataset.v] = +t.dataset.x;
-    renderVars(); if (st.res) run(true);
+    renderVars(); if ($('#expr').value.trim()) run(true);
   } else if (a === 'tok') insertToken(t.dataset.t);
   else if (a === 'ex') {
     const ex = EXAMPLES[+t.dataset.i]; st.n = ex[1]; st.vals = {}; $('#expr').value = ex[0]; renderVars(); run(false);
@@ -293,5 +293,5 @@ renderExamples();
 const hasUrl = readUrl();
 renderVars();
 if (hasUrl) { st.open = new Set(['al']); run(true); }
-else { $('#expr').value = "AB' + CD"; }
+else { $('#expr').value = "AB' + CD"; run(false); }
 })();
