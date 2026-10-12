@@ -176,11 +176,12 @@ function bodyKmap(r) {
 }
 function qmHtml(r, q, kind) {
   if (!q.ones.length) return '<p class="note">No hay términos.</p>';
-  const cols = q.cols.map((col, ci) => `<div class="qcol"><p class="sub" style="margin-bottom:6px">Columna ${ci + 1}</p>${col.map(g => `<div class="qgrp"><b>${g.ones} unos</b>${g.items.map(it => `<div class="qi ${it.used ? 'u' : ''}"><span>${it.pat}</span><em>${it.used ? '✓' : ''}</em><span>${it.m.join(',')}</span></div>`).join('')}</div>`).join('')}</div>`).join('');
+  const cols = q.cols.map((col, ci) => `<div class="qcol"><p class="sub" style="margin-bottom:6px">Columna ${ci + 1}</p>${col.map(g => `<div class="qgrp"><b>${g.ones} unos</b>${g.items.map(it => `<div class="qi ${it.used ? 'u' : ''}"><span>${it.pat}</span><em>${it.used ? '✓' : 'primo'}</em><span>${it.m.join(',')}</span></div>`).join('')}</div>`).join('')}</div>`).join('');
   const ess = new Set(q.essential.map(p => p.pat)), cov = new Set(q.cover.map(p => p.pat));
   const head = `<tr><th>Primo</th><th>Término</th>${q.ones.map(m => `<th>${m}</th>`).join('')}</tr>`;
   const body = q.primes.map(p => `<tr><td class="mono">${p.pat}</td><td class="mono" style="color:var(--lav2)">${esc(kind === 'sop' ? L.patProd(p.pat, r.vars) : L.patSum(p.pat, r.vars))}${ess.has(p.pat) ? ' ★' : cov.has(p.pat) ? ' ●' : ''}</td>${q.ones.map(m => `<td class="${p.m.includes(m) ? 'x' : ''} ${ess.has(p.pat) && p.m.includes(m) ? 'e' : ''}">${p.m.includes(m) ? '×' : ''}</td>`).join('')}</tr>`).join('');
-  return `<div class="qcols">${cols}</div><div><p class="sub">Tabla de primos · ★ esencial · ● elegido</p><div class="tw"><table class="tt pc"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
+  const res = q.cover.map(p => kind === 'sop' ? L.patProd(p.pat, r.vars) : L.patSum(p.pat, r.vars)).join(kind === 'sop' ? ' + ' : '');
+  return `<ol class="note" style="padding-left:34px;line-height:1.7"><li>Se agrupan los minitérminos según cuántos unos tienen.</li><li>Se unen pares que difieren en un solo bit; ese bit pasa a <b>–</b>. <b>✓</b> = ya se unió con otro.</li><li>Los que quedan sin ✓ (<b>primo</b>) no se pueden unir más.</li><li>En la tabla de primos, ★ = único que cubre algún minitérmino (obligatorio); se añaden los necesarios hasta cubrir todos.</li></ol><div class="qcols">${cols}</div><div><p class="sub">Tabla de primos · ★ esencial · ● elegido</p><div class="tw"><table class="tt pc"><thead>${head}</thead><tbody>${body}</tbody></table></div></div><div class="canon"><small>RESULTADO</small>${esc(r.label)}${kind === 'sop' ? '' : "′"} = ${esc(res)}</div>`;
 }
 
 /* 04 compuertas */
