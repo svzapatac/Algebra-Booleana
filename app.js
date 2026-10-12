@@ -139,6 +139,7 @@ function bodyTerms(r) {
 /* 03 karnaugh */
 const GS = [['#A78BFA', 'solid'], ['#C4B5FD', 'dashed'], ['#7C3AED', 'solid'], ['#DDD6FE', 'dotted'], ['#8B5CF6', 'dashed'], ['#EDE9FE', 'dotted']];
 function bodyKmap(r) {
+  if (r.kmap && st.bat.on) return bodyBattle(r);
   let out = '';
   const km = r.kmap;
   if (km) {
@@ -191,9 +192,56 @@ function bodyKmap(r) {
   } else {
     out += `<p class="note">El mapa de Karnaugh está disponible de 2 a 4 variables. Con ${r.n} variables se simplifica con Quine-McCluskey (abajo).</p>`;
   }
-  out += `<details class="fold" ${km ? '' : 'open'}><summary>Quine-McCluskey · unos</summary><div>${qmHtml(r, r.qm.ones, 'sop')}</div></details>`;
-  if (r.zeros.length) out += `<details class="fold"><summary>Quine-McCluskey · ceros</summary><div>${qmHtml(r, r.qm.zeros, 'pos')}</div></details>`;
   return out;
+}
+
+function batSeq(r) {
+  const km = r.kmap, f = a => a.map((gr, gi) => ({ gr, gi })).sort((x, y) => y.gr.size - x.gr.size || x.gi - y.gi);
+  return [...f(km.sop.groups).map(x => ({ ...x, kind: 'sop' })), ...f(km.pos.groups).map(x => ({ ...x, kind: 'pos' }))];
+}
+function bodyBattle(r) {
+  const km = r.kmap, bat = st.bat, seq = batSeq(r), vis = seq.slice(0, bat.k);
+  const CS = 68, HW = 64, HH = 50, rows = km.rowCodes.length, cols = km.colCodes.length;
+  const nOnes = km.sop.groups.length;
+  const capO = new Set(), capZ = new Set();
+  vis.forEach(x => x.gr.cells.forEach(c => (x.kind === 'sop' ? capO : capZ).add(c[0] + ',' + c[1])));
+  let tO = 0, tZ = 0; km.cells.forEach(row => row.forEach(c => { c.v ? tO++ : tZ++; }));
+  let cells = `<div class="corner"><i style="left:8px;bottom:6px">${km.rowVars.join('')}</i><i style="right:8px;top:6px">${km.colVars.join('')}</i></div>`;
+  cells += km.colCodes.map(c => `<div class="h">${c}</div>`).join('');
+  km.rowCodes.forEach((rc, ri) => {
+    cells += `<div class="h">${rc}</div>`;
+    km.cells[ri].forEach((c, ci) => {
+      const k = ri + ',' + ci;
+      const cls = c.v ? (capO.has(k) ? 'one cap' : 'one ship') : (capZ.has(k) ? 'zero cap' : (bat.k >= nOnes ? 'zero ship' : 'zero'));
+      cells += `<div class="cell ${cls}"><small>${c.m}</small>${c.v}</div>`;
+    });
+  });
+  const frames = vis.map((x, idx) => {
+    const [col, ls] = GS[idx % GS.length], ins = 4 + (idx % 3) * 3, isNew = idx === vis.length - 1;
+    return x.gr.frames.map(f => {
+      const left = HW + f.c0 * CS + ins, top = HH + f.r0 * CS + ins;
+      const w = (f.c1 - f.c0 + 1) * CS - 2 * ins, h = (f.r1 - f.r0 + 1) * CS - 2 * ins;
+      const bw = `${f.oT ? 0 : 2}px ${f.oR ? 0 : 2}px ${f.oB ? 0 : 2}px ${f.oL ? 0 : 2}px`;
+      const rad = `${f.oT || f.oL ? 0 : 12}px ${f.oT || f.oR ? 0 : 12}px ${f.oB || f.oR ? 0 : 12}px ${f.oB || f.oL ? 0 : 12}px`;
+      return `<div class="frame ${isNew ? 'new' : ''}" style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-style:${ls};border-color:${col};border-width:${bw};border-radius:${rad};background:${col}1A"></div>`;
+    }).join('');
+  }).join('');
+  const legend = vis.map((x, idx) => { const [col, ls] = GS[idx % GS.length]; return `<div class="lg ${idx === vis.length - 1 ? 'hot' : ''}"><i style="border:2px ${ls} ${col};background:${col}1A"></i>${esc(x.gr.term)}<span>${x.kind === 'sop' ? 'unos' : 'ceros'} · ${x.gr.size} celdas · fijas ${esc(x.gr.why)}</span></div>`; }).join('');
+  const eO = vis.filter(x => x.kind === 'sop').map(x => x.gr.term).join(' + ') || '…';
+  const eZ = vis.filter(x => x.kind === 'pos').map(x => x.gr.term).join('') || '…';
+  const done = bat.k >= seq.length;
+  const ctrl = `<button type="button" class="bt pri" data-act="bat" data-m="${bat.playing ? 'pause' : 'play'}">${bat.playing ? '⏸ Pausa' : '▶ Seguir'}</button>
+    <button type="button" class="bt" data-act="bat" data-m="next">Siguiente ›</button>
+    <button type="button" class="bt" data-act="bat" data-m="reset">↺ Reiniciar</button>
+    <button type="button" class="bt" data-act="bat" data-m="exit">Salir</button>
+    <span class="pill hi">Unos ${capO.size}/${tO}</span><span class="pill hi">Ceros ${capZ.size}/${tZ}</span>`;
+  return `<div class="stats" style="align-items:center">${ctrl}</div>
+    <div class="km-wrap">
+      <div class="km" style="grid-template-columns:${HW}px repeat(${cols},${CS}px);grid-template-rows:${HH}px repeat(${rows},${CS}px)">${cells}${frames}</div>
+      <div class="legend"><p class="sub">${done ? 'Tablero completo' : bat.k < nOnes ? 'Capturando unos' : bat.k === nOnes && !vis.length ? 'Listo' : 'Capturando ceros'}</p>${legend || `<div class="lg">${tO} unos · ${tZ} ceros a la vista</div>`}
+        <div class="canon" style="margin-top:6px"><small>RESULTADO · SOP</small>${esc(r.label)} = ${esc(eO)}</div>
+        <div class="canon"><small>RESULTADO · POS</small>${esc(r.label)} = ${esc(eZ)}</div></div>
+    </div>`;
 }
 function qmHtml(r, q, kind) {
   if (!q.ones.length) return '<p class="note">No hay términos.</p>';
@@ -283,7 +331,7 @@ function startBat() {
   stopBat();
   st.bat.timer = setInterval(() => {
     const b = st.bat; if (!b.playing || !st.res || !st.res.kmap) return;
-    const nG = st.res.kmap[st.tab.km].groups.length;
+    const nG = batSeq(st.res).length;
     if (b.k >= nG) { b.playing = false; stopBat(); }
     else { b.k++; if (b.k >= nG) { b.playing = false; stopBat(); } }
     refreshCard('km');
@@ -314,7 +362,7 @@ document.addEventListener('click', e => {
     const id = t.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); refreshCard(id);
   } else if (a === 'kmtab') { st.tab.km = t.dataset.m; st.bat.k = 0; refreshCard('km'); }
   else if (a === 'bat') {
-    const m = t.dataset.m, b = st.bat, nG = st.res.kmap[st.tab.km].groups.length;
+    const m = t.dataset.m, b = st.bat, nG = batSeq(st.res).length;
     if (m === 'start') { b.on = true; b.k = 0; b.playing = true; startBat(); }
     else if (m === 'pause') b.playing = false;
     else if (m === 'play') { if (b.k >= nG) b.k = 0; b.playing = true; startBat(); }
