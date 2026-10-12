@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab Booleano</title>
+<meta name="description" content="Laboratorio de álgebra booleana: tablas de verdad, Karnaugh, compuertas y simplificación paso a paso con postulados de Huntington.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237C3AED'/%3E%3Cpath d='M9 22l7-13 7 13' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <div class="brand"><span class="logo">∧</span><span>Lab Booleano</span></div>
+    <span class="chip-ghost">Cap. 2 · Mano</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="panel hero" aria-label="Ejercicio">
+    <h1>Ejercicio</h1>
+    <div class="row">
+      <label class="lbl">Variables</label>
+      <div class="stepper">
+        <button type="button" data-act="nminus" aria-label="Menos variables">−</button>
+        <output id="nOut">4</output>
+        <button type="button" data-act="nplus" aria-label="Más variables">+</button>
+      </div>
+      <div id="vars" class="vars"></div>
+    </div>
+    <div class="row">
+      <label class="lbl" for="expr">Expresión</label>
+      <div class="exprbox">
+        <input id="expr" class="expr" type="text" autocomplete="off" spellcheck="false" placeholder="AB' + CD">
+        <button type="button" class="go" data-act="go">Calcular</button>
+      </div>
+    </div>
+    <div class="row">
+      <span class="lbl"></span>
+      <div class="tokens" id="tokens"></div>
+    </div>
+    <div class="row">
+      <span class="lbl"></span>
+      <div class="examples" id="examples"></div>
+    </div>
+    <p id="err" class="err" role="alert" hidden></p>
+  </section>
+
+  <section id="result" aria-live="polite"></section>
+</main>
+
+<footer class="wrap foot">
+  <span>Álgebra booleana y compuertas lógicas · Diseño digital</span>
+  <button type="button" class="link" data-act="copy">Copiar enlace</button>
+</footer>
+
+<script src="logic.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
