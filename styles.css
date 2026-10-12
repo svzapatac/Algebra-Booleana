@@ -193,3 +193,6 @@ details.fold>div{padding-bottom:16px;display:flex;flex-direction:column;gap:16px
 .frame.new{animation:pop .7s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes pop{from{transform:scale(1.6);opacity:0}to{transform:scale(1);opacity:1}}
 .lg.hot{border-color:var(--acc);background:var(--hl);animation:pop .5s ease-out}
+.km .cell.zero{color:#4B4660}
+.km .cell.zero.ship{animation:pulse 1.4s ease-in-out infinite;color:var(--soft)}
+.km .cell.zero.cap{background:rgba(167,139,250,.10);color:var(--lav)}
