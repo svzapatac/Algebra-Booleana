@@ -91,6 +91,7 @@ function render() {
     <div class="cards" style="margin-top:24px">${CARDS.map(c => cardHtml(c, r)).join('')}</div>`;
 }
 function cardHtml(c, r) {
+  if (c.id === 'km' && r.n > 4) return `<article class="card locked" id="card-km"><div class="card-h" style="cursor:not-allowed;opacity:.5"><span class="num">${c.n}</span><h2>${c.title}</h2><span class="prev">Solo hasta 4 variables</span><svg class="chev" viewBox="0 0 18 18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="transform:none"><rect x="3.5" y="8" width="11" height="7.5" rx="2"/><path d="M6 8V6a3 3 0 016 0v2"/></svg></div></article>`;
   const open = st.open.has(c.id);
   return `<article class="card ${open ? 'open' : ''}" id="card-${c.id}">
     <button type="button" class="card-h" data-act="toggle" data-id="${c.id}" aria-expanded="${open}">
