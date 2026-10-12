@@ -10,7 +10,7 @@ const TOKENS = ["'", '+', '·', '⊕', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const st = { n: 4, vals: {}, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'orig' } };
+const st = { n: 4, vals: {}, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'orig' }, bat: { on: false, k: 0, playing: false, timer: null } };
 
 /* ───── formulario ───── */
 function vars() { return LETTERS.slice(0, st.n).split(''); }
@@ -60,6 +60,7 @@ function run(keepOpen) {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
   if (!keepOpen) st.open = new Set();
+  stopBat(); st.bat.on = false; st.bat.k = 0; st.bat.playing = false;
   writeUrl();
   render();
 }
@@ -145,28 +146,47 @@ function bodyKmap(r) {
     const CS = 68, HW = 64, HH = 50;
     const rows = km.rowCodes.length, cols = km.colCodes.length;
     const want = mode === 'sop' ? 1 : 0;
+    const bat = st.bat;
+    let groups = g.groups.map((gr, gi) => ({ gr, gi }));
+    if (bat.on) { groups.sort((x, y) => y.gr.size - x.gr.size || x.gi - y.gi); groups = groups.slice(0, bat.k); }
+    const capSet = new Set(groups.flatMap(x => x.gr.cells.map(c => c[0] + ',' + c[1])));
+    let total = 0; km.cells.forEach(row => row.forEach(c => { if (c.v === want) total++; }));
     let cells = `<div class="corner"><i style="left:8px;bottom:6px">${km.rowVars.join('')}</i><i style="right:8px;top:6px">${km.colVars.join('')}</i></div>`;
     cells += km.colCodes.map(c => `<div class="h">${c}</div>`).join('');
     km.rowCodes.forEach((rc, ri) => {
       cells += `<div class="h">${rc}</div>`;
-      km.cells[ri].forEach(c => { cells += `<div class="cell ${c.v === want ? 'one' : ''}"><small>${c.m}</small>${c.v}</div>`; });
+      km.cells[ri].forEach((c, ci) => {
+        const isT = c.v === want;
+        const cls = !isT ? '' : !bat.on ? 'one' : capSet.has(ri + ',' + ci) ? 'one cap' : 'one ship';
+        cells += `<div class="cell ${cls}"><small>${c.m}</small>${c.v}</div>`;
+      });
     });
-    const frames = g.groups.map((gr, gi) => {
+    const frames = groups.map(({ gr, gi }, idx) => {
       const [col, ls] = GS[gi % GS.length], ins = 4 + (gi % 3) * 3;
+      const isNew = bat.on && idx === groups.length - 1;
       return gr.frames.map(f => {
         const left = HW + f.c0 * CS + ins, top = HH + f.r0 * CS + ins;
         const w = (f.c1 - f.c0 + 1) * CS - 2 * ins, h = (f.r1 - f.r0 + 1) * CS - 2 * ins;
         const bw = `${f.oT ? 0 : 2}px ${f.oR ? 0 : 2}px ${f.oB ? 0 : 2}px ${f.oL ? 0 : 2}px`;
         const rad = `${f.oT || f.oL ? 0 : 12}px ${f.oT || f.oR ? 0 : 12}px ${f.oB || f.oR ? 0 : 12}px ${f.oB || f.oL ? 0 : 12}px`;
-        return `<div class="frame" style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-style:${ls};border-color:${col};border-width:${bw};border-radius:${rad};background:${col}1A"></div>`;
+        return `<div class="frame ${isNew ? 'new' : ''}" style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-style:${ls};border-color:${col};border-width:${bw};border-radius:${rad};background:${col}1A"></div>`;
       }).join('');
     }).join('');
-    const legend = g.groups.map((gr, gi) => { const [col, ls] = GS[gi % GS.length]; return `<div class="lg"><i style="border:2px ${ls} ${col};background:${col}1A"></i>${esc(gr.term)}<span>${gr.size} celdas · fijas ${esc(gr.why)}</span></div>`; }).join('');
-    out += `<div class="tabs"><button type="button" class="${mode === 'sop' ? 'on' : ''}" data-act="kmtab" data-m="sop">Unos · SOP</button><button type="button" class="${mode === 'pos' ? 'on' : ''}" data-act="kmtab" data-m="pos">Ceros · POS</button></div>
+    const legend = groups.map(({ gr, gi }, idx) => { const [col, ls] = GS[gi % GS.length]; return `<div class="lg ${bat.on && idx === groups.length - 1 ? 'hot' : ''}"><i style="border:2px ${ls} ${col};background:${col}1A"></i>${esc(gr.term)}<span>${gr.size} celdas · fijas ${esc(gr.why)}</span></div>`; }).join('');
+    const nG = g.groups.length, done = bat.on && bat.k >= nG;
+    const expr = bat.on ? (groups.length ? groups.map(x => x.gr.term).join(mode === 'sop' ? ' + ' : '') : '…') : g.expr;
+    const ctrl = !bat.on
+      ? `<button type="button" class="bt pri" data-act="bat" data-m="start">▶ Modo batalla</button>`
+      : `<button type="button" class="bt pri" data-act="bat" data-m="${bat.playing ? 'pause' : 'play'}">${bat.playing ? '⏸ Pausa' : '▶ Seguir'}</button>
+         <button type="button" class="bt" data-act="bat" data-m="next">Siguiente ›</button>
+         <button type="button" class="bt" data-act="bat" data-m="reset">↺ Reiniciar</button>
+         <button type="button" class="bt" data-act="bat" data-m="exit">Salir</button>
+         <span class="pill hi">Capturadas ${capSet.size}/${total}</span><span class="pill">Grupos ${groups.length}/${nG}</span>`;
+    out += `<div class="stats" style="align-items:center"><div class="tabs"><button type="button" class="${mode === 'sop' ? 'on' : ''}" data-act="kmtab" data-m="sop">Unos · SOP</button><button type="button" class="${mode === 'pos' ? 'on' : ''}" data-act="kmtab" data-m="pos">Ceros · POS</button></div>${ctrl}</div>
     <div class="km-wrap">
       <div class="km" style="grid-template-columns:${HW}px repeat(${cols},${CS}px);grid-template-rows:${HH}px repeat(${rows},${CS}px)">${cells}${frames}</div>
-      <div class="legend"><p class="sub">Grupos</p>${legend || '<div class="lg">sin grupos</div>'}
-        <div class="canon" style="margin-top:6px"><small>RESULTADO</small>${esc(r.label)} = ${esc(g.expr)}</div></div>
+      <div class="legend"><p class="sub">${bat.on ? (done ? 'Todas capturadas' : 'Capturas') : 'Grupos'}</p>${legend || `<div class="lg">${bat.on ? total + ' objetivos a la vista' : 'sin grupos'}</div>`}
+        <div class="canon" style="margin-top:6px"><small>RESULTADO</small>${esc(r.label)}${mode === 'pos' ? '' : ''} = ${esc(expr)}</div></div>
     </div>`;
   } else {
     out += `<p class="note">El mapa de Karnaugh está disponible de 2 a 4 variables. Con ${r.n} variables se simplifica con Quine-McCluskey (abajo).</p>`;
@@ -258,6 +278,18 @@ function bodyCheck(r) {
     <div class="tw"><table class="tt"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
 }
 
+function stopBat() { clearInterval(st.bat.timer); st.bat.timer = null; }
+function startBat() {
+  stopBat();
+  st.bat.timer = setInterval(() => {
+    const b = st.bat; if (!b.playing || !st.res || !st.res.kmap) return;
+    const nG = st.res.kmap[st.tab.km].groups.length;
+    if (b.k >= nG) { b.playing = false; stopBat(); }
+    else { b.k++; if (b.k >= nG) { b.playing = false; stopBat(); } }
+    refreshCard('km');
+  }, 1600);
+}
+
 /* ───── eventos ───── */
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act],[data-row]'); if (!t) return;
@@ -280,7 +312,17 @@ document.addEventListener('click', e => {
   } else if (a === 'go') run(true);
   else if (a === 'toggle') {
     const id = t.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); refreshCard(id);
-  } else if (a === 'kmtab') { st.tab.km = t.dataset.m; refreshCard('km'); }
+  } else if (a === 'kmtab') { st.tab.km = t.dataset.m; st.bat.k = 0; refreshCard('km'); }
+  else if (a === 'bat') {
+    const m = t.dataset.m, b = st.bat, nG = st.res.kmap[st.tab.km].groups.length;
+    if (m === 'start') { b.on = true; b.k = 0; b.playing = true; startBat(); }
+    else if (m === 'pause') b.playing = false;
+    else if (m === 'play') { if (b.k >= nG) b.k = 0; b.playing = true; startBat(); }
+    else if (m === 'next') { b.playing = false; b.k = Math.min(nG, b.k + 1); }
+    else if (m === 'reset') { b.k = 0; b.playing = false; }
+    else if (m === 'exit') { b.on = false; b.playing = false; stopBat(); }
+    refreshCard('km');
+  }
   else if (a === 'gtab') { st.tab.gates = t.dataset.m; refreshCard('gt'); }
   else if (a === 'copy') {
     writeUrl();
