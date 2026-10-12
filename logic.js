@@ -406,6 +406,59 @@ function simplify(ast, vars, minAst) {
   return { steps: [{ kind: 'given', tag: 'dado', expr: str(ast), node: ast, ok: true }, ...steps], ok, completed, truncated: r.truncated };
 }
 
+function canonExpand(ast, vars, ones) {
+  const envs = allEnvs(vars), n = vars.length;
+  const ref = envs.map(e => ev(ast, e)).join('');
+  const expand = cur => {
+    const terms = cur.t === 'or' ? cur.args : [cur];
+    for (let i = 0; i < terms.length; i++) {
+      const t = terms[i]; if (!isProd(t)) continue;
+      const have = new Set(prodLits(t).map(l => l.t === 'var' ? l.n : l.a.n));
+      const miss = vars.find(v => !have.has(v)); if (!miss) continue;
+      const nt = mkAnd([...prodLits(t), mkOr([V(miss), NOT(V(miss))])]);
+      const nterms = terms.slice(); nterms[i] = nt;
+      return { node: mkOr(nterms) };
+    }
+    return null;
+  };
+  const attempts = [
+    ...A_DEF,
+    { run: via(applyBottom, R.flatOr), meta: M('T4(a)', 'asociativa: quitar paréntesis') },
+    { run: via(applyBottom, R.flatAnd), meta: M('T4(b)', 'asociativa: quitar paréntesis') },
+    ...A_NOT,
+    { run: via(applyBottom, R.t2b), meta: M('T2(b)', 'x·0 = 0') },
+    { run: via(applyBottom, R.t2a), meta: M('T2(a)', 'x + 1 = 1') },
+    { run: via(applyBottom, R.p5b), meta: M('P5(b)', "complemento: xx' = 0") },
+    { run: via(applyBottom, R.p2b), meta: M('P2(b)', 'identidad: x·1 = x') },
+    { run: via(applyBottom, R.p2a), meta: M('P2(a)', 'identidad: x + 0 = x') },
+    { run: via(applyBottom, R.t1b), meta: M('T1(b)', 'idempotencia: xx = x') },
+    { run: via(applyBottom, R.t1a), meta: M('T1(a)', 'idempotencia: x + x = x') },
+    { run: via(applyBottom, R.dist), meta: M('P4(a)', 'distributiva: x(y + z) = xy + xz') },
+    { run: expand, meta: M('P5(a)', "x = x·1 = x(y + y')") }
+  ];
+  const r = runSteps(ast, attempts, ref, envs, 140);
+  let { steps, cur, ok } = r;
+  const pat = i => i.toString(2).padStart(n, '0');
+  const target = sopAst(ones.map(pat), vars);
+  if (ones.length && key(cur) === key(target) && str(cur) !== str(target)) {
+    steps.push({ ...M('P3', 'conmutativa: ordenar por índice'), tag: 'P3(a)', node: target, expr: '= ' + str(target), ok: r.tvOf(target) === ref }); 
+  } else if (ones.length && key(cur) !== key(target)) {
+    steps.push({ ...M('TV', 'según la tabla de verdad', 'qm'), tag: 'TV', node: target, expr: '= ' + str(target), ok: r.tvOf(target) === ref });
+  }
+  return { steps: [{ kind: 'given', tag: 'dado', expr: str(ast), node: ast, ok: true }, ...steps], ok: ok && steps.every(x => x.ok !== false), truncated: r.truncated };
+}
+
+function gateList(ast) {
+  const out = [], seen = new Set(), nm = { not: 'NOT', and: 'AND', or: 'OR', xor: 'XOR', nand: 'NAND', nor: 'NOR', xnor: 'XNOR' };
+  (function w(n) {
+    if (n.t === 'var' || n.t === 'const') return;
+    kids(n).forEach(w);
+    const o = str(n); if (seen.has(o)) return; seen.add(o);
+    out.push({ out: o, op: nm[n.t], ins: kids(n).map(str) });
+  })(ast);
+  return out;
+}
+
 function complement(g, vars) {
   const envs = allEnvs(vars), start = NOT(g);
   const ref = envs.map(e => ev(start, e)).join('');
@@ -465,7 +518,8 @@ function kmapFor(n, vars, fv, onesQ, zerosQ) {
     const frames = [];
     runs(Rr, rc.length).forEach(rs => runs(Cc, cc.length).forEach(cs =>
       frames.push({ r0: rs.a, r1: rs.b, c0: cs.a, c1: cs.b, oT: rs.oL, oB: rs.oR, oL: cs.oL, oR: cs.oR })));
-    return { gi, pat: p.pat, m: p.m, cells: pos, frames, term: kind === 'sop' ? patProd(p.pat, vars) : patSum(p.pat, vars), size: p.m.length };
+    const fixed = []; for (let i = 0; i < p.pat.length; i++) if (p.pat[i] !== '-') fixed.push(vars[i] + '=' + p.pat[i]);
+    return { gi, pat: p.pat, m: p.m, cells: pos, frames, why: fixed.join(' ') || 'todas las celdas', term: kind === 'sop' ? patProd(p.pat, vars) : patSum(p.pat, vars), size: p.m.length };
   });
   const sg = groupsFor(onesQ, 'sop'), pg = groupsFor(zerosQ, 'pos');
   return {
@@ -647,6 +701,10 @@ function analyze(opts) {
     checks.unshift({ name: 'Identidad ' + equation.lhs + ' = ' + equation.rhs, ok: equation.equal });
   }
 
+  const canonSteps = ones.length ? canonExpand(ast, vars, ones) : { steps: [{ kind: 'given', tag: 'dado', expr: str(ast), ok: true }], ok: true };
+  const gZfull = sopAst(zeros.map(bin), vars);
+  const canonPosC = complement(gZfull, vars);
+  checks.push({ name: 'Forma canónica por álgebra ≡ F', ok: canonSteps.ok && canonPosC.ok });
   const cost = { orig: gateStats(ast), min: gateStats(minAst), pos: gateStats(posAst) };
 
   return {
@@ -663,6 +721,8 @@ function analyze(opts) {
     evalValue: values ? ev(ast, values) : null,
     verify: { cols: verifyCols, rows: envs.length },
     checks, equation, cost,
+    canon: { sop: canonSteps, posG: str(gZfull), pos: canonPosC },
+    glist: { orig: gateList(ast), sop: gateList(minAst), pos: gateList(posAst) },
     usedRules: [...new Set([...dv.steps, ...comp.steps, ...posC.steps].map(s => (s.tag || '').slice(0, 2)).filter(t => RULES[t]))]
   };
 }
