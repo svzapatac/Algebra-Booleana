@@ -70,7 +70,7 @@ const CARDS = [
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
   { id: 'gt', n: '04', title: 'Compuertas lógicas', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
-  { id: 'al', n: '05', title: 'Álgebra y postulados', prev: r => `${r.derive.steps.length - 1} pasos`, body: bodyAlgebra },
+  { id: 'al', n: '05', title: 'Álgebra y postulados', prev: r => `${r.canon.sop.steps.length + r.derive.steps.length - 2} pasos`, body: bodyAlgebra },
   { id: 'ck', n: '06', title: 'Comprobación', prev: r => `${r.checks.filter(c => c.ok).length}/${r.checks.length}`, body: bodyCheck }
 ];
 
@@ -160,7 +160,7 @@ function bodyKmap(r) {
         return `<div class="frame" style="left:${left}px;top:${top}px;width:${w}px;height:${h}px;border-style:${ls};border-color:${col};border-width:${bw};border-radius:${rad};background:${col}1A"></div>`;
       }).join('');
     }).join('');
-    const legend = g.groups.map((gr, gi) => { const [col, ls] = GS[gi % GS.length]; return `<div class="lg"><i style="border:2px ${ls} ${col};background:${col}1A"></i>${esc(gr.term)}<span>${gr.size} celdas</span></div>`; }).join('');
+    const legend = g.groups.map((gr, gi) => { const [col, ls] = GS[gi % GS.length]; return `<div class="lg"><i style="border:2px ${ls} ${col};background:${col}1A"></i>${esc(gr.term)}<span>${gr.size} celdas · fijas ${esc(gr.why)}</span></div>`; }).join('');
     out += `<div class="tabs"><button type="button" class="${mode === 'sop' ? 'on' : ''}" data-act="kmtab" data-m="sop">Unos · SOP</button><button type="button" class="${mode === 'pos' ? 'on' : ''}" data-act="kmtab" data-m="pos">Ceros · POS</button></div>
     <div class="km-wrap">
       <div class="km" style="grid-template-columns:${HW}px repeat(${cols},${CS}px);grid-template-rows:${HH}px repeat(${rows},${CS}px)">${cells}${frames}</div>
@@ -194,7 +194,8 @@ function bodyGates(r) {
   const cmp = `<span class="pill hi">Original ${r.cost.orig.gates} compuertas</span><span class="pill hi">SOP ${r.cost.min.gates}</span><span class="pill hi">POS ${r.cost.pos.gates}</span>`;
   return `${tabs}<div class="svgbox">${svg}</div>
     <div class="stats"><span class="pill ok">${name}: ${cost.gates} compuertas · ${cost.inputs} entradas</span>${ic}</div>
-    <div class="stats">${cmp}</div>`;
+    <div class="stats">${cmp}</div>
+    <div><p class="sub">Cómo se arma · ${name}</p><div class="box">${(r.glist[t] || []).map((g, i) => `<div class="ev" style="grid-template-columns:34px 70px 1fr 1fr"><span style="color:var(--acc)">G${i + 1}</span><span class="op">${g.op}</span><span>${esc(g.ins.join(', '))}</span><span class="v" style="text-align:left">→ ${esc(g.out)}</span></div>`).join('') || '<div class="ev"><span>Sin compuertas</span></div>'}</div></div>`;
 }
 
 /* 05 álgebra */
@@ -221,17 +222,15 @@ function bodyAlgebra(r) {
   const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
   const blocks = [];
   const lb = r.label;
-  const s1 = stepRows(r.derive.steps, 'S', lb + ' =');
-  blocks.push({ n: 1, title: 'Simplificar', ...s1, extra: r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '') });
-  const s2 = stepRows(r.complement.steps, 'C', lb + "' =");
-  blocks.push({ n: 2, title: 'Complemento', ...s2 });
-  const dualSteps = [{ tag: 'dado', expr: r.dual.from }, { tag: 'DUAL', expr: '= ' + r.dual.expr, note: '+ ↔ ·   0 ↔ 1', ok: r.dual.ok }];
-  const s3 = stepRows(dualSteps, 'D', lb + ' =');
-  s3.html = s3.html.replace(/(<span class="ex2">)(=\s)/, '$1$2');
-  blocks.push({ n: 3, title: 'Dual', ...s3 });
-  const gstep = [{ tag: 'dado', expr: r.min.posG }, ...r.min.posSteps.map(x => x)];
-  const s4 = stepRows(r.min.posSteps, 'P', lb + ' =');
-  blocks.push({ n: 4, title: 'Producto de sumas', ...s4, extra: `<p class="note" style="margin-top:8px">${esc(lb)}′ mínima (ceros del mapa) = ${esc(r.min.posG)}</p>` });
+  const add = (title, o, extra) => blocks.push({ n: blocks.length + 1, title, ...o, extra });
+  const cs = r.canon.sop;
+  add('Expandir a minitérminos', stepRows(cs.steps, 'E', lb + ' ='), cs.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '');
+  add('Simplificar', stepRows(r.derive.steps, 'S', lb + ' ='),
+    r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima: ningún postulado la reduce más.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : ''));
+  add('Complemento', stepRows(r.complement.steps, 'C', lb + "' ="));
+  add('Dual', stepRows([{ tag: 'dado', expr: r.dual.from }, { tag: 'DUAL', expr: '= ' + r.dual.expr, note: '+ ↔ ·   0 ↔ 1', ok: r.dual.ok }], 'D', lb + ' ='));
+  add('Producto de sumas mínimo', stepRows(r.min.posSteps, 'P', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ mínima (ceros del mapa) = ${esc(r.min.posG)}</p>`);
+  add('Producto de maxitérminos', stepRows(r.canon.pos.steps, 'M', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ = suma de los ceros = ${esc(r.canon.posG.length > 160 ? r.canon.posG.slice(0, 160) + '…' : r.canon.posG)}</p>`);
   const usedMap = {};
   blocks.forEach(b => b.used.forEach(u => { const k = (u.tag || '').slice(0, 2); if (L.RULES[k] && u.id) (usedMap[k] = usedMap[k] || []).push(u.id); }));
   const rail = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
