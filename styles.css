@@ -196,3 +196,11 @@ details.fold>div{padding-bottom:16px;display:flex;flex-direction:column;gap:16px
 .km .cell.zero{color:#4B4660}
 .km .cell.zero.ship{animation:pulse 1.4s ease-in-out infinite;color:var(--soft)}
 .km .cell.zero.cap{background:rgba(167,139,250,.10);color:var(--lav)}
+.how{padding:16px 18px;border:1px solid var(--hlb);background:var(--hl);border-radius:14px;margin-top:18px}
+.how .why{margin:0 0 8px;color:var(--lav2);font-size:15px}
+.how ol{margin:0;padding-left:20px;color:var(--soft);font-size:14px;line-height:1.65}
+.route{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:20px}
+.route i{font-style:normal;color:var(--dim)}
+.rt{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);font-size:13px;color:var(--soft)}
+.rt:hover{border-color:var(--hlb);color:var(--lav2)}
+.rt b{width:20px;height:20px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-size:11px}
