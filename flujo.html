@@ -1,0 +1,165 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<title>Flujo del Lab Booleano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Concepto: lectura vertical de arriba hacia abajo; rombos violeta para decisiones, ramas "No" a la derecha. */
+:root{--bg:#07060B;--panel:#0E0C16;--line:#2E2548;--fg:#EDEAF7;--muted:#8B86A3;--acc:#A78BFA;--pri:#7C3AED;--hl:#1B1233;--hlb:#4C2D8F;--sans:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:'Geist Mono',ui-monospace,Menlo,monospace;color-scheme:dark}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#F7F5FC;--panel:#FFFFFF;--line:#CFC4EE;--fg:#1A1530;--muted:#5F5A78;--acc:#6D28D9;--pri:#7C3AED;--hl:#EFE9FD;--hlb:#B9A5F0;color-scheme:light}}
+:root[data-theme="light"]{--bg:#F7F5FC;--panel:#FFFFFF;--line:#CFC4EE;--fg:#1A1530;--muted:#5F5A78;--acc:#6D28D9;--pri:#7C3AED;--hl:#EFE9FD;--hlb:#B9A5F0;color-scheme:light}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);padding-inline:16px;padding-block:28px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+.logo{width:36px;height:36px;border-radius:10px;background:var(--pri);color:#fff;display:grid;place-items:center;font-family:var(--mono);font-weight:500}
+h1{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+.key{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);align-items:center}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.key svg{flex:none}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:14px 8px}
+.scroll svg{display:block;width:100%;min-width:760px;height:auto}
+figcaption{margin-top:12px;font-size:13px;color:var(--muted);max-width:70ch}
+figure{margin:0}
+.pill{fill:var(--pri)}
+.proc,.inp,.side{fill:var(--bg);stroke:var(--line);stroke-width:1.4}
+.proc.out{fill:var(--hl);stroke:var(--hlb)}
+.inp{fill:var(--hl);stroke:var(--hlb)}
+.side{stroke-dasharray:5 4}
+.dec{fill:var(--bg);stroke:var(--acc);stroke-width:1.6}
+.t1,.t1d,.t1p{font-family:var(--sans);font-size:13.5px;font-weight:600;fill:var(--fg)}
+.t1p{fill:#fff}
+.t1d{font-size:13px}
+.t2{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.lab{font-family:var(--mono);font-size:11px;fill:var(--acc)}
+.band{font-family:var(--sans);font-size:10px;letter-spacing:.12em;fill:var(--muted)}
+.edge{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round}
+.edge.dash{stroke-dasharray:6 5;stroke:var(--acc)}
+.ah{fill:var(--muted)}
+.dotj{fill:var(--muted)}
+</style>
+<div class="wrap">
+<header>
+<div class="logo">∧</div>
+<h1>Flujo del Lab Booleano</h1>
+</header>
+<div class="key" aria-label="Leyenda de formas">
+<span><svg width="30" height="16" viewBox="0 0 30 16" aria-hidden="true"><path d="M5,1 H29 L25,15 H1 Z" class="inp"/></svg>entrada del usuario</span>
+<span><svg width="30" height="16" viewBox="0 0 30 16" aria-hidden="true"><rect x="1" y="1" width="28" height="14" rx="4" class="proc"/></svg>proceso</span>
+<span><svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><path d="M15,1 L29,10 L15,19 L1,10 Z" class="dec"/></svg>decisión</span>
+<span><svg width="30" height="16" viewBox="0 0 30 16" aria-hidden="true"><rect x="1" y="1" width="28" height="14" rx="4" class="side"/></svg>rama alternativa</span>
+</div>
+<figure>
+<div class="scroll">
+<svg viewBox="0 0 940 1822" role="img" aria-label="Diagrama de flujo del programa: entrada, lectura de la expresión con validación, tabla de verdad, Σ y Π, forma mínima, álgebra paso a paso, Karnaugh hasta 4 variables, compuertas, comprobación y regreso a Calcular cuando el usuario cambia algo">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+<rect x="340.0" y="16" width="240" height="40" rx="20.0" class="pill"/>
+<text x="460" y="40.0" class="t1p" text-anchor="middle">Abrir la página</text>
+<path d="M460,56 L460,92" class="edge" marker-end="url(#ar)"/>
+<path d="M264.0,92 H670.0 L656.0,144 H250.0 Z" class="inp"/>
+<text x="460" y="114" class="t1" text-anchor="middle">Elegir variables (1 a 6) y su valor 0 o 1</text>
+<text x="460" y="131" class="t2" text-anchor="middle">A, B, C… cada una vale 0 o 1</text>
+<path d="M460,144 L460,180" class="edge" marker-end="url(#ar)"/>
+<path d="M264.0,180 H670.0 L656.0,232 H250.0 Z" class="inp"/>
+<text x="460" y="202" class="t1" text-anchor="middle">Escribir la expresión</text>
+<text x="460" y="219" class="t2" text-anchor="middle">AB' + CD  ·  a+b  ·  A xor B  ·  F = …</text>
+<path d="M460,232 L460,268" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="268" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="290" class="t1" text-anchor="middle">Calcular</text>
+<text x="460" y="307" class="t2" text-anchor="middle">también se recalcula al cambiar un 0 o 1</text>
+<path d="M460,320 L460,356" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="356" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="378" class="t1" text-anchor="middle">Leer la expresión</text>
+<text x="460" y="395" class="t2" text-anchor="middle">texto → árbol · precedencia: ( ) NOT AND OR</text>
+<path d="M460,408 L460,444" class="edge" marker-end="url(#ar)"/>
+<path d="M460,444 L610.0,490.0 L460,536 L310.0,490.0 Z" class="dec"/>
+<text x="460" y="494.0" class="t1d" text-anchor="middle">¿Expresión válida?</text>
+<text x="474" y="552" class="lab" text-anchor="start">Sí</text>
+<rect x="700.0" y="464.0" width="190" height="52" rx="10" class="side"/>
+<text x="795" y="486.0" class="t1" text-anchor="middle">Mostrar el error</text>
+<text x="795" y="503.0" class="t2" text-anchor="middle">variable o paréntesis mal</text>
+<path d="M610.0,490.0 L700.0,490.0" class="edge" marker-end="url(#ar)"/>
+<text x="632.0" y="483.0" class="lab" text-anchor="middle">No</text>
+<path d="M795,464.0 L795,206.0 L662.0,206.0" class="edge" marker-end="url(#ar)"/>
+<path d="M460,536 L460,576" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="576" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="598" class="t1" text-anchor="middle">Tabla de verdad</text>
+<text x="460" y="615" class="t2" text-anchor="middle">evaluar las 2ⁿ filas · columnas intermedias</text>
+<path d="M460,628 L460,664" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="664" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="686" class="t1" text-anchor="middle">Σ y Π</text>
+<text x="460" y="703" class="t2" text-anchor="middle">F = 1 → minitérminos  ·  F = 0 → maxitérminos</text>
+<path d="M460,716 L460,752" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="752" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="774" class="t1" text-anchor="middle">Forma mínima</text>
+<text x="460" y="791" class="t2" text-anchor="middle">Quine-McCluskey: SOP con los unos, POS con los ceros</text>
+<path d="M460,804 L460,840" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="840" width="420" height="64" rx="10" class="proc"/>
+<text x="460" y="862" class="t1" text-anchor="middle">Álgebra paso a paso</text>
+<text x="460" y="879" class="t2" text-anchor="middle">expandir · simplificar · complemento · dual · POS</text>
+<text x="460" y="894" class="t2" text-anchor="middle">cada paso cita su postulado o teorema y se verifica (✓)</text>
+<path d="M460,904 L460,940" class="edge" marker-end="url(#ar)"/>
+<path d="M460,940 L610.0,986.0 L460,1032 L310.0,986.0 Z" class="dec"/>
+<text x="460" y="983.0" class="t1d" text-anchor="middle">¿Las reglas llegan</text>
+<text x="460" y="1000.0" class="t1d" text-anchor="middle">a la mínima?</text>
+<text x="474" y="1048" class="lab" text-anchor="start">Sí</text>
+<rect x="700.0" y="960.0" width="190" height="52" rx="10" class="side"/>
+<text x="795" y="982.0" class="t1" text-anchor="middle">Último paso: Q-M</text>
+<text x="795" y="999.0" class="t2" text-anchor="middle">completa y lo indica</text>
+<path d="M610.0,986.0 L700.0,986.0" class="edge" marker-end="url(#ar)"/>
+<text x="632.0" y="979.0" class="lab" text-anchor="middle">No</text>
+<path d="M795,1012.0 L795,1066 L460,1066" class="edge"/>
+<path d="M460,1032 L460,1090" class="edge" marker-end="url(#ar)"/>
+<circle cx="460" cy="1066" r="3.5" class="dotj"/>
+<path d="M460,1090 L610.0,1136.0 L460,1182 L310.0,1136.0 Z" class="dec"/>
+<text x="460" y="1140.0" class="t1d" text-anchor="middle">¿Hasta 4 variables?</text>
+<text x="474" y="1198" class="lab" text-anchor="start">Sí</text>
+<rect x="700.0" y="1110.0" width="190" height="52" rx="10" class="side"/>
+<text x="795" y="1132.0" class="t1" text-anchor="middle">Tarjeta 03 bloqueada</text>
+<text x="795" y="1149.0" class="t2" text-anchor="middle">solo de 2 a 4 variables</text>
+<path d="M610.0,1136.0 L700.0,1136.0" class="edge" marker-end="url(#ar)"/>
+<text x="632.0" y="1129.0" class="lab" text-anchor="middle">No</text>
+<path d="M460,1182 L460,1222" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="1222" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="1244" class="t1" text-anchor="middle">Mapa de Karnaugh</text>
+<text x="460" y="1261" class="t2" text-anchor="middle">Gray · grupos de 1, 2, 4, 8 · modo batalla</text>
+<path d="M795,1162.0 L795,1308 L460,1308" class="edge"/>
+<path d="M460,1274 L460,1332" class="edge" marker-end="url(#ar)"/>
+<circle cx="460" cy="1308" r="3.5" class="dotj"/>
+<rect x="250.0" y="1332" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="1354" class="t1" text-anchor="middle">Compuertas</text>
+<text x="460" y="1371" class="t2" text-anchor="middle">dibujar original, mínima SOP y POS · contar chips</text>
+<path d="M460,1384 L460,1420" class="edge" marker-end="url(#ar)"/>
+<rect x="250.0" y="1420" width="420" height="52" rx="10" class="proc"/>
+<text x="460" y="1442" class="t1" text-anchor="middle">Comprobación</text>
+<text x="460" y="1459" class="t2" text-anchor="middle">Σ, Π, mín. SOP y mín. POS contra F, fila por fila</text>
+<path d="M460,1472 L460,1508" class="edge" marker-end="url(#ar)"/>
+<path d="M460,1508 L610.0,1554.0 L460,1600 L310.0,1554.0 Z" class="dec"/>
+<text x="460" y="1558.0" class="t1d" text-anchor="middle">¿Todas iguales?</text>
+<text x="474" y="1616" class="lab" text-anchor="start">Sí</text>
+<rect x="700.0" y="1528.0" width="190" height="52" rx="10" class="side"/>
+<text x="795" y="1550.0" class="t1" text-anchor="middle">Marcar ✗ o ≠</text>
+<text x="795" y="1567.0" class="t2" text-anchor="middle">en la tarjeta 06</text>
+<path d="M610.0,1554.0 L700.0,1554.0" class="edge" marker-end="url(#ar)"/>
+<text x="632.0" y="1547.0" class="lab" text-anchor="middle">No</text>
+<path d="M795,1580.0 L795,1634 L460,1634" class="edge"/>
+<path d="M460,1600 L460,1658" class="edge" marker-end="url(#ar)"/>
+<circle cx="460" cy="1634" r="3.5" class="dotj"/>
+<rect x="250.0" y="1658" width="420" height="52" rx="10" class="proc out"/>
+<text x="460" y="1680" class="t1" text-anchor="middle">Mostrar resumen y 6 tarjetas</text>
+<text x="460" y="1697" class="t2" text-anchor="middle">tabla · Σ y Π · Karnaugh · compuertas · álgebra · comprobación</text>
+<path d="M460,1710 L460,1746" class="edge" marker-end="url(#ar)"/>
+<path d="M264.0,1746 H670.0 L656.0,1798 H250.0 Z" class="inp"/>
+<text x="460" y="1768" class="t1" text-anchor="middle">Interacción</text>
+<text x="460" y="1785" class="t2" text-anchor="middle">cambiar un 0 o 1, abrir una tarjeta o escribir otra expresión</text>
+<path d="M662.0,1772.0 L915,1772.0 L915,294.0 L670.0,294.0" class="edge dash" marker-end="url(#ar)"/>
+<text x="905" y="1764.0" class="lab" text-anchor="end">repite</text>
+<text x="22" y="122.0" class="band" text-anchor="start">ENTRADA</text>
+<text x="22" y="606.0" class="band" text-anchor="start">ANÁLISIS</text>
+<text x="22" y="876.0" class="band" text-anchor="start">SIMPLIFICACIÓN</text>
+<text x="22" y="1252.0" class="band" text-anchor="start">SALIDAS</text>
+<text x="22" y="1450.0" class="band" text-anchor="start">COMPROBACIÓN</text>
+</svg>
+</div>
+<figcaption>El programa lee la expresión, calcula todo desde la tabla de verdad y comprueba cada resultado contra ella. Cualquier cambio de valor vuelve a Calcular.</figcaption>
+</figure>
+</div>
+</body></html>
