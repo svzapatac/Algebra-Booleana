@@ -86,10 +86,12 @@ function render() {
   const eq = r.equation ? `<span class="pill ${r.equation.equal ? 'ok' : 'bad'}">${r.equation.equal ? 'Identidad verdadera' : 'Identidad falsa'}</span>` : '';
   box.innerHTML = `
     <div class="sum">
-      <div class="big"><small>${esc(r.label)} =</small>${esc(r.min.sop)}</div>
-      <div class="big" style="font-size:20px;color:var(--lav)"><small>POS</small>${esc(r.min.pos)}</div>
-      <div class="pills">
-        <span class="pill hi">${esc(r.sigma)}</span><span class="pill hi">${esc(r.pi)}</span>${valPill}${eq}
+      <div class="orig"><span>Expresión</span><code>${esc(r.expr)}</code></div>
+      <div class="res-grid">
+        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div><div class="rf">${esc(r.sigma)}</div></div>
+        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div><div class="rf">${esc(r.pi)}</div></div>
+      </div>
+      <div class="pills">${valPill}${eq}
         <span class="pill ${allOk ? 'ok' : 'bad'}">${allOk ? '✓ ' : ''}${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>
       </div>
     </div>
@@ -287,30 +289,32 @@ function stepRows(steps, prefix, label) {
     const id = i === 0 ? '' : prefix + i;
     if (s.tag) used.push({ tag: s.tag, id });
     return `<div class="st ${last ? 'last' : ''}"><span class="id">${id}</span>
-      <span class="ex2">${i === 0 ? esc(label) + ' ' : ''}${i === 0 ? '' : ''}${esc(s.expr)}</span>
+      <span class="ex2 ${s.expr.length > 160 ? 'xl' : s.expr.length > 70 ? 'lg' : ''}">${i === 0 ? esc(label) + ' ' : ''}${esc(s.expr)}</span>
       <span class="tg"><span class="tag ${ti.cls}">${esc(ti.label)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ''}</span>
       <span class="ck">${i === 0 ? '' : (s.ok === false ? '✗' : '✓')}</span></div>`;
   }).join('');
-  return { html, used };
+  const l = steps[steps.length - 1].expr.replace(/^=\s*/, '');
+  return { html, used, last: l.length > 90 ? l.slice(0, 90) + '…' : l };
 }
 function bodyAlgebra(r) {
   const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
   const blocks = [];
   const lb = r.label;
-  const add = (title, o, extra) => blocks.push({ n: blocks.length + 1, title, ...o, extra });
+  const fin = o => { const l = o.steps ? o.steps[o.steps.length - 1] : null; return o.fin; };
+  const add = (title, o, extra, opn) => blocks.push({ n: blocks.length + 1, title, ...o, extra, opn });
   const cs = r.canon.sop;
-  add('Expandir a minitérminos', stepRows(cs.steps, 'E', lb + ' ='), cs.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '');
   add('Simplificar', stepRows(r.derive.steps, 'S', lb + ' ='),
-    r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima: ningún postulado la reduce más.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : ''));
+    r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : ''), true);
   add('Complemento', stepRows(r.complement.steps, 'C', lb + "' ="));
   add('Dual', stepRows([{ tag: 'dado', expr: r.dual.from }, { tag: 'DUAL', expr: '= ' + r.dual.expr, note: '+ ↔ ·   0 ↔ 1', ok: r.dual.ok }], 'D', lb + ' ='));
   add('Producto de sumas mínimo', stepRows(r.min.posSteps, 'P', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ mínima (ceros del mapa) = ${esc(r.min.posG)}</p>`);
-  add('Producto de maxitérminos', stepRows(r.canon.pos.steps, 'M', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ = suma de los ceros = ${esc(r.canon.posG.length > 160 ? r.canon.posG.slice(0, 160) + '…' : r.canon.posG)}</p>`);
+  add('Expandir a minitérminos', stepRows(cs.steps, 'E', lb + ' ='), cs.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '');
+  add('Producto de maxitérminos', stepRows(r.canon.pos.steps, 'M', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ = suma de los ceros</p>`);
   const usedMap = {};
   blocks.forEach(b => b.used.forEach(u => { const k = (u.tag || '').slice(0, 2); if (L.RULES[k] && u.id) (usedMap[k] = usedMap[k] || []).push(u.id); }));
   const rail = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
     `<div class="ri ${usedMap[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${usedMap[k] ? [...new Set(usedMap[k])].slice(0, 6).join(' ') : ''}</em></div>`).join('');
-  return `<div class="alg"><div class="alg-main">${blocks.map(b => `<div class="blk"><h3><b>${b.n}</b>${b.title}</h3>${head}${b.html}${b.extra || ''}</div>`).join('')}</div>
+  return `<div class="alg"><div class="alg-main">${blocks.map(b => `<details class="blk" ${b.opn ? 'open' : ''}><summary><b>${b.n}</b><span class="bt2">${b.title}</span><span class="cnt">${b.html.split('class="st').length - 1} pasos</span><code class="fin">${esc(b.last)}</code></summary>${head}${b.html}${b.extra || ''}</details>`).join('')}</div>
     <aside class="rail">${rail('post')}${rail('teo')}</aside></div>`;
 }
 
