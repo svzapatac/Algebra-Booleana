@@ -88,6 +88,7 @@ function tokenize(src) {
     if (c === '+' || c === '|' || c === '∨') { toks.push({ k: 'OR' }); i++; continue; }
     if ('·*.&∧•×'.includes(c)) { toks.push({ k: 'AND' }); i++; continue; }
     if (c === '⊕' || c === '^') { toks.push({ k: 'XOR' }); i++; continue; }
+    if (c === '⊙' || c === '≡' || c === '↔') { toks.push({ k: 'XNOR' }); i++; continue; }
     if ("'’′`".includes(c)) { toks.push({ k: 'PRIME' }); i++; continue; }
     if (c === '!' || c === '~' || c === '¬') { toks.push({ k: 'NOTP' }); i++; continue; }
     if (c === '(' || c === '[') { toks.push({ k: 'LP' }); i++; continue; }
@@ -436,7 +437,7 @@ function canonExpand(ast, vars, ones) {
     { run: via(applyBottom, R.dist), meta: M('P4(a)', 'distributiva: x(y + z) = xy + xz') },
     { run: expand, meta: M('P5(a)', "x = x·1 = x(y + y')") }
   ];
-  const r = runSteps(ast, attempts, ref, envs, 140);
+  const r = runSteps(ast, attempts, ref, envs, 400);
   let { steps, cur, ok } = r;
   const pat = i => i.toString(2).padStart(n, '0');
   const target = sopAst(ones.map(pat), vars);
