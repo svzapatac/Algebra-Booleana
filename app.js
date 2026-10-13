@@ -60,7 +60,7 @@ function run(keepOpen) {
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
-  st.open = new Set(['al']);
+  st.open = new Set(['pt', 'al']);
   stopBat(); st.bat.on = false; st.bat.k = 0; st.bat.playing = false;
   writeUrl();
   render();
@@ -68,6 +68,7 @@ function run(keepOpen) {
 
 /* ───── render ───── */
 const CARDS = [
+  { id: 'pt', n: '00', title: 'Resolver por partes', show: r => r.partes && r.partes.length > 0, prev: r => `${r.partes.length} cajas`, body: bodyPartes },
   { id: 'tt', n: '01', title: 'Tabla de verdad', prev: r => `${r.table.rows.length} filas`, body: bodyTable },
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
@@ -77,7 +78,7 @@ const CARDS = [
 ];
 
 
-const ROUTE = [['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
+const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
 
 function render() {
   const r = st.res, box = $('#result');
@@ -95,8 +96,8 @@ function render() {
         <span class="pill ${allOk ? 'ok' : 'bad'}">${allOk ? '✓ ' : ''}${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>
       </div>
     </div>
-    <div class="route"><span class="sub" style="margin:0">Ruta del programa</span>${ROUTE.map((x, i) => `<button type="button" class="rt" data-act="goto" data-id="${x[0]}"><b>${i + 1}</b>${x[1]}</button>`).join('<i>›</i>')}</div>
-    <div class="cards" style="margin-top:24px">${CARDS.map(c => cardHtml(c, r)).join('')}</div>`;
+    <div class="route"><span class="sub" style="margin:0">Ruta del programa</span>${ROUTE.filter(x => x[0] !== 'pt' || (r.partes && r.partes.length)).map((x, i) => `<button type="button" class="rt" data-act="goto" data-id="${x[0]}"><b>${i + 1}</b>${x[1]}</button>`).join('<i>›</i>')}</div>
+    <div class="cards" style="margin-top:24px">${CARDS.filter(c => !c.show || c.show(r)).map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
 }
 function cardHtml(c, r) {
   if (c.id === 'km' && r.n > 4) return `<article class="card locked" id="card-km"><div class="card-h" style="cursor:not-allowed;opacity:.5"><span class="num">${c.n}</span><h2>${c.title}</h2><span class="prev">Solo hasta 4 variables</span><svg class="chev" viewBox="0 0 18 18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="transform:none"><rect x="3.5" y="8" width="11" height="7.5" rx="2"/><path d="M6 8V6a3 3 0 016 0v2"/></svg></div></article>`;
@@ -110,7 +111,8 @@ function cardHtml(c, r) {
   </article>`;
 }
 function refreshCard(id) {
-  const c = CARDS.find(x => x.id === id), el = $('#card-' + id);
+  const vis = CARDS.filter(x => !x.show || x.show(st.res));
+  const c = { ...CARDS.find(x => x.id === id), n: String(vis.findIndex(x => x.id === id) + 1).padStart(2, '0') }, el = $('#card-' + id);
   el.outerHTML = cardHtml(c, st.res);
 }
 
@@ -275,6 +277,20 @@ function bodyGates(r) {
     <div><p class="sub">Cómo se arma · ${name}</p><div class="box">${(r.glist[t] || []).map((g, i) => `<div class="ev" style="grid-template-columns:34px 70px 1fr 1fr"><span style="color:var(--acc)">G${i + 1}</span><span class="op">${g.op}</span><span>${esc(g.ins.join(', '))}</span><span class="v" style="text-align:left">→ ${esc(g.out)}</span></div>`).join('') || '<div class="ev"><span>Sin compuertas</span></div>'}</div></div>`;
 }
 
+
+/* 00 resolver por partes */
+function bodyPartes(r) {
+  const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
+  return `<div class="pboxes">${r.partes.map(b => {
+    const sr = stepRows(b.steps, b.id + '.', '');
+    const ops = b.kind === 'gate' ? `<div class="pops">${b.operands.map(o => `<div><b>${o.name}</b><code>${esc(o.min)}</code>${o.from ? `<em>caja ${o.from}</em>` : ''}</div>`).join('')}</div>
+      <div class="pdef"><span>Definición</span><code>${esc(b.def)}</code></div>` : '';
+    return `<details class="pbox ${b.kind}" open><summary><b>${b.id}</b><span class="bt2">${b.title}</span><code class="pex">${esc(b.expr)}</code><span class="cnt">${b.steps.length - 1} pasos</span></summary>
+      ${ops}${head}${sr.html}
+      <div class="pres"><span>Resultado de la caja ${b.id}</span><code>${esc(b.result)}</code><i>${b.ok ? '✓' : '✗'}</i></div></details>`;
+  }).join('')}</div>`;
+}
+
 /* 05 álgebra */
 function tagInfo(tag) {
   const m = /^([PT])(\d)(\(([ab])\))?$/.exec(tag || '');
@@ -396,6 +412,6 @@ $('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') run(true); 
 renderExamples();
 const hasUrl = readUrl();
 renderVars();
-if (hasUrl) { st.open = new Set(['al']); run(true); }
-else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['al']); run(true); }
+if (hasUrl) { st.open = new Set(['pt', 'al']); run(true); }
+else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['pt', 'al']); run(true); }
 })();

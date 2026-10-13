@@ -627,6 +627,51 @@ function subCols(ast) {
   return [...seen.entries()].slice(-12);
 }
 
+
+/* Resolución por partes: una caja por XOR / XNOR / NAND / NOR (de adentro hacia afuera) */
+function partesOf(ast, vars) {
+  const n = vars.length, envs = allEnvs(vars);
+  const minOf = nd => {
+    const on = []; envs.forEach((e, i) => { if (ev(nd, e)) on.push(i); });
+    if (!on.length) return K(0);
+    if (on.length === envs.length) return K(1);
+    return sopAst(qm(on, n).cover.map(p => p.pat), vars);
+  };
+  const NAME = { xor: 'XOR', xnor: 'XNOR', nand: 'NAND', nor: 'NOR' };
+  const DEF = { xor: "x ⊕ y = x·y' + x'·y", xnor: "x ⊙ y = x·y + x'·y'", nand: "(x·y)' = x' + y'", nor: "(x + y)' = x'·y'" };
+  const boxes = [], byKey = {};
+  let hasGate = false;
+  const simpBox = c => {
+    if (c.t === 'var' || c.t === 'const' || isLit(c) || XORF.has(c.t)) return;
+    const k = key(c); if (byKey[k] !== undefined) return;
+    const res = minOf(c); if (str(res) === str(c)) return;
+    const sm = simplify(c, vars, res);
+    byKey[k] = boxes.length;
+    boxes.push({ id: boxes.length + 1, kind: 'simp', title: 'Simplificar', expr: str(c), steps: sm.steps, result: str(res), ok: sm.ok });
+  };
+  const walk = nd => {
+    if (nd.t === 'var' || nd.t === 'const') return;
+    kids(nd).forEach(walk);
+    const k = key(nd);
+    if (!XORF.has(nd.t) || byKey[k] !== undefined) return;
+    hasGate = true;
+    nd.args.forEach(simpBox);
+    const ops = nd.args.map(c => {
+      const m = minOf(c);
+      return { expr: str(c), min: str(m), node: m, from: byKey[key(c)] };
+    });
+    const sub = { t: nd.t, args: ops.map(o => o.node) };
+    const res = minOf(nd);
+    const sm = simplify(sub, vars, res);
+    byKey[k] = boxes.length;
+    boxes.push({ id: boxes.length + 1, kind: 'gate', op: NAME[nd.t], title: 'Resolver ' + NAME[nd.t], expr: str(nd), def: DEF[nd.t],
+      operands: ops.map((o, i) => ({ name: i ? 'y' : 'x', expr: o.expr, min: o.min, from: o.from === undefined ? null : o.from + 1 })),
+      sub: str(sub), steps: sm.steps, result: str(res), ok: sm.ok });
+  };
+  walk(ast);
+  return hasGate ? boxes.slice(0, 14) : [];
+}
+
 function analyze(opts) {
   const vars = opts.vars.map(v => v.toUpperCase()), n = vars.length;
   if (n < 1 || n > 6) throw new Error('Usa entre 1 y 6 variables');
@@ -717,6 +762,7 @@ function analyze(opts) {
     qm: { ones: qO, zeros: qZ },
     kmap: km,
     min: { sop: str(minAst), pos: str(posAst), sopAst: minAst, posAst, posG: str(gZ), posSteps: posC.steps },
+    partes: partesOf(ast, vars),
     derive: dv, complement: comp, dual: { ast: dualAst, expr: str(dualAst), ok: dualOk, from: str(minAst) },
     evalSteps: values ? evalSteps(ast, values) : null,
     evalValue: values ? ev(ast, values) : null,
