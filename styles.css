@@ -242,3 +242,4 @@ details.blk>.note{margin-bottom:14px}
 .st.last{background:var(--hl);border-color:var(--acc);border-left:4px solid var(--acc);box-shadow:0 0 0 1px var(--hlb),0 0 22px #7C3AED33}
 .st.last .ex2{color:#fff;font-weight:600}
 .st .tag{font-weight:600}
+.rf span{display:block;font-family:var(--sans,inherit);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--acc);margin-bottom:3px}

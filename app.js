@@ -88,8 +88,8 @@ function render() {
     <div class="sum">
       <div class="orig"><span>Expresión</span><code>${esc(r.expr)}</code></div>
       <div class="res-grid">
-        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div><div class="rf">${esc(r.sigma)}</div></div>
-        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div><div class="rf">${esc(r.pi)}</div></div>
+        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div><div class="rf"><span>Filas donde F = 1</span>${esc(r.sigma.replace(/^Σ\(|\)$/g,"").replace(/^Σm\(|\)$/g,""))}</div></div>
+        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div><div class="rf"><span>Filas donde F = 0</span>${esc(r.pi.replace(/^Π\(|\)$/g,"").replace(/^ΠM\(|\)$/g,""))}</div></div>
       </div>
       <div class="pills">${valPill}${eq}
         <span class="pill ${allOk ? 'ok' : 'bad'}">${allOk ? '✓ ' : ''}${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>
