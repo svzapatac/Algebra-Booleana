@@ -76,24 +76,6 @@ const CARDS = [
 ];
 
 
-const HELP = {
-  tt: { why: 'Prueba todas las combinaciones de entradas (2ⁿ filas) y calcula la salida. Es la referencia: todo lo demás se compara contra esta tabla.',
-    how: ['Las variables se escriben en binario, de 0…0 a 1…1.', 'Se evalúan las subexpresiones de adentro hacia afuera, con la precedencia: paréntesis, NOT, AND, OR.', 'La última columna es F; de ella salen Σ y Π.'] },
-  mm: { why: 'Pasa la tabla a forma canónica: cada fila con F = 1 es un minitérmino (AND de todas las variables) y cada fila con F = 0 es un maxitérmino (OR de todas).',
-    how: ["Minitérmino: la variable va sin negar si vale 1 y negada si vale 0 (fila 0011 → A'B'CD).", "Maxitérmino: al revés, sin negar si vale 0 (fila 0011 → A + B + C' + D').", 'F = suma de minitérminos (Σ) = producto de maxitérminos (Π).'] },
-  km: { why: 'Es la tabla de verdad acomodada para ver a simple vista qué se puede simplificar: las celdas vecinas se diferencian en una sola variable.',
-    how: ['Filas y columnas van en código Gray (00, 01, 11, 10): los vecinos cambian un solo bit, y los bordes también son vecinos.', 'Se encierran grupos de 1, 2, 4, 8… unos, lo más grandes posible (SOP). Con los ceros sale la forma POS.', 'De cada grupo se conservan las variables que no cambian: esas forman el término.'] },
-  gt: { why: 'Dibuja la expresión como circuito: cada operador es una compuerta, conectadas de las entradas hacia la salida.',
-    how: ['Cada NOT, AND y OR (y XOR, NAND, NOR) de la expresión es una compuerta.', 'Se lee de izquierda (variables) a derecha (F). El color de los cables sigue los valores que elegiste.', 'Se compara el circuito original con el simplificado: menos compuertas y entradas = circuito más barato (chips 7404, 7408, 7432).'] },
-  al: { why: 'Muestra la simplificación como la haría una persona: una línea por paso, citando el postulado o teorema del libro. Cada paso se comprueba contra la tabla de verdad (✓).',
-    how: ['Orden en que el programa aplica las reglas: 1) definiciones (XOR, NAND…) → 2) asociativa → 3) De Morgan e involución → 4) nulo, identidad, idempotencia y complemento → 5) distributiva hasta llegar a suma de productos → 6) absorción → 7) términos que difieren en una variable: se agrupan, se saca factor común y x + x′ = 1.', 'Si con esas reglas no llega a la forma mínima, el último paso la completa con Quine-McCluskey y lo dice.', 'Complemento: De Morgan sobre la forma mínima. Dual: cambiar + por · y 0 por 1.'] },
-  ck: { why: 'Prueba que todos los resultados son la misma función: se comparan, fila por fila, las 2ⁿ filas.',
-    how: ['Σ, Π, la mínima SOP y la mínima POS deben dar la misma columna que F.', 'Cada paso del álgebra se verificó contra F; el ✓ lo indica.', 'Dual: se cumple Fᵈ(x) = (F(x′))′. Si algo falla aparece ✗ o ≠.'] }
-};
-function howHtml(id) {
-  const h = HELP[id]; if (!h) return '';
-  return `<div class="how"><p class="sub" style="margin-bottom:6px">Qué hace y por qué</p><p class="why">${esc(h.why)}</p><ol>${h.how.map(x => `<li>${esc(x)}</li>`).join('')}</ol></div>`;
-}
 const ROUTE = [['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
 
 function render() {
@@ -121,7 +103,7 @@ function cardHtml(c, r) {
       <span class="num">${c.n}</span><h2>${c.title}</h2><span class="prev">${esc(c.prev(r))}</span>
       <svg class="chev" viewBox="0 0 18 18" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l5 5 5-5"/></svg>
     </button>
-    ${open ? `<div class="card-b">${howHtml(c.id)}${c.body(r)}</div>` : ''}
+    ${open ? `<div class="card-b">${c.body(r)}</div>` : ''}
   </article>`;
 }
 function refreshCard(id) {
@@ -143,7 +125,7 @@ function bodyTable(r) {
       ${r.evalSteps.map(s => `<div class="ev"><span>${esc(s.expr)}</span><span class="op">${s.op}</span><span>${esc(s.calc)}</span><span class="v">${s.value}</span></div>`).join('') ||
         `<div class="ev"><span>${esc(r.expr)}</span><span class="op">—</span><span></span><span class="v">${r.evalValue}</span></div>`}
     </div></div>`;
-  } else ev = `<p class="note">Asigna 0/1 a todas las variables (o toca una fila) para ver la evaluación.</p>`;
+  }
   return `<div class="tw"><table class="tt"><thead>${head}</thead><tbody>${rows}</tbody></table></div>${ev}`;
 }
 
