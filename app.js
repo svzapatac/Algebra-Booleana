@@ -60,7 +60,7 @@ function run(keepOpen) {
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
-  if (!keepOpen) st.open = new Set();
+  st.open = new Set(['al']);
   stopBat(); st.bat.on = false; st.bat.k = 0; st.bat.playing = false;
   writeUrl();
   render();
@@ -289,7 +289,7 @@ function stepRows(steps, prefix, label) {
     const id = i === 0 ? '' : prefix + i;
     if (s.tag) used.push({ tag: s.tag, id });
     return `<div class="st ${last ? 'last' : ''}"><span class="id">${id}</span>
-      <span class="ex2 ${s.expr.length > 160 ? 'xl' : s.expr.length > 70 ? 'lg' : ''}">${i === 0 ? esc(label) + ' ' : ''}${esc(s.expr)}</span>
+      <span class="ex2 ${s.expr.length > 160 ? 'xlong' : s.expr.length > 70 ? 'long' : ''}">${i === 0 ? esc(label) + ' ' : ''}${esc(s.expr)}</span>
       <span class="tg"><span class="tag ${ti.cls}">${esc(ti.label)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ''}</span>
       <span class="ck">${i === 0 ? '' : (s.ok === false ? '✗' : '✓')}</span></div>`;
   }).join('');
@@ -314,7 +314,7 @@ function bodyAlgebra(r) {
   blocks.forEach(b => b.used.forEach(u => { const k = (u.tag || '').slice(0, 2); if (L.RULES[k] && u.id) (usedMap[k] = usedMap[k] || []).push(u.id); }));
   const rail = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
     `<div class="ri ${usedMap[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${usedMap[k] ? [...new Set(usedMap[k])].slice(0, 6).join(' ') : ''}</em></div>`).join('');
-  return `<div class="alg"><div class="alg-main">${blocks.map(b => `<details class="blk" ${b.opn ? 'open' : ''}><summary><b>${b.n}</b><span class="bt2">${b.title}</span><span class="cnt">${b.html.split('class="st').length - 1} pasos</span><code class="fin">${esc(b.last)}</code></summary>${head}${b.html}${b.extra || ''}</details>`).join('')}</div>
+  return `<div class="alg"><div class="alg-main">${blocks.map(b => `<details class="blk" open><summary><b>${b.n}</b><span class="bt2">${b.title}</span><span class="cnt">${b.html.split('class="st').length - 1} pasos</span><code class="fin">${esc(b.last)}</code></summary>${head}${b.html}${b.extra || ''}</details>`).join('')}</div>
     <aside class="rail">${rail('post')}${rail('teo')}</aside></div>`;
 }
 
