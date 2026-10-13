@@ -369,7 +369,7 @@ function qm(ones, n) {
       }
     }
   }
-  const sk = p => p.pat.replace(/-/g, '2');
+  const sk = p => String(p.pat.replace(/-/g, '').length) + p.pat.replace(/-/g, '9');
   const cover = [...essential, ...extra].sort((a, b) => (sk(a) < sk(b) ? -1 : sk(a) > sk(b) ? 1 : 0));
   return { cols, primes: primes.sort((a, b) => a.m[0] - b.m[0]), essential, cover, ones };
 }
