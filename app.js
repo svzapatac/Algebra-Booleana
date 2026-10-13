@@ -3,6 +3,7 @@
 const L = window.Logic;
 const LETTERS = 'ABCDEF';
 const EXAMPLES = [
+  ["((((A+B)'·(A+C)) ⊕ (A+B+C)') ⊙ (A+B+D)') ⊕ (E(A+B))'", 5],
   ["AB' + CD", 4], ["AB'C + AB'C' + CD", 4], ["(A + B)'", 3], ["A + A'B", 2],
   ["AB + A'C + BC", 3], ["A ⊕ B ⊕ C", 3], ["(A + B)(A + C) = A + BC", 3], ["A nand B", 2]
 ];
@@ -10,7 +11,7 @@ const TOKENS = ["'", '+', '·', '⊕', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const st = { n: 4, vals: {}, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'orig' }, bat: { on: false, k: 0, playing: false, timer: null } };
+const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'orig' }, bat: { on: false, k: 0, playing: false, timer: null } };
 
 /* ───── formulario ───── */
 function vars() { return LETTERS.slice(0, st.n).split(''); }
@@ -392,5 +393,5 @@ renderExamples();
 const hasUrl = readUrl();
 renderVars();
 if (hasUrl) { st.open = new Set(['al']); run(true); }
-else { $('#expr').value = "AB' + CD"; run(false); }
+else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['al']); run(true); }
 })();
