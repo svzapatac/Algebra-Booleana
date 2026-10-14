@@ -21,7 +21,7 @@ function renderVars() {
   $('#tokens').innerHTML = TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
 }
 function renderExamples() {
-  $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="ex" data-act="ex" data-i="${i}">${esc(e[0])}</button>`).join('');
+  $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="ex" data-act="ex" data-i="${i}">${i === 0 ? 'Ejercicio del tablero' : esc(e[0])}</button>`).join('');
 }
 function insertToken(t) {
   const inp = $('#expr'), a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
@@ -90,16 +90,14 @@ function render() {
   const eq = r.equation ? `<span class="pill ${r.equation.equal ? 'ok' : 'bad'}">${r.equation.equal ? 'Identidad verdadera' : 'Identidad falsa'}</span>` : '';
   box.innerHTML = `
     <div class="sum">
-      <div class="orig"><span>Expresión</span><code>${esc(r.expr)}</code></div>
       <div class="res-grid">
-        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div><div class="rf"><span>Filas donde F = 1</span>${esc(r.sigma.replace(/^Σ\(|\)$/g,"").replace(/^Σm\(|\)$/g,""))}</div></div>
-        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div><div class="rf"><span>Filas donde F = 0</span>${esc(r.pi.replace(/^Π\(|\)$/g,"").replace(/^ΠM\(|\)$/g,""))}</div></div>
+        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div></div>
+        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div></div>
       </div>
       <div class="pills">${valPill}${eq}
         <span class="pill ${allOk ? 'ok' : 'bad'}">${allOk ? '✓ ' : ''}${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>
       </div>
     </div>
-    <div class="route"><span class="sub" style="margin:0">Ruta del programa</span>${ROUTE.filter(x => x[0] !== 'pt' || (r.partes && r.partes.length)).map((x, i) => `<button type="button" class="rt" data-act="goto" data-id="${x[0]}"><b>${i + 1}</b>${x[1]}</button>`).join('<i>›</i>')}</div>
     <div class="cards" style="margin-top:24px">${CARDS.filter(c => !c.show || c.show(r)).map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
   mountLab();
 }
