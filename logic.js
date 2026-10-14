@@ -277,8 +277,9 @@ function runSteps(start, attempts, ref, envs, cap) {
     const good = tvOf(node) === ref; if (!good) ok = false;
     steps.push({ ...meta, node, expr: '= ' + str(node), ok: good }); cur = node;
   };
+  const t0 = Date.now(), size = n => n.t === 'var' || n.t === 'const' ? 1 : 1 + kids(n).reduce((s, c) => s + size(c), 0);
   for (let g = 0; ; g++) {
-    if (g >= cap) { truncated = true; break; }
+    if (g >= cap || Date.now() - t0 > 1800 || size(cur) > 2500) { truncated = true; break; }
     let did = false;
     for (const at of attempts) {
       const r = at.run(cur); if (!r) continue;
@@ -507,9 +508,9 @@ function runs(idx, L) {
 }
 
 function kmapFor(n, vars, fv, onesQ, zerosQ) {
-  if (n < 2 || n > 4) return null;
-  const gray = k => k === 1 ? ['0', '1'] : ['00', '01', '11', '10'];
-  const rv = n === 2 ? [vars[0]] : n === 3 ? [vars[0]] : [vars[0], vars[1]];
+  if (n < 2 || n > 8) return null;
+  const gray = k => Array.from({ length: 1 << k }, (_, i) => (i ^ (i >> 1)).toString(2).padStart(k, '0'));
+  const rv = vars.slice(0, Math.max(1, n >> 1));
   const cv = vars.slice(rv.length);
   const rc = gray(rv.length), cc = gray(cv.length);
   const cells = rc.map(r => cc.map(c => { const m = parseInt(r + c, 2); return { m, v: fv[m] }; }));
@@ -674,7 +675,7 @@ function partesOf(ast, vars) {
 
 function analyze(opts) {
   const vars = opts.vars.map(v => v.toUpperCase()), n = vars.length;
-  if (n < 1 || n > 6) throw new Error('Usa entre 1 y 6 variables');
+  if (n < 1 || n > 8) throw new Error('Usa entre 1 y 8 variables');
   let src = String(opts.expr || '').replace(/==|≡/g, '=').trim();
   let label = 'F', eqSrc = null;
   const parts = src.split('=');
@@ -750,7 +751,7 @@ function analyze(opts) {
   const canonSteps = ones.length ? canonExpand(ast, vars, ones) : { steps: [{ kind: 'given', tag: 'dado', expr: str(ast), ok: true }], ok: true };
   const gZfull = sopAst(zeros.map(bin), vars);
   const canonPosC = complement(gZfull, vars);
-  checks.push({ name: 'Forma canónica por álgebra ≡ F', ok: canonSteps.ok && canonPosC.ok });
+  checks.push({ name: canonSteps.truncated ? 'Forma canónica Σ ≡ F (tabla de verdad)' : 'Forma canónica por álgebra ≡ F', ok: canonSteps.ok && canonPosC.ok });
   const cost = { orig: gateStats(ast), min: gateStats(minAst), pos: gateStats(posAst) };
 
   return {

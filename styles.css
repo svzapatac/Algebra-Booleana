@@ -267,3 +267,8 @@ details.blk>.note{margin-bottom:14px}
 .pres span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--lav)}
 .pres code{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;overflow-wrap:anywhere}
 .pres i{margin-left:auto;font-style:normal;color:var(--lav2)}
+
+.km.sm .cell{font-size:18px}.km.sm .cell small{font-size:9px}
+.km.xs .cell{font-size:14px}.km.xs .cell small{display:none}.km.xs .h{font-size:10px}.km.sm .h{font-size:12px}
+.km-wrap{max-width:100%}.km{max-width:100%}
+.card-b:has(.km){overflow-x:auto}
