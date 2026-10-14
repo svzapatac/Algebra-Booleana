@@ -94,9 +94,7 @@ function render() {
         <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div></div>
         <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div></div>
       </div>
-      <div class="pills">${valPill}${eq}
-        <span class="pill ${allOk ? 'ok' : 'bad'}">${allOk ? '✓ ' : ''}${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>
-      </div>
+      ${(valPill || eq || !allOk) ? `<div class="pills">${valPill}${eq}${allOk ? '' : `<span class="pill bad">${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>`}</div>` : ''}
     </div>
     <div class="cards" style="margin-top:24px">${CARDS.filter(c => !c.show || c.show(r)).map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
   mountLab();
