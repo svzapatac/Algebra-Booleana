@@ -442,7 +442,7 @@ document.addEventListener('click', e => {
 $('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') { st.vals = null; run(true); } });
 
 /* ───── inicio ───── */
-renderExamples();
+
 const hasUrl = readUrl();
 renderVars();
 if (hasUrl) { st.open = new Set(['pt', 'gt', 'al']); run(true); }
