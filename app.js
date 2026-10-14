@@ -53,9 +53,20 @@ function readUrl() {
 }
 
 /* ───── cálculo ───── */
+function autoN(src) {
+  let s = String(src || '');
+  const eq = s.split('=');
+  if (eq.length === 2 && /^\s*F\s*(\([^)]*\))?\s*$/i.test(eq[0])) s = eq[1];
+  s = s.replace(/\b(XNOR|NAND|NOR|XOR|AND|OR|NOT)\b/gi, ' ');
+  let mx = -1;
+  for (const ch of s.toUpperCase()) { const i = LETTERS.indexOf(ch); if (i > mx) mx = i; }
+  return mx + 1;
+}
 function run(keepOpen) {
   st.expr = $('#expr').value.trim();
   showErr('');
+  const need = autoN(st.expr);
+  if (need >= 1 && need <= 6 && need !== st.n) { st.n = need; renderVars(); }
   const values = {}; vars().forEach(v => { values[v] = st.vals[v] === undefined ? 0 : st.vals[v]; });
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
