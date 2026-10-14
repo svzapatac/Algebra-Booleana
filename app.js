@@ -11,7 +11,7 @@ const TOKENS = ["'", '+', '·', '⊕', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'lab' }, bat: { on: false, k: 0, playing: false, timer: null } };
+const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'lab', al: 0 }, bat: { on: false, k: 0, playing: false, timer: null } };
 
 /* ───── formulario ───── */
 function vars() { return LETTERS.slice(0, st.n).split(''); }
@@ -319,6 +319,20 @@ function tagInfo(tag) {
   if (m) return { cls: m[1] === 'P' ? 'post' : 'teo', label: (m[1] === 'P' ? 'Postulado ' : 'Teorema ') + m[2] + (m[3] || '') };
   return { dado: { cls: 'given', label: 'dado' }, DEF: { cls: 'def', label: 'Definición' }, QM: { cls: 'qm', label: 'Mín. Quine-McCluskey' }, DUAL: { cls: 'dual', label: 'Dualidad' } }[tag] || { cls: 'given', label: tag };
 }
+function hlExpr(cur, prev) {
+  const A = cur.split(' '), B = prev ? prev.split(' ') : [];
+  const mk = (t, ch) => ch ? `<mark>${esc(t)}</mark>` : (/^(\+|⊕|XNOR|NAND|NOR|XOR)$/.test(t) ? `<i class="op">${esc(t)}</i>` : esc(t));
+  if (!B.length || A.length * B.length > 250000) return A.map(t => mk(t, false)).join(' ');
+  const n = A.length, m = B.length, W = m + 1, D = new Uint16Array((n + 1) * W);
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+    D[i * W + j] = A[i] === B[j] ? D[(i + 1) * W + j + 1] + 1 : Math.max(D[(i + 1) * W + j], D[i * W + j + 1]);
+  const keep = new Array(n).fill(false);
+  for (let i = 0, j = 0; i < n && j < m;) {
+    if (A[i] === B[j]) { keep[i] = true; i++; j++; }
+    else if (D[(i + 1) * W + j] >= D[i * W + j + 1]) i++; else j++;
+  }
+  return A.map((t, i) => mk(t, !keep[i] && !/^(\+|⊕|XNOR)$/.test(t))).join(' ');
+}
 function stepRows(steps, prefix, label) {
   const used = [];
   const html = steps.map((s, i) => {
@@ -327,12 +341,12 @@ function stepRows(steps, prefix, label) {
     const id = i === 0 ? '' : prefix + i;
     if (s.tag) used.push({ tag: s.tag, id });
     return `<div class="st ${last ? 'last' : ''}"><span class="id">${id}</span>
-      <span class="ex2 ${s.expr.length > 160 ? 'xlong' : s.expr.length > 70 ? 'long' : ''}">${i === 0 ? esc(label) + ' ' : ''}${esc(s.expr)}</span>
+      <span class="ex2 ${s.expr.length > 160 ? 'xlong' : s.expr.length > 70 ? 'long' : ''}">${i === 0 ? esc(label) + ' ' : ''}${i === 0 ? hlExpr(s.expr, '') : '<i class="op">=</i> ' + hlExpr(s.expr.replace(/^=\s*/, ''), steps[i - 1].expr.replace(/^=\s*/, ''))}</span>
       <span class="tg"><span class="tag ${ti.cls}">${esc(ti.label)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ''}</span>
       <span class="ck">${i === 0 ? '' : (s.ok === false ? '✗' : '✓')}</span></div>`;
   }).join('');
   const l = steps[steps.length - 1].expr.replace(/^=\s*/, '');
-  return { html, used, last: l.length > 90 ? l.slice(0, 90) + '…' : l };
+  return { html, used, last: l.length > 90 ? l.slice(0, 90) + '…' : l, full: l };
 }
 function bodyAlgebra(r) {
   const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
@@ -342,7 +356,7 @@ function bodyAlgebra(r) {
   const add = (title, o, extra, opn) => blocks.push({ n: blocks.length + 1, title, ...o, extra, opn });
   const cs = r.canon.sop;
   add('Simplificar', stepRows(r.derive.steps, 'S', lb + ' ='),
-    r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : ''), true);
+    (r.partes && r.partes.length && r.derive.steps.length > 12 ? '<p class="note" style="margin-top:8px">Esta es la versión mecánica y larga. La versión corta, por etapas, está en la tarjeta «Resolver por partes».</p>' : '') + (r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '')), true);
   add('Complemento', stepRows(r.complement.steps, 'C', lb + "' ="));
   add('Dual', stepRows([{ tag: 'dado', expr: r.dual.from }, { tag: 'DUAL', expr: '= ' + r.dual.expr, note: '+ ↔ ·   0 ↔ 1', ok: r.dual.ok }], 'D', lb + ' ='));
   add('Producto de sumas mínimo', stepRows(r.min.posSteps, 'P', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ mínima (ceros del mapa) = ${esc(r.min.posG)}</p>`);
@@ -352,8 +366,17 @@ function bodyAlgebra(r) {
   blocks.forEach(b => b.used.forEach(u => { const k = (u.tag || '').slice(0, 2); if (L.RULES[k] && u.id) (usedMap[k] = usedMap[k] || []).push(u.id); }));
   const rail = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
     `<div class="ri ${usedMap[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${usedMap[k] ? [...new Set(usedMap[k])].slice(0, 6).join(' ') : ''}</em></div>`).join('');
-  return `<div class="alg"><div class="alg-main">${blocks.map(b => `<details class="blk" open><summary><b>${b.n}</b><span class="bt2">${b.title}</span><span class="cnt">${b.html.split('class="st').length - 1} pasos</span><code class="fin">${esc(b.last)}</code></summary>${head}${b.html}${b.extra || ''}</details>`).join('')}</div>
-    <aside class="rail">${rail('post')}${rail('teo')}</aside></div>`;
+  const cur = Math.min(st.tab.al || 0, blocks.length - 1), b = blocks[cur];
+  const cnt = x => x.html.split('class="st').length - 2;
+  const tabs = `<div class="altabs">${blocks.map((x, k) => `<button type="button" class="${k === cur ? 'on' : ''}" data-act="altab" data-i="${k}"><b>${x.n}</b><span>${x.title}</span><small>${cnt(x)} pasos</small></button>`).join('')}</div>`;
+  const uses = Object.fromEntries(Object.entries(usedMap).map(([k, v]) => [k, v.length]));
+  const rail2 = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
+    `<div class="ri ${uses[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${uses[k] ? '×' + uses[k] : ''}</em></div>`).join('');
+  return `${tabs}<div class="alg"><div class="alg-main">
+      <div class="albox"><div class="alh"><b>${b.n}</b><span>${b.title}</span><small>${cnt(b)} pasos · cada fila cambia solo lo resaltado</small></div>
+        ${head}${b.html}${b.extra || ''}
+        <div class="pres"><span>Resultado</span><code>${esc(b.full)}</code><i>✓</i></div></div></div>
+    <aside class="rail"><p class="sub" style="margin:0 0 4px">Reglas usadas en la hoja completa</p>${rail2('post')}${rail2('teo')}</aside></div>`;
 }
 
 /* 06 comprobación */
@@ -421,6 +444,7 @@ document.addEventListener('click', e => {
     else if (m === 'exit') { b.on = false; b.playing = false; stopBat(); }
     refreshCard('km');
   }
+  else if (a === 'altab') { st.tab.al = +t.dataset.i; refreshCard('al'); }
   else if (a === 'gtab') { st.tab.gates = t.dataset.m; refreshCard('gt'); }
   else if (a === 'copy') {
     writeUrl();
