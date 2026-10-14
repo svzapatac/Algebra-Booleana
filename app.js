@@ -7,21 +7,16 @@ const EXAMPLES = [
   ["AB' + CD", 4], ["AB'C + AB'C' + CD", 4], ["(A + B)'", 3], ["A + A'B", 2],
   ["AB + A'C + BC", 3], ["A ⊕ B ⊕ C", 3], ["(A + B)(A + C) = A + BC", 3], ["A nand B", 2]
 ];
-const TOKENS = ["'", '+', '·', '⊕', '(', ')', '0', '1'];
+const TOKENS = ["'", '+', '·', '⊕', '⊙', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'lab', al: 0 }, bat: { on: false, k: 0, playing: false, timer: null } };
+const st = { n: 5, vals: null, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'lab', al: 0 }, bat: { on: false, k: 0, playing: false, timer: null } };
 
 /* ───── formulario ───── */
 function vars() { return LETTERS.slice(0, st.n).split(''); }
 function renderVars() {
   $('#nOut').textContent = st.n;
-  $('#vars').innerHTML = vars().map(v => {
-    const cur = String(st.vals[v] === undefined ? 0 : st.vals[v]);
-    const b = (val, lab) => `<button type="button" data-act="val" data-v="${v}" data-x="${val}" class="${cur === val ? 'on' : ''}">${lab}</button>`;
-    return `<div class="var"><b>${v}</b><div class="seg">${b('0', '0')}${b('1', '1')}</div></div>`;
-  }).join('');
   $('#tokens').innerHTML = vars().map(v => `<button type="button" class="tok" data-act="tok" data-t="${v}">${v}</button>`).join('') +
     TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
 }
@@ -39,15 +34,12 @@ function showErr(m) { const e = $('#err'); e.hidden = !m; e.textContent = m || '
 function writeUrl() {
   const p = new URLSearchParams();
   p.set('e', st.expr); p.set('n', st.n);
-  p.set('v', vars().map(v => st.vals[v] === undefined ? 0 : st.vals[v]).join(''));
   try { history.replaceState(null, '', '?' + p.toString()); } catch (e) {}
 }
 function readUrl() {
   const p = new URLSearchParams(location.search);
   const n = parseInt(p.get('n'), 10);
   if (n >= 1 && n <= 8) st.n = n;
-  const v = p.get('v') || '';
-  vars().forEach((x, i) => { if (v[i] === '0' || v[i] === '1') st.vals[x] = +v[i]; });
   if (p.get('e')) { st.expr = p.get('e'); $('#expr').value = st.expr; return true; }
   return false;
 }
@@ -67,7 +59,7 @@ function run(keepOpen) {
   showErr('');
   const need = autoN(st.expr);
   if (need >= 1 && need <= 8 && need !== st.n) { st.n = need; renderVars(); }
-  const values = {}; vars().forEach(v => { values[v] = st.vals[v] === undefined ? 0 : st.vals[v]; });
+  const values = st.vals && vars().every(v => st.vals[v] === 0 || st.vals[v] === 1) ? st.vals : undefined;
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
@@ -419,15 +411,12 @@ document.addEventListener('click', e => {
   const a = t.dataset.act;
   if (a === 'nminus' || a === 'nplus') {
     st.n = Math.max(1, Math.min(8, st.n + (a === 'nplus' ? 1 : -1)));
-    Object.keys(st.vals).forEach(k => { if (!vars().includes(k)) delete st.vals[k]; });
+    st.vals = null;
     renderVars();
-  } else if (a === 'val') {
-    st.vals[t.dataset.v] = +t.dataset.x;
-    renderVars(); if ($('#expr').value.trim()) run(true);
   } else if (a === 'tok') insertToken(t.dataset.t);
   else if (a === 'ex') {
-    const ex = EXAMPLES[+t.dataset.i]; st.n = ex[1]; st.vals = {}; $('#expr').value = ex[0]; renderVars(); run(false);
-  } else if (a === 'go') run(true);
+    const ex = EXAMPLES[+t.dataset.i]; st.n = ex[1]; st.vals = null; $('#expr').value = ex[0]; renderVars(); run(false);
+  } else if (a === 'go') { st.vals = null; run(true); }
   else if (a === 'toggle') {
     const id = t.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); refreshCard(id);
   } else if (a === 'goto') {
@@ -452,7 +441,7 @@ document.addEventListener('click', e => {
     if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, done); else done();
   }
 });
-$('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') run(true); });
+$('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') { st.vals = null; run(true); } });
 
 /* ───── inicio ───── */
 renderExamples();
