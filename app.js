@@ -21,7 +21,7 @@ function renderVars() {
   $('#tokens').innerHTML = TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
 }
 function renderExamples() {
-  $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="ex" data-act="ex" data-i="${i}">${i === 0 ? 'Ejercicio del tablero' : esc(e[0])}</button>`).join('');
+  $('#examples').innerHTML = EXAMPLES.map((e, i) => i === 0 ? '' : `<button type="button" class="ex" data-act="ex" data-i="${i}">${esc(e[0])}</button>`).join('');
 }
 function insertToken(t) {
   const inp = $('#expr'), a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
