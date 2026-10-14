@@ -17,8 +17,8 @@ const st = { n: 5, vals: null, expr: '', res: null, open: new Set(), tab: { km: 
 function vars() { return LETTERS.slice(0, st.n).split(''); }
 function renderVars() {
   $('#nOut').textContent = st.n;
-  $('#tokens').innerHTML = vars().map(v => `<button type="button" class="tok" data-act="tok" data-t="${v}">${v}</button>`).join('') +
-    TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
+  $('#vars').innerHTML = vars().map(v => `<button type="button" class="var vchip" data-act="tok" data-t="${v}"><b>${v}</b></button>`).join('');
+  $('#tokens').innerHTML = TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
 }
 function renderExamples() {
   $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="ex" data-act="ex" data-i="${i}">${esc(e[0])}</button>`).join('');
