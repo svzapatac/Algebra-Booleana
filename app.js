@@ -84,12 +84,13 @@ const CARDS = [
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
   { id: 'gt', n: '04', title: 'Compuertas lógicas', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
+  { id: 'lab', n: '04b', title: 'Laboratorio de compuertas', prev: r => 'interactivo', body: () => '<div id="lab-root"></div>' },
   { id: 'al', n: '05', title: 'Álgebra y postulados', prev: r => `${r.canon.sop.steps.length + r.derive.steps.length - 2} pasos`, body: bodyAlgebra },
   { id: 'ck', n: '06', title: 'Comprobación', prev: r => `${r.checks.filter(c => c.ok).length}/${r.checks.length}`, body: bodyCheck }
 ];
 
 
-const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
+const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['lab', 'Laboratorio'], ['ck', 'Comprobación']];
 
 function render() {
   const r = st.res, box = $('#result');
@@ -109,6 +110,7 @@ function render() {
     </div>
     <div class="route"><span class="sub" style="margin:0">Ruta del programa</span>${ROUTE.filter(x => x[0] !== 'pt' || (r.partes && r.partes.length)).map((x, i) => `<button type="button" class="rt" data-act="goto" data-id="${x[0]}"><b>${i + 1}</b>${x[1]}</button>`).join('<i>›</i>')}</div>
     <div class="cards" style="margin-top:24px">${CARDS.filter(c => !c.show || c.show(r)).map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
+  mountLab();
 }
 function cardHtml(c, r) {
   const open = st.open.has(c.id);
@@ -120,10 +122,12 @@ function cardHtml(c, r) {
     ${open ? `<div class="card-b">${c.body(r)}</div>` : ''}
   </article>`;
 }
+function mountLab() { const h = $('#lab-root'); if (h && window.Lab && st.res) Lab.mount(h, st.res, st.vals); }
 function refreshCard(id) {
   const vis = CARDS.filter(x => !x.show || x.show(st.res));
   const c = { ...CARDS.find(x => x.id === id), n: String(vis.findIndex(x => x.id === id) + 1).padStart(2, '0') }, el = $('#card-' + id);
   el.outerHTML = cardHtml(c, st.res);
+  mountLab();
 }
 
 /* 01 tabla */
