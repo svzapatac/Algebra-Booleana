@@ -11,7 +11,7 @@ const TOKENS = ["'", '+', '·', '⊕', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'orig' }, bat: { on: false, k: 0, playing: false, timer: null } };
+const st = { n: 5, vals: { A: 0, B: 0, C: 0, D: 1, E: 0 }, expr: '', res: null, open: new Set(), tab: { km: 'sop', gates: 'lab' }, bat: { on: false, k: 0, playing: false, timer: null } };
 
 /* ───── formulario ───── */
 function vars() { return LETTERS.slice(0, st.n).split(''); }
@@ -71,7 +71,7 @@ function run(keepOpen) {
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
-  st.open = new Set(['pt', 'al']);
+  st.open = new Set(['pt', 'gt', 'al']);
   stopBat(); st.bat.on = false; st.bat.k = 0; st.bat.playing = false;
   writeUrl();
   render();
@@ -83,14 +83,13 @@ const CARDS = [
   { id: 'tt', n: '01', title: 'Tabla de verdad', prev: r => `${r.table.rows.length} filas`, body: bodyTable },
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
-  { id: 'gt', n: '04', title: 'Compuertas lógicas', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
-  { id: 'lab', n: '04b', title: 'Laboratorio de compuertas', prev: r => 'interactivo', body: () => '<div id="lab-root"></div>' },
+  { id: 'gt', n: '04', title: 'Compuertas y laboratorio', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
   { id: 'al', n: '05', title: 'Álgebra y postulados', prev: r => `${r.canon.sop.steps.length + r.derive.steps.length - 2} pasos`, body: bodyAlgebra },
   { id: 'ck', n: '06', title: 'Comprobación', prev: r => `${r.checks.filter(c => c.ok).length}/${r.checks.length}`, body: bodyCheck }
 ];
 
 
-const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['lab', 'Laboratorio'], ['ck', 'Comprobación']];
+const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
 
 function render() {
   const r = st.res, box = $('#result');
@@ -284,10 +283,14 @@ function qmHtml(r, q, kind) {
 /* 04 compuertas */
 function bodyGates(r) {
   const t = st.tab.gates;
+  if (t === 'lab') {
+    const tb = `<div class="tabs"><button type="button" class="on" data-act="gtab" data-m="lab">Laboratorio interactivo</button>${['orig', 'sop', 'pos'].map(k => `<button type="button" data-act="gtab" data-m="${k}">${{ orig: 'Original', sop: 'Mínima SOP', pos: 'Mínima POS' }[k]} (diagrama)</button>`).join('')}</div>`;
+    return `${tb}<div id="lab-root" style="margin-top:12px"></div>`;
+  }
   const items = { orig: ['Original', r.ast, r.cost.orig], sop: ['Mínima SOP', r.min.sopAst, r.cost.min], pos: ['Mínima POS', r.min.posAst, r.cost.pos] };
   const [name, ast, cost] = items[t];
   const svg = L.gateSvg(ast, { values: r.values, vars: r.vars });
-  const tabs = `<div class="tabs">${Object.entries(items).map(([k, v]) => `<button type="button" class="${k === t ? 'on' : ''}" data-act="gtab" data-m="${k}">${v[0]}</button>`).join('')}</div>`;
+  const tabs = `<div class="tabs"><button type="button" data-act="gtab" data-m="lab">Laboratorio interactivo</button>${Object.entries(items).map(([k, v]) => `<button type="button" class="${k === t ? 'on' : ''}" data-act="gtab" data-m="${k}">${v[0]}</button>`).join('')}</div>`;
   const ic = cost.ic.map(i => `<span class="pill">${i.code} ${i.name} × ${i.chips}</span>`).join('');
   const cmp = `<span class="pill hi">Original ${r.cost.orig.gates} compuertas</span><span class="pill hi">SOP ${r.cost.min.gates}</span><span class="pill hi">POS ${r.cost.pos.gates}</span>`;
   return `${tabs}<div class="svgbox">${svg}</div>
@@ -431,6 +434,6 @@ $('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') run(true); 
 renderExamples();
 const hasUrl = readUrl();
 renderVars();
-if (hasUrl) { st.open = new Set(['pt', 'al']); run(true); }
-else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['pt', 'al']); run(true); }
+if (hasUrl) { st.open = new Set(['pt', 'gt', 'al']); run(true); }
+else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['pt', 'gt', 'al']); run(true); }
 })();
