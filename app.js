@@ -81,6 +81,11 @@ const CARDS = [
 
 const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
 
+function unitsHtml(expr, kind) {
+  const us = kind === 'pos' ? (expr.match(/\([^()]*\)|[A-J]'?/g) || [expr]) : expr.split(' + ');
+  return us.map((u, i) => `<span class="u">${esc(u)}${kind === 'sop' && i < us.length - 1 ? ' <i>+</i>' : ''}</span>`).join(' ');
+}
+const kcls = s => s.length <= 40 ? 'k1' : s.length <= 100 ? 'k2' : s.length <= 220 ? 'k3' : 'k4';
 function render() {
   const r = st.res, box = $('#result');
   const allOk = r.checks.every(c => c.ok);
@@ -88,9 +93,9 @@ function render() {
   const eq = r.equation ? `<span class="pill ${r.equation.equal ? 'ok' : 'bad'}">${r.equation.equal ? 'Identidad verdadera' : 'Identidad falsa'}</span>` : '';
   box.innerHTML = `
     <div class="sum">
-      <div class="res-grid">
-        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.sop)}</div></div>
-        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv">${esc(r.label)} = ${esc(r.min.pos)}</div></div>
+      <div class="res-grid ${Math.max(r.min.sop.length, r.min.pos.length) > 90 ? 'stack' : ''}">
+        <div class="resbox sop"><div class="rh"><b>SOP</b><span>Suma de productos · agrupa los unos</span></div><div class="rv ${kcls(r.min.sop)}">${esc(r.label)} = ${unitsHtml(r.min.sop, 'sop')}</div></div>
+        <div class="resbox pos"><div class="rh"><b>POS</b><span>Producto de sumas · agrupa los ceros</span></div><div class="rv ${kcls(r.min.pos)}">${esc(r.label)} = ${unitsHtml(r.min.pos, 'pos')}</div></div>
       </div>
       ${(valPill || eq || !allOk) ? `<div class="pills">${valPill}${eq}${allOk ? '' : `<span class="pill bad">${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>`}</div>` : ''}
     </div>

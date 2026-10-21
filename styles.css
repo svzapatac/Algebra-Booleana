@@ -342,3 +342,23 @@ details.blk>.note{margin-bottom:14px}
 .var.vchip{padding:7px 16px;min-width:44px;justify-content:center}
 .var.vchip b{font-family:var(--mono);font-size:15px}
 button.var.vchip{cursor:pointer;color:var(--txt)}button.var.vchip:hover{border-color:var(--acc);background:var(--hl)}
+
+/* resultados adaptables */
+.res-grid{align-items:start}
+.res-grid.stack{grid-template-columns:1fr}
+.rv.k1{font-size:32px}.rv.k2{font-size:24px}.rv.k3{font-size:18px;line-height:1.55}.rv.k4{font-size:15px;line-height:1.6}
+.rv .u{display:inline-block;white-space:nowrap}
+.rv .u i{font-style:normal;color:var(--acc)}
+.rv.k3 .u,.rv.k4 .u{background:#ffffff0d;border-radius:8px;padding:1px 8px;margin:2px 1px}
+.sop .rv.k3 .u,.sop .rv.k4 .u{background:#ffffff14}
+@media (max-width:640px){.rv.k1{font-size:24px}.rv.k2{font-size:18px}.rv.k3{font-size:15px}.rv.k4{font-size:13px}.resbox{padding:16px}}
+@media (max-width:640px){
+  .exprbox{flex:1 1 100%;min-width:0;flex-wrap:wrap}
+  .exprbox .expr{flex:1 1 100%;min-width:0;font-size:16px;padding:10px 12px}
+  .exprbox .go{flex:1 1 100%;padding:12px}
+  .row{gap:10px}.stepper,.vars{flex:none}
+  .hero h1{font-size:22px}
+  .rv .u{white-space:normal}
+}
+.wrap{overflow-x:clip}
+.vars{display:flex;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%}
