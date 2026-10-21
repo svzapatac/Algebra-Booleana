@@ -320,29 +320,39 @@ const patProd = (p, vars) => { let s = ''; for (let i = 0; i < p.length; i++) if
 const patSum = (p, vars) => { const l = []; for (let i = 0; i < p.length; i++) if (p[i] === '0') l.push(vars[i]); else if (p[i] === '1') l.push(vars[i] + "'"); return l.length ? '(' + l.join(' + ') + ')' : '0'; };
 
 function qm(ones, n) {
-  const cols = []; let primes = [];
-  let level = ones.map(m => ({ pat: m.toString(2).padStart(n, '0'), m: [m], used: false }));
-  while (level.length) {
-    const groups = {};
-    level.forEach(x => (groups[popc(x.pat)] = groups[popc(x.pat)] || []).push(x));
-    const ks = Object.keys(groups).map(Number).sort((a, b) => a - b);
-    const nxt = new Map();
-    for (const k of ks) if (groups[k + 1]) for (const a of groups[k]) for (const b of groups[k + 1]) {
-      let d = -1, c = 0;
-      for (let i = 0; i < n; i++) if (a.pat[i] !== b.pat[i]) { c++; d = i; }
-      if (c !== 1 || a.pat[d] === '-' || b.pat[d] === '-') continue;
-      const pat = a.pat.slice(0, d) + '-' + a.pat.slice(d + 1);
-      a.used = b.used = true;
-      if (!nxt.has(pat)) nxt.set(pat, { pat, m: [...new Set([...a.m, ...b.m])].sort((x, y) => x - y), used: false });
+  const SZ = 1 << n;
+  // cubos como (valor, máscara de "-"): se fusionan los que difieren en un solo bit
+  let level = new Map();
+  ones.forEach(m => level.set(m, { v: m, k: 0 }));
+  const prim = [];
+  while (level.size) {
+    const nxt = new Map(), used = new Set();
+    for (const [key, c] of level) for (let b = 0; b < n; b++) {
+      const bit = 1 << b;
+      if ((c.k & bit) || (c.v & bit)) continue;
+      const pk = c.k * SZ + (c.v | bit);
+      if (!level.has(pk)) continue;
+      used.add(key); used.add(pk);
+      const nk = c.k | bit, nkey = nk * SZ + c.v;
+      if (!nxt.has(nkey)) nxt.set(nkey, { v: c.v, k: nk });
     }
-    cols.push(ks.map(k => ({ ones: k, items: groups[k].map(x => ({ pat: x.pat, m: x.m, used: x.used })) })));
-    primes.push(...level.filter(x => !x.used));
-    level = [...nxt.values()];
+    for (const [key, c] of level) if (!used.has(key)) prim.push(c);
+    level = nxt;
   }
+  let primes = prim.map(c => {
+    let pat = '';
+    for (let i = 0; i < n; i++) { const bit = 1 << (n - 1 - i); pat += (c.k & bit) ? '-' : (c.v & bit) ? '1' : '0'; }
+    const m = []; let s = c.k;
+    for (;;) { m.push(c.v | s); if (s === 0) break; s = (s - 1) & c.k; }
+    m.sort((x, y) => x - y);
+    return { pat, m, used: false };
+  });
   const seen = new Set(); primes = primes.filter(p => !seen.has(p.pat) && seen.add(p.pat));
-  const lits = p => [...p.pat].filter(c => c !== '-').length;
+  const lits = p => { let c = 0; for (const ch of p.pat) if (ch !== '-') c++; return c; };
+  const cov = new Map(); ones.forEach(m => cov.set(m, []));
+  primes.forEach(p => p.m.forEach(m => { const l = cov.get(m); if (l) l.push(p); }));
   const essential = [];
-  ones.forEach(m => { const c = primes.filter(p => p.m.includes(m)); if (c.length === 1 && !essential.includes(c[0])) essential.push(c[0]); });
+  ones.forEach(m => { const c = cov.get(m); if (c.length === 1 && !essential.includes(c[0])) essential.push(c[0]); });
   const covered = new Set(essential.flatMap(p => p.m));
   const rest = ones.filter(m => !covered.has(m));
   const cand = primes.filter(p => !essential.includes(p));
@@ -363,16 +373,17 @@ function qm(ones, n) {
         if (best) { extra = best.c; break outer; }
       }
     } else {
-      let left = rest.slice();
-      while (left.length) {
-        const b = cand.reduce((a, p) => { const g = p.m.filter(m => left.includes(m)).length; return g > a.g ? { g, p } : a; }, { g: 0, p: null }).p;
-        extra.push(b); left = left.filter(m => !b.m.includes(m));
+      let left = new Set(rest);
+      while (left.size) {
+        let bp = null, bg = 0;
+        for (const p of cand) { let g = 0; for (const m of p.m) if (left.has(m)) g++; if (g > bg) { bg = g; bp = p; } }
+        extra.push(bp); bp.m.forEach(m => left.delete(m));
       }
     }
   }
   const sk = p => String(p.pat.replace(/-/g, '').length) + p.pat.replace(/-/g, '9');
   const cover = [...essential, ...extra].sort((a, b) => (sk(a) < sk(b) ? -1 : sk(a) > sk(b) ? 1 : 0));
-  return { cols, primes: primes.sort((a, b) => a.m[0] - b.m[0]), essential, cover, ones };
+  return { cols: [], primes: primes.sort((a, b) => a.m[0] - b.m[0]), essential, cover, ones };
 }
 
 function sopAst(pats, vars) {
@@ -670,12 +681,14 @@ function partesOf(ast, vars) {
       sub: str(sub), steps: sm.steps, result: str(res), ok: sm.ok });
   };
   walk(ast);
-  return hasGate ? boxes.slice(0, 14) : [];
+  if (hasGate) return boxes.slice(0, 14);
+  const res = minOf(ast), sm = simplify(ast, vars, res);
+  return [{ id: 1, kind: 'simp', title: 'Simplificar', expr: str(ast), steps: sm.steps, result: str(res), ok: sm.ok }];
 }
 
 function analyze(opts) {
   const vars = opts.vars.map(v => v.toUpperCase()), n = vars.length;
-  if (n < 1 || n > 8) throw new Error('Usa entre 1 y 8 variables');
+  if (n < 1 || n > 10) throw new Error('Usa entre 1 y 10 variables');
   let src = String(opts.expr || '').replace(/==|≡/g, '=').trim();
   let label = 'F', eqSrc = null;
   const parts = src.split('=');

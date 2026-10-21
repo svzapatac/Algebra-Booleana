@@ -1,11 +1,10 @@
 (function () {
 'use strict';
 const L = window.Logic;
-const LETTERS = 'ABCDEFGH';
+const LETTERS = 'ABCDEFGHIJ';
 const EXAMPLES = [
-  ["((((A+B)'·(A+C)) ⊕ (A+B+C)') ⊙ (A+B+D)') ⊕ (E(A+B))'", 5],
-  ["AB' + CD", 4], ["AB'C + AB'C' + CD", 4], ["(A + B)'", 3], ["A + A'B", 2],
-  ["AB + A'C + BC", 3], ["A ⊕ B ⊕ C", 3], ["(A + B)(A + C) = A + BC", 3], ["A nand B", 2]
+  ["((((A+B)'·(A+C)) ⊕ (A+B+C)') ⊙ (A+B+D)') ⊕ (E(A+B))'", 5, 'Ejemplo de 5 variables'],
+  ["(A⊕B)(C+D) + (E⊙F)(G+H)' + I·J", 10, 'Ejemplo de 10 variables']
 ];
 const TOKENS = ["'", '+', '·', '⊕', '⊙', '(', ')', '0', '1'];
 const $ = s => document.querySelector(s);
@@ -21,7 +20,7 @@ function renderVars() {
   $('#tokens').innerHTML = TOKENS.map(t => `<button type="button" class="tok" data-act="tok" data-t="${t}">${t}</button>`).join('');
 }
 function renderExamples() {
-  $('#examples').innerHTML = EXAMPLES.map((e, i) => i === 0 ? '' : `<button type="button" class="ex" data-act="ex" data-i="${i}">${esc(e[0])}</button>`).join('');
+  $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="ex" data-act="ex" data-i="${i}">${e[2]}</button>`).join('');
 }
 function insertToken(t) {
   const inp = $('#expr'), a = inp.selectionStart ?? inp.value.length, b = inp.selectionEnd ?? a;
@@ -39,7 +38,7 @@ function writeUrl() {
 function readUrl() {
   const p = new URLSearchParams(location.search);
   const n = parseInt(p.get('n'), 10);
-  if (n >= 1 && n <= 8) st.n = n;
+  if (n >= 1 && n <= 10) st.n = n;
   if (p.get('e')) { st.expr = p.get('e'); $('#expr').value = st.expr; return true; }
   return false;
 }
@@ -58,12 +57,12 @@ function run(keepOpen) {
   st.expr = $('#expr').value.trim();
   showErr('');
   const need = autoN(st.expr);
-  if (need >= 1 && need <= 8 && need !== st.n) { st.n = need; renderVars(); }
+  if (need >= 1 && need <= 10 && need !== st.n) { st.n = need; renderVars(); }
   const values = st.vals && vars().every(v => st.vals[v] === 0 || st.vals[v] === 1) ? st.vals : undefined;
   try {
     st.res = L.analyze({ vars: vars(), expr: st.expr, values });
   } catch (e) { showErr(e.message); return; }
-  st.open = new Set(['pt', 'gt', 'al']);
+  st.open = new Set(['pt', 'gt']);
   stopBat(); st.bat.on = false; st.bat.k = 0; st.bat.playing = false;
   writeUrl();
   render();
@@ -71,17 +70,16 @@ function run(keepOpen) {
 
 /* ───── render ───── */
 const CARDS = [
-  { id: 'pt', n: '00', title: 'Resolver por partes', show: r => r.partes && r.partes.length > 0, prev: r => `${r.partes.length} cajas`, body: bodyPartes },
+  { id: 'pt', n: '00', title: 'Resolver por partes', prev: r => `${r.partes.length} ${r.partes.length === 1 ? 'caja' : 'cajas'}`, body: bodyPartes },
   { id: 'tt', n: '01', title: 'Tabla de verdad', prev: r => `${r.table.rows.length} filas`, body: bodyTable },
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
   { id: 'gt', n: '04', title: 'Compuertas y laboratorio', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
-  { id: 'al', n: '05', title: 'Álgebra y postulados', prev: r => `${r.canon.sop.steps.length + r.derive.steps.length - 2} pasos`, body: bodyAlgebra },
   { id: 'ck', n: '06', title: 'Comprobación', prev: r => `${r.checks.filter(c => c.ok).length}/${r.checks.length}`, body: bodyCheck }
 ];
 
 
-const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['al', 'Álgebra'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
+const ROUTE = [['pt', 'Por partes'], ['tt', 'Tabla de verdad'], ['mm', 'Σ y Π'], ['km', 'Karnaugh'], ['gt', 'Compuertas'], ['ck', 'Comprobación']];
 
 function render() {
   const r = st.res, box = $('#result');
@@ -96,7 +94,7 @@ function render() {
       </div>
       ${(valPill || eq || !allOk) ? `<div class="pills">${valPill}${eq}${allOk ? '' : `<span class="pill bad">${r.checks.filter(c => c.ok).length}/${r.checks.length} comprobaciones</span>`}</div>` : ''}
     </div>
-    <div class="cards" style="margin-top:24px">${CARDS.filter(c => !c.show || c.show(r)).map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
+    <div class="cards" style="margin-top:24px">${CARDS.map((c, i) => cardHtml({ ...c, n: String(i + 1).padStart(2, '0') }, r)).join('')}</div>`;
   mountLab();
 }
 function cardHtml(c, r) {
@@ -205,7 +203,7 @@ function bodyKmap(r) {
         <div class="canon" style="margin-top:6px"><small>RESULTADO</small>${esc(r.label)}${mode === 'pos' ? '' : ''} = ${esc(expr)}</div></div>
     </div>`;
   } else {
-    out += `<p class="note">El mapa de Karnaugh necesita al menos 2 variables.</p>`;
+    out += `<p class="note">${r.n > 8 ? `El mapa de Karnaugh se muestra hasta 8 variables; con ${r.n} tendría ${1 << r.n} celdas.` : 'El mapa de Karnaugh necesita al menos 2 variables.'}</p>`;
   }
   return out;
 }
@@ -296,7 +294,7 @@ function bodyPartes(r) {
     const ops = b.kind === 'gate' ? `<div class="pops">${b.operands.map(o => `<div><b>${o.name}</b><code>${esc(o.min)}</code>${o.from ? `<em>caja ${o.from}</em>` : ''}</div>`).join('')}</div>
       <div class="pdef"><span>Definición</span><code>${esc(b.def)}</code></div>` : '';
     return `<details class="pbox ${b.kind}" open><summary><b>${b.id}</b><span class="bt2">${b.title}</span><code class="pex">${esc(b.expr)}</code><span class="cnt">${b.steps.length - 1} pasos</span></summary>
-      ${ops}${head}${sr.html}
+      ${ops}${head}${sr.html}${b.steps.length === 1 ? '<p class="note" style="margin:10px 14px 0">Ya está en su forma mínima.</p>' : ''}
       <div class="pres"><span>Resultado de la caja ${b.id}</span><code>${esc(b.result)}</code><i>${b.ok ? '✓' : '✗'}</i></div></details>`;
   }).join('')}</div>`;
 }
@@ -335,36 +333,6 @@ function stepRows(steps, prefix, label) {
   }).join('');
   const l = steps[steps.length - 1].expr.replace(/^=\s*/, '');
   return { html, used, last: l.length > 90 ? l.slice(0, 90) + '…' : l, full: l };
-}
-function bodyAlgebra(r) {
-  const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
-  const blocks = [];
-  const lb = r.label;
-  const fin = o => { const l = o.steps ? o.steps[o.steps.length - 1] : null; return o.fin; };
-  const add = (title, o, extra, opn) => blocks.push({ n: blocks.length + 1, title, ...o, extra, opn });
-  const cs = r.canon.sop;
-  add('Simplificar', stepRows(r.derive.steps, 'S', lb + ' ='),
-    (r.partes && r.partes.length && r.derive.steps.length > 12 ? '<p class="note" style="margin-top:8px">Esta es la versión mecánica y larga. La versión corta, por etapas, está en la tarjeta «Resolver por partes».</p>' : '') + (r.derive.steps.length === 1 ? '<p class="note" style="margin-top:8px">Ya está en su forma mínima.</p>' : (r.derive.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '')), true);
-  add('Complemento', stepRows(r.complement.steps, 'C', lb + "' ="));
-  add('Dual', stepRows([{ tag: 'dado', expr: r.dual.from }, { tag: 'DUAL', expr: '= ' + r.dual.expr, note: '+ ↔ ·   0 ↔ 1', ok: r.dual.ok }], 'D', lb + ' ='));
-  add('Producto de sumas mínimo', stepRows(r.min.posSteps, 'P', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ mínima (ceros del mapa) = ${esc(r.min.posG)}</p>`);
-  add('Expandir a minitérminos', stepRows(cs.steps, 'E', lb + ' ='), cs.truncated ? '<p class="note" style="margin-top:8px">Se alcanzó el límite de pasos.</p>' : '');
-  add('Producto de maxitérminos', stepRows(r.canon.pos.steps, 'M', lb + ' ='), `<p class="note" style="margin-top:8px">${esc(lb)}′ = suma de los ceros</p>`);
-  const usedMap = {};
-  blocks.forEach(b => b.used.forEach(u => { const k = (u.tag || '').slice(0, 2); if (L.RULES[k] && u.id) (usedMap[k] = usedMap[k] || []).push(u.id); }));
-  const rail = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
-    `<div class="ri ${usedMap[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${usedMap[k] ? [...new Set(usedMap[k])].slice(0, 6).join(' ') : ''}</em></div>`).join('');
-  const cur = Math.min(st.tab.al || 0, blocks.length - 1), b = blocks[cur];
-  const cnt = x => x.html.split('class="st').length - 2;
-  const tabs = `<div class="altabs">${blocks.map((x, k) => `<button type="button" class="${k === cur ? 'on' : ''}" data-act="altab" data-i="${k}"><b>${x.n}</b><span>${x.title}</span><small>${cnt(x)} pasos</small></button>`).join('')}</div>`;
-  const uses = Object.fromEntries(Object.entries(usedMap).map(([k, v]) => [k, v.length]));
-  const rail2 = kind => `<h4>${kind === 'post' ? 'POSTULADOS DE HUNTINGTON' : 'TEOREMAS'}</h4>` + Object.entries(L.RULES).filter(([, v]) => v.kind === kind).map(([k, v]) =>
-    `<div class="ri ${uses[k] ? 'used' : ''}"><b>${k}</b><div><span>${v.name}</span><code>${esc(v.f)}</code></div><em>${uses[k] ? '×' + uses[k] : ''}</em></div>`).join('');
-  return `${tabs}<div class="alg"><div class="alg-main">
-      <div class="albox"><div class="alh"><b>${b.n}</b><span>${b.title}</span><small>${cnt(b)} pasos · cada fila cambia solo lo resaltado</small></div>
-        ${head}${b.html}${b.extra || ''}
-        <div class="pres"><span>Resultado</span><code>${esc(b.full)}</code><i>✓</i></div></div></div>
-    <aside class="rail"><p class="sub" style="margin:0 0 4px">Reglas usadas en la hoja completa</p>${rail2('post')}${rail2('teo')}</aside></div>`;
 }
 
 /* 06 comprobación */
@@ -406,7 +374,7 @@ document.addEventListener('click', e => {
   }
   const a = t.dataset.act;
   if (a === 'nminus' || a === 'nplus') {
-    st.n = Math.max(1, Math.min(8, st.n + (a === 'nplus' ? 1 : -1)));
+    st.n = Math.max(1, Math.min(10, st.n + (a === 'nplus' ? 1 : -1)));
     st.vals = null;
     renderVars();
   } else if (a === 'tok') insertToken(t.dataset.t);
@@ -429,7 +397,6 @@ document.addEventListener('click', e => {
     else if (m === 'exit') { b.on = false; b.playing = false; stopBat(); }
     refreshCard('km');
   }
-  else if (a === 'altab') { st.tab.al = +t.dataset.i; refreshCard('al'); }
   else if (a === 'gtab') { st.tab.gates = t.dataset.m; refreshCard('gt'); }
   else if (a === 'copy') {
     writeUrl();
@@ -443,6 +410,7 @@ $('#expr').addEventListener('keydown', e => { if (e.key === 'Enter') { st.vals =
 
 const hasUrl = readUrl();
 renderVars();
-if (hasUrl) { st.open = new Set(['pt', 'gt', 'al']); run(true); }
-else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['pt', 'gt', 'al']); run(true); }
+renderExamples();
+if (hasUrl) { st.open = new Set(['pt', 'gt']); run(true); }
+else { $('#expr').value = EXAMPLES[0][0]; st.open = new Set(['pt', 'gt']); run(true); }
 })();
