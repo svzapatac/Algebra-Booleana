@@ -35,6 +35,16 @@ figure{margin:0}
 .edge.dash{stroke-dasharray:6 5;stroke:var(--acc)}
 .ah{fill:var(--muted)}
 .dotj{fill:var(--muted)}
+.kt{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.kt th,.kt td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+.kt th{font-size:11px;letter-spacing:.08em;color:var(--muted);font-weight:500;text-transform:uppercase}
+.kt td.m{font-family:var(--mono)}
+.kt tr.no td{color:var(--muted)}
+.kt .y{color:var(--acc);font-weight:600}
+.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:16px 18px}
+.card h2{margin:0 0 4px;font-size:16px;font-weight:600}
+.card p{margin:0;font-size:13px;color:var(--muted);max-width:75ch}
+.tw{overflow-x:auto}
 </style>
 <div class="wrap">
 <header>
@@ -49,117 +59,14 @@ figure{margin:0}
 </div>
 <figure>
 <div class="scroll">
-<svg viewBox="0 0 940 1822" role="img" aria-label="Diagrama de flujo del programa: entrada, lectura de la expresión con validación, tabla de verdad, Σ y Π, forma mínima, álgebra paso a paso, Karnaugh de 2 a 8 variables, compuertas, comprobación y regreso a Calcular cuando el usuario cambia algo">
-<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
-<rect x="340.0" y="16" width="240" height="40" rx="20.0" class="pill"/>
-<text x="460" y="40.0" class="t1p" text-anchor="middle">Abrir la página</text>
-<path d="M460,56 L460,92" class="edge" marker-end="url(#ar)"/>
-<path d="M264.0,92 H670.0 L656.0,144 H250.0 Z" class="inp"/>
-<text x="460" y="114" class="t1" text-anchor="middle">Elegir variables (1 a 6) y su valor 0 o 1</text>
-<text x="460" y="131" class="t2" text-anchor="middle">A, B, C… cada una vale 0 o 1</text>
-<path d="M460,144 L460,180" class="edge" marker-end="url(#ar)"/>
-<path d="M264.0,180 H670.0 L656.0,232 H250.0 Z" class="inp"/>
-<text x="460" y="202" class="t1" text-anchor="middle">Escribir la expresión</text>
-<text x="460" y="219" class="t2" text-anchor="middle">AB' + CD  ·  a+b  ·  A xor B  ·  F = …</text>
-<path d="M460,232 L460,268" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="268" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="290" class="t1" text-anchor="middle">Calcular</text>
-<text x="460" y="307" class="t2" text-anchor="middle">también se recalcula al cambiar un 0 o 1</text>
-<path d="M460,320 L460,356" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="356" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="378" class="t1" text-anchor="middle">Leer la expresión</text>
-<text x="460" y="395" class="t2" text-anchor="middle">texto → árbol · precedencia: ( ) NOT AND OR</text>
-<path d="M460,408 L460,444" class="edge" marker-end="url(#ar)"/>
-<path d="M460,444 L610.0,490.0 L460,536 L310.0,490.0 Z" class="dec"/>
-<text x="460" y="494.0" class="t1d" text-anchor="middle">¿Expresión válida?</text>
-<text x="474" y="552" class="lab" text-anchor="start">Sí</text>
-<rect x="700.0" y="464.0" width="190" height="52" rx="10" class="side"/>
-<text x="795" y="486.0" class="t1" text-anchor="middle">Mostrar el error</text>
-<text x="795" y="503.0" class="t2" text-anchor="middle">variable o paréntesis mal</text>
-<path d="M610.0,490.0 L700.0,490.0" class="edge" marker-end="url(#ar)"/>
-<text x="632.0" y="483.0" class="lab" text-anchor="middle">No</text>
-<path d="M795,464.0 L795,206.0 L662.0,206.0" class="edge" marker-end="url(#ar)"/>
-<path d="M460,536 L460,576" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="576" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="598" class="t1" text-anchor="middle">Tabla de verdad</text>
-<text x="460" y="615" class="t2" text-anchor="middle">evaluar las 2ⁿ filas · columnas intermedias</text>
-<path d="M460,628 L460,664" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="664" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="686" class="t1" text-anchor="middle">Σ y Π</text>
-<text x="460" y="703" class="t2" text-anchor="middle">F = 1 → minitérminos  ·  F = 0 → maxitérminos</text>
-<path d="M460,716 L460,752" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="752" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="774" class="t1" text-anchor="middle">Forma mínima</text>
-<text x="460" y="791" class="t2" text-anchor="middle">Quine-McCluskey: SOP con los unos, POS con los ceros</text>
-<path d="M460,804 L460,840" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="840" width="420" height="64" rx="10" class="proc"/>
-<text x="460" y="862" class="t1" text-anchor="middle">Álgebra paso a paso</text>
-<text x="460" y="879" class="t2" text-anchor="middle">expandir · simplificar · complemento · dual · POS</text>
-<text x="460" y="894" class="t2" text-anchor="middle">cada paso cita su postulado o teorema y se verifica (✓)</text>
-<path d="M460,904 L460,940" class="edge" marker-end="url(#ar)"/>
-<path d="M460,940 L610.0,986.0 L460,1032 L310.0,986.0 Z" class="dec"/>
-<text x="460" y="983.0" class="t1d" text-anchor="middle">¿Las reglas llegan</text>
-<text x="460" y="1000.0" class="t1d" text-anchor="middle">a la mínima?</text>
-<text x="474" y="1048" class="lab" text-anchor="start">Sí</text>
-<rect x="700.0" y="960.0" width="190" height="52" rx="10" class="side"/>
-<text x="795" y="982.0" class="t1" text-anchor="middle">Último paso: Q-M</text>
-<text x="795" y="999.0" class="t2" text-anchor="middle">completa y lo indica</text>
-<path d="M610.0,986.0 L700.0,986.0" class="edge" marker-end="url(#ar)"/>
-<text x="632.0" y="979.0" class="lab" text-anchor="middle">No</text>
-<path d="M795,1012.0 L795,1066 L460,1066" class="edge"/>
-<path d="M460,1032 L460,1090" class="edge" marker-end="url(#ar)"/>
-<circle cx="460" cy="1066" r="3.5" class="dotj"/>
-<path d="M460,1090 L610.0,1136.0 L460,1182 L310.0,1136.0 Z" class="dec"/>
-<text x="460" y="1140.0" class="t1d" text-anchor="middle">¿2 a 8 variables?</text>
-<text x="474" y="1198" class="lab" text-anchor="start">Sí</text>
-<rect x="700.0" y="1110.0" width="190" height="52" rx="10" class="side"/>
-<text x="795" y="1132.0" class="t1" text-anchor="middle">Tarjeta 03 bloqueada</text>
-<text x="795" y="1149.0" class="t2" text-anchor="middle">de 2 a 8 variables</text>
-<path d="M610.0,1136.0 L700.0,1136.0" class="edge" marker-end="url(#ar)"/>
-<text x="632.0" y="1129.0" class="lab" text-anchor="middle">No</text>
-<path d="M460,1182 L460,1222" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="1222" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="1244" class="t1" text-anchor="middle">Mapa de Karnaugh</text>
-<text x="460" y="1261" class="t2" text-anchor="middle">Gray · grupos de 1, 2, 4, 8 · modo batalla</text>
-<path d="M795,1162.0 L795,1308 L460,1308" class="edge"/>
-<path d="M460,1274 L460,1332" class="edge" marker-end="url(#ar)"/>
-<circle cx="460" cy="1308" r="3.5" class="dotj"/>
-<rect x="250.0" y="1332" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="1354" class="t1" text-anchor="middle">Compuertas</text>
-<text x="460" y="1371" class="t2" text-anchor="middle">dibujar original, mínima SOP y POS · contar chips</text>
-<path d="M460,1384 L460,1420" class="edge" marker-end="url(#ar)"/>
-<rect x="250.0" y="1420" width="420" height="52" rx="10" class="proc"/>
-<text x="460" y="1442" class="t1" text-anchor="middle">Comprobación</text>
-<text x="460" y="1459" class="t2" text-anchor="middle">Σ, Π, mín. SOP y mín. POS contra F, fila por fila</text>
-<path d="M460,1472 L460,1508" class="edge" marker-end="url(#ar)"/>
-<path d="M460,1508 L610.0,1554.0 L460,1600 L310.0,1554.0 Z" class="dec"/>
-<text x="460" y="1558.0" class="t1d" text-anchor="middle">¿Todas iguales?</text>
-<text x="474" y="1616" class="lab" text-anchor="start">Sí</text>
-<rect x="700.0" y="1528.0" width="190" height="52" rx="10" class="side"/>
-<text x="795" y="1550.0" class="t1" text-anchor="middle">Marcar ✗ o ≠</text>
-<text x="795" y="1567.0" class="t2" text-anchor="middle">en la tarjeta 06</text>
-<path d="M610.0,1554.0 L700.0,1554.0" class="edge" marker-end="url(#ar)"/>
-<text x="632.0" y="1547.0" class="lab" text-anchor="middle">No</text>
-<path d="M795,1580.0 L795,1634 L460,1634" class="edge"/>
-<path d="M460,1600 L460,1658" class="edge" marker-end="url(#ar)"/>
-<circle cx="460" cy="1634" r="3.5" class="dotj"/>
-<rect x="250.0" y="1658" width="420" height="52" rx="10" class="proc out"/>
-<text x="460" y="1680" class="t1" text-anchor="middle">Mostrar resumen y 6 tarjetas</text>
-<text x="460" y="1697" class="t2" text-anchor="middle">tabla · Σ y Π · Karnaugh · compuertas · álgebra · comprobación</text>
-<path d="M460,1710 L460,1746" class="edge" marker-end="url(#ar)"/>
-<path d="M264.0,1746 H670.0 L656.0,1798 H250.0 Z" class="inp"/>
-<text x="460" y="1768" class="t1" text-anchor="middle">Interacción</text>
-<text x="460" y="1785" class="t2" text-anchor="middle">cambiar un 0 o 1, abrir una tarjeta o escribir otra expresión</text>
-<path d="M662.0,1772.0 L915,1772.0 L915,294.0 L670.0,294.0" class="edge dash" marker-end="url(#ar)"/>
-<text x="905" y="1764.0" class="lab" text-anchor="end">repite</text>
-<text x="22" y="122.0" class="band" text-anchor="start">ENTRADA</text>
-<text x="22" y="606.0" class="band" text-anchor="start">ANÁLISIS</text>
-<text x="22" y="876.0" class="band" text-anchor="start">SIMPLIFICACIÓN</text>
-<text x="22" y="1252.0" class="band" text-anchor="start">SALIDAS</text>
-<text x="22" y="1450.0" class="band" text-anchor="start">COMPROBACIÓN</text>
-</svg>
+<svg viewBox="0 0 940 1756" role="img" aria-label="Diagrama de flujo del programa: escribir la expresión, lectura con validación, tabla de verdad, Σ y Π, forma mínima, resolver por partes, mapa de Karnaugh solo de 2 a 8 variables, compuertas y laboratorio interactivo, comprobación y regreso a Calcular cuando el usuario cambia algo"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs><rect x="340" y="16" width="240" height="40" rx="20" class="pill"/><text x="460" y="40" class="t1p" text-anchor="middle">Abrir la página</text><path d="M460,56 L460,92" class="edge" marker-end="url(#ar)"/><path d="M264,92 H670 L656,144 H250 Z" class="inp"/><text x="460" y="114" class="t1" text-anchor="middle">Escribir la expresión o tocar un ejemplo</text><text x="460" y="131" class="t2" text-anchor="middle">letras A–J y símbolos · ejemplos de 5 y 10 variables</text><path d="M460,144 L460,180" class="edge" marker-end="url(#ar)"/><rect x="250" y="180" width="420" height="52" rx="10" class="proc"/><text x="460" y="202" class="t1" text-anchor="middle">Calcular</text><text x="460" y="219" class="t2" text-anchor="middle">Enter o botón · detecta solo cuántas variables usas (1 a 10)</text><path d="M460,232 L460,268" class="edge" marker-end="url(#ar)"/><rect x="250" y="268" width="420" height="52" rx="10" class="proc"/><text x="460" y="290" class="t1" text-anchor="middle">Leer la expresión</text><text x="460" y="307" class="t2" text-anchor="middle">texto → árbol · precedencia: ( ) NOT AND OR</text><path d="M460,320 L460,356" class="edge" marker-end="url(#ar)"/><path d="M460,356 L610,402 L460,448 L310,402 Z" class="dec"/><text x="460" y="406" class="t1d" text-anchor="middle">¿Expresión válida?</text><text x="474" y="464" class="lab" text-anchor="start">Sí</text><rect x="700" y="376" width="190" height="52" rx="10" class="side"/><text x="795" y="398" class="t1" text-anchor="middle">Mostrar el error</text><text x="795" y="415" class="t2" text-anchor="middle">símbolo o paréntesis mal</text><path d="M610,402 L700,402" class="edge" marker-end="url(#ar)"/><text x="632" y="395" class="lab" text-anchor="middle">No</text><path d="M795,376 L795,118 L662,118" class="edge" marker-end="url(#ar)"/><path d="M460,448 L460,488" class="edge" marker-end="url(#ar)"/><rect x="250" y="488" width="420" height="52" rx="10" class="proc"/><text x="460" y="510" class="t1" text-anchor="middle">Tabla de verdad</text><text x="460" y="527" class="t2" text-anchor="middle">evaluar las 2ⁿ filas (hasta 1024 con 10 variables)</text><path d="M460,540 L460,576" class="edge" marker-end="url(#ar)"/><rect x="250" y="576" width="420" height="52" rx="10" class="proc"/><text x="460" y="598" class="t1" text-anchor="middle">Σ y Π</text><text x="460" y="615" class="t2" text-anchor="middle">F = 1 → minitérminos  ·  F = 0 → maxitérminos</text><path d="M460,628 L460,664" class="edge" marker-end="url(#ar)"/><rect x="250" y="664" width="420" height="52" rx="10" class="proc"/><text x="460" y="686" class="t1" text-anchor="middle">Forma mínima</text><text x="460" y="703" class="t2" text-anchor="middle">Quine-McCluskey: SOP con los unos, POS con los ceros</text><path d="M460,716 L460,752" class="edge" marker-end="url(#ar)"/><rect x="250" y="752" width="420" height="64" rx="10" class="proc"/><text x="460" y="774" class="t1" text-anchor="middle">Resolver por partes</text><text x="460" y="791" class="t2" text-anchor="middle">una caja por cada operación (XOR, XNOR, AND, OR…)</text><text x="460" y="806" class="t2" text-anchor="middle">cada paso cita su postulado o teorema y se verifica (✓)</text><path d="M460,816 L460,852" class="edge" marker-end="url(#ar)"/><path d="M460,852 L610,898 L460,944 L310,898 Z" class="dec"/><text x="460" y="895" class="t1d" text-anchor="middle">¿Las reglas llegan</text><text x="460" y="912" class="t1d" text-anchor="middle">a la mínima?</text><text x="474" y="960" class="lab" text-anchor="start">Sí</text><rect x="700" y="872" width="190" height="52" rx="10" class="side"/><text x="795" y="894" class="t1" text-anchor="middle">Último paso: Q-M</text><text x="795" y="911" class="t2" text-anchor="middle">completa y lo indica</text><path d="M610,898 L700,898" class="edge" marker-end="url(#ar)"/><text x="632" y="891" class="lab" text-anchor="middle">No</text><path d="M795,924 L795,978 L460,978" class="edge"/><path d="M460,944 L460,1002" class="edge" marker-end="url(#ar)"/><circle cx="460" cy="978" r="3.5" class="dotj"/><path d="M460,1002 L610,1048 L460,1094 L310,1048 Z" class="dec"/><text x="460" y="1052" class="t1d" text-anchor="middle">¿2 a 8 variables?</text><text x="474" y="1110" class="lab" text-anchor="start">Sí</text><rect x="700" y="1022" width="190" height="52" rx="10" class="side"/><text x="795" y="1044" class="t1" text-anchor="middle">Sin mapa de Karnaugh</text><text x="795" y="1061" class="t2" text-anchor="middle">1 variable, o 9 a 10</text><path d="M610,1048 L700,1048" class="edge" marker-end="url(#ar)"/><text x="632" y="1041" class="lab" text-anchor="middle">No</text><rect x="250" y="1152" width="420" height="52" rx="10" class="proc"/><text x="460" y="1174" class="t1" text-anchor="middle">Mapa de Karnaugh</text><text x="460" y="1191" class="t2" text-anchor="middle">código Gray · grupos de 1, 2, 4, 8 · SOP y POS · modo batalla</text><path d="M795,1074 L795,1238 L460,1238" class="edge"/><circle cx="460" cy="1238" r="3.5" class="dotj"/><path d="M460,1094 L460,1152" class="edge" marker-end="url(#ar)"/><path d="M460,1204 L460,1262" class="edge" marker-end="url(#ar)"/><rect x="250" y="1262" width="420" height="64" rx="10" class="proc"/><text x="460" y="1284" class="t1" text-anchor="middle">Compuertas y laboratorio</text><text x="460" y="1301" class="t2" text-anchor="middle">diagramas Original, mínima SOP y POS · contar chips</text><text x="460" y="1316" class="t2" text-anchor="middle">laboratorio interactivo que verifica el circuito</text><path d="M460,1326 L460,1362" class="edge" marker-end="url(#ar)"/><rect x="250" y="1362" width="420" height="52" rx="10" class="proc"/><text x="460" y="1384" class="t1" text-anchor="middle">Comprobación</text><text x="460" y="1401" class="t2" text-anchor="middle">Σ, Π, mín. SOP y mín. POS contra F, fila por fila</text><path d="M460,1414 L460,1450" class="edge" marker-end="url(#ar)"/><path d="M460,1450 L610,1496 L460,1542 L310,1496 Z" class="dec"/><text x="460" y="1500" class="t1d" text-anchor="middle">¿Todas iguales?</text><text x="474" y="1558" class="lab" text-anchor="start">Sí</text><rect x="700" y="1470" width="190" height="52" rx="10" class="side"/><text x="795" y="1492" class="t1" text-anchor="middle">Marcar ✗ o ≠</text><text x="795" y="1509" class="t2" text-anchor="middle">en la tarjeta de comprobación</text><path d="M610,1496 L700,1496" class="edge" marker-end="url(#ar)"/><text x="632" y="1489" class="lab" text-anchor="middle">No</text><path d="M795,1522 L795,1576 L460,1576" class="edge"/><path d="M460,1542 L460,1600" class="edge" marker-end="url(#ar)"/><circle cx="460" cy="1576" r="3.5" class="dotj"/><rect x="250" y="1600" width="420" height="52" rx="10" class="proc out"/><text x="460" y="1622" class="t1" text-anchor="middle">Mostrar resultados y 6 tarjetas</text><text x="460" y="1639" class="t2" text-anchor="middle">partes · tabla · Σ y Π · Karnaugh · compuertas · comprobación</text><path d="M460,1652 L460,1688" class="edge" marker-end="url(#ar)"/><path d="M264,1688 H670 L656,1740 H250 Z" class="inp"/><text x="460" y="1710" class="t1" text-anchor="middle">Interacción</text><text x="460" y="1727" class="t2" text-anchor="middle">clic en una fila o escribir otra expresión</text><path d="M662,1714 L915,1714 L915,206 L670,206" class="edge dash" marker-end="url(#ar)"/><text x="905" y="1706" class="lab" text-anchor="end">repite</text><text x="22" y="122" class="band" text-anchor="start">ENTRADA</text><text x="22" y="518" class="band" text-anchor="start">ANÁLISIS</text><text x="22" y="788" class="band" text-anchor="start">SIMPLIFICACIÓN</text><text x="22" y="1082" class="band" text-anchor="start">SALIDAS</text><text x="22" y="1392" class="band" text-anchor="start">COMPROBACIÓN</text></svg>
 </div>
-<figcaption>El programa lee la expresión, calcula todo desde la tabla de verdad y comprueba cada resultado contra ella. Cualquier cambio de valor vuelve a Calcular.</figcaption>
+<figcaption>El programa lee la expresión, calcula todo desde la tabla de verdad y comprueba cada resultado contra ella. El mapa de Karnaugh solo se dibuja de 2 a 8 variables; con 1, 9 o 10 se omite y todo lo demás se calcula igual.</figcaption>
 </figure>
+<section class="card">
+<h2>¿Cuándo se puede hacer el mapa de Karnaugh?</h2>
+<p>Solo de 2 a 8 variables. Las primeras variables van en las filas y las demás en las columnas, ambas en código Gray. Con más variables el mapa tendría demasiadas celdas para leerse.</p>
+<div class="tw"><table class="kt"><thead><tr><th>Variables</th><th>¿Hay mapa?</th><th>Filas × columnas</th><th>Celdas</th></tr></thead><tbody><tr class="no"><td class="m">1</td><td class="">No</td><td class="m">—</td><td>Un mapa necesita al menos 2 variables</td></tr><tr class=""><td class="m">2</td><td class="y">Sí</td><td class="m">2 × 2</td><td>4</td></tr><tr class=""><td class="m">3</td><td class="y">Sí</td><td class="m">2 × 4</td><td>8</td></tr><tr class=""><td class="m">4</td><td class="y">Sí</td><td class="m">4 × 4</td><td>16</td></tr><tr class=""><td class="m">5</td><td class="y">Sí</td><td class="m">4 × 8</td><td>32</td></tr><tr class=""><td class="m">6</td><td class="y">Sí</td><td class="m">8 × 8</td><td>64</td></tr><tr class=""><td class="m">7</td><td class="y">Sí</td><td class="m">8 × 16</td><td>128</td></tr><tr class=""><td class="m">8</td><td class="y">Sí</td><td class="m">16 × 16</td><td>256</td></tr><tr class="no"><td class="m">9 a 10</td><td class="">No</td><td class="m">—</td><td>512 o 1024 celdas: ilegible. El resto del análisis sí se hace</td></tr></tbody></table></div>
+</section>
 </div>
 </body></html>
