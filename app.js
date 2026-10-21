@@ -296,8 +296,8 @@ function bodyPartes(r) {
   const head = `<div class="sth"><span>PASO</span><span>ENUNCIADO</span><span>JUSTIFICACIÓN</span><span></span></div>`;
   return `<div class="pboxes">${r.partes.map(b => {
     const sr = stepRows(b.steps, b.id + '.', '');
-    const ops = b.kind === 'gate' ? `<div class="pops">${b.operands.map(o => `<div><b>${o.name}</b><code>${esc(o.min)}</code>${o.from ? `<em>caja ${o.from}</em>` : ''}</div>`).join('')}</div>
-      <div class="pdef"><span>Definición</span><code>${esc(b.def)}</code></div>` : '';
+    const ops = (b.operands && b.operands.length ? `<div class="pops">${b.operands.map(o => `<div><b>${o.name}</b><code>${esc(o.min)}</code>${o.from ? `<em>caja ${o.from}</em>` : ''}</div>`).join('')}</div>` : '')
+      + (b.def ? `<div class="pdef"><span>Definición</span><code>${esc(b.def)}</code></div>` : '');
     return `<details class="pbox ${b.kind}" open><summary><b>${b.id}</b><span class="bt2">${b.title}</span><code class="pex">${esc(b.expr)}</code><span class="cnt">${b.steps.length - 1} pasos</span></summary>
       ${ops}${head}${sr.html}${b.steps.length === 1 ? '<p class="note" style="margin:10px 14px 0">Ya está en su forma mínima.</p>' : ''}
       <div class="pres"><span>Resultado de la caja ${b.id}</span><code>${esc(b.result)}</code><i>${b.ok ? '✓' : '✗'}</i></div></details>`;

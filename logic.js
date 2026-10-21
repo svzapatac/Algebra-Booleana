@@ -640,7 +640,7 @@ function subCols(ast) {
 }
 
 
-/* Resolución por partes: una caja por XOR / XNOR / NAND / NOR (de adentro hacia afuera) */
+/* Resolución por partes: una caja por operación de la expresión, de adentro hacia afuera */
 function partesOf(ast, vars) {
   const n = vars.length, envs = allEnvs(vars);
   const minOf = nd => {
@@ -649,41 +649,35 @@ function partesOf(ast, vars) {
     if (on.length === envs.length) return K(1);
     return sopAst(qm(on, n).cover.map(p => p.pat), vars);
   };
-  const NAME = { xor: 'XOR', xnor: 'XNOR', nand: 'NAND', nor: 'NOR' };
-  const DEF = { xor: "x ⊕ y = x·y' + x'·y", xnor: "x ⊙ y = x·y + x'·y'", nand: "(x·y)' = x' + y'", nor: "(x + y)' = x'·y'" };
-  const boxes = [], byKey = {};
-  let hasGate = false;
-  const simpBox = c => {
-    if (c.t === 'var' || c.t === 'const' || isLit(c) || XORF.has(c.t)) return;
-    const k = key(c); if (byKey[k] !== undefined) return;
-    const res = minOf(c); if (str(res) === str(c)) return;
-    const sm = simplify(c, vars, res);
-    byKey[k] = boxes.length;
-    boxes.push({ id: boxes.length + 1, kind: 'simp', title: 'Simplificar', expr: str(c), steps: sm.steps, result: str(res), ok: sm.ok });
-  };
+  const NAME = { xor: 'XOR', xnor: 'XNOR', nand: 'NAND', nor: 'NOR', and: 'AND', or: 'OR', not: 'NOT' };
+  const DEF = { xor: "x ⊕ y = x·y' + x'·y", xnor: "x ⊙ y = x·y + x'·y'", nand: "(x·y)' = x' + y'", nor: "(x + y)' = x'·y'", not: "(x + y)' = x'·y'   ·   (x·y)' = x' + y'" };
+  const boxes = [], byKey = {}, mins = {};
+  const minCached = nd => { const k = L_key(nd); return mins[k] || (mins[k] = minOf(nd)); };
+  const L_key = key;
   const walk = nd => {
-    if (nd.t === 'var' || nd.t === 'const') return;
+    if (nd.t === 'var' || nd.t === 'const' || isLit(nd)) return;
     kids(nd).forEach(walk);
     const k = key(nd);
-    if (!XORF.has(nd.t) || byKey[k] !== undefined) return;
-    hasGate = true;
-    nd.args.forEach(simpBox);
-    const ops = nd.args.map(c => {
-      const m = minOf(c);
-      return { expr: str(c), min: str(m), node: m, from: byKey[key(c)] };
-    });
-    const sub = { t: nd.t, args: ops.map(o => o.node) };
-    const res = minOf(nd);
+    if (byKey[k] !== undefined) return;
+    const ops = kids(nd).map(c => ({ c, m: minCached(c) }));
+    const sub = nd.t === 'not' ? NOT(ops[0].m) : { t: nd.t, args: ops.map(o => o.m) };
+    const res = minCached(nd);
+    const isGate = XORF.has(nd.t);
+    if (!(nd === ast || isGate || str(sub) !== str(res))) return;
+    if (boxes.length >= 30) return;
     const sm = simplify(sub, vars, res);
     byKey[k] = boxes.length;
-    boxes.push({ id: boxes.length + 1, kind: 'gate', op: NAME[nd.t], title: 'Resolver ' + NAME[nd.t], expr: str(nd), def: DEF[nd.t],
-      operands: ops.map((o, i) => ({ name: i ? 'y' : 'x', expr: o.expr, min: o.min, from: o.from === undefined ? null : o.from + 1 })),
+    const names = ops.length <= 2 ? ['x', 'y'] : ops.map((_, i) => 'x' + (i + 1));
+    boxes.push({ id: boxes.length + 1, kind: isGate ? 'gate' : 'simp', op: NAME[nd.t], title: 'Resolver ' + NAME[nd.t], expr: str(nd), def: DEF[nd.t] || '',
+      operands: ops.map((o, i) => ({ name: names[i], expr: str(o.c), min: str(o.m), from: byKey[key(o.c)] === undefined ? null : byKey[key(o.c)] + 1 })),
       sub: str(sub), steps: sm.steps, result: str(res), ok: sm.ok });
   };
   walk(ast);
-  if (hasGate) return boxes.slice(0, 14);
-  const res = minOf(ast), sm = simplify(ast, vars, res);
-  return [{ id: 1, kind: 'simp', title: 'Simplificar', expr: str(ast), steps: sm.steps, result: str(res), ok: sm.ok }];
+  if (!boxes.length) { // variable o literal suelto
+    const res = minOf(ast);
+    return [{ id: 1, kind: 'simp', title: 'Resolver', expr: str(ast), operands: [], steps: [{ kind: 'given', tag: 'dado', expr: str(ast), ok: true }], result: str(res), ok: true }];
+  }
+  return boxes;
 }
 
 function analyze(opts) {

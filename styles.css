@@ -362,3 +362,5 @@ button.var.vchip{cursor:pointer;color:var(--txt)}button.var.vchip:hover{border-c
 }
 .wrap{overflow-x:clip}
 .vars{display:flex;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%}
+.pbox.gate>summary .bt2,.pbox.simp>summary .bt2{font-size:17px;font-weight:700;color:#fff}
+.pbox.simp{border-color:var(--hlb)}
