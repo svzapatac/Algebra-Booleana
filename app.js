@@ -74,7 +74,7 @@ const CARDS = [
   { id: 'tt', n: '01', title: 'Tabla de verdad', prev: r => `${r.table.rows.length} filas`, body: bodyTable },
   { id: 'mm', n: '02', title: 'Minitérminos y maxitérminos', prev: r => `${r.ones.length} · ${r.zeros.length}`, body: bodyTerms },
   { id: 'km', n: '03', title: 'Mapa de Karnaugh', prev: r => r.kmap ? `${r.kmap.sop.groups.length} grupos` : 'Quine-McCluskey', body: bodyKmap },
-  { id: 'gt', n: '04', title: 'Compuertas y laboratorio', prev: r => `${r.cost.orig.gates} → ${r.cost.min.gates}`, body: bodyGates },
+  { id: 'gt', n: '04', title: 'Compuertas y laboratorio', prev: r => { const o = r.cost.orig.gates, m = Math.min(r.cost.min.gates, r.cost.pos.gates); return m < o ? `${o} → ${m}` : `original: ${o} (menor)`; }, body: bodyGates },
   { id: 'ck', n: '06', title: 'Comprobación', prev: r => `${r.checks.filter(c => c.ok).length}/${r.checks.length}`, body: bodyCheck }
 ];
 
@@ -286,10 +286,14 @@ function bodyGates(r) {
     : L.gateSvg(ast, { values: r.values, vars: r.vars });
   const tabs = `<div class="tabs"><button type="button" data-act="gtab" data-m="lab">Laboratorio interactivo</button>${Object.entries(items).map(([k, v]) => `<button type="button" class="${k === t ? 'on' : ''}" data-act="gtab" data-m="${k}">${v[0]}</button>`).join('')}</div>`;
   const ic = cost.ic.map(i => `<span class="pill">${i.code} ${i.name} × ${i.chips}</span>`).join('');
-  const cmp = `<span class="pill hi">Original ${r.cost.orig.gates} compuertas</span><span class="pill hi">SOP ${r.cost.min.gates}</span><span class="pill hi">POS ${r.cost.pos.gates}</span>`;
+  const co = r.cost.orig, cm = r.cost.min, cp = r.cost.pos, best = Math.min(co.gates, cm.gates, cp.gates);
+  const pl = (nm, c) => `<span class="pill ${c.gates === best ? 'ok' : 'hi'}">${nm} ${c.gates}${nm === 'Original' ? ' compuertas' : ''}${c.gates === best ? ' · menor' : ''}</span>`;
+  const cmp = pl('Original', co) + pl('SOP', cm) + pl('POS', cp);
+  const noSave = Math.min(cm.gates, cp.gates) >= co.gates
+    ? `<p class="sub" style="margin:8px 0 0;max-width:78ch;text-transform:none;letter-spacing:0;line-height:1.5">Aquí la forma mínima no ahorra compuertas. La mínima SOP/POS es de dos niveles (AND y OR) y reduce términos, pero la expresión original está factorizada y usa XOR/XNOR, que son una sola compuerta cada una. La simplificación reduce términos y letras, no siempre compuertas: usa el circuito de menor costo (marcado “menor”).</p>` : '';
   return `${tabs}<div class="svgbox">${svg}</div>
     <div class="stats"><span class="pill ok">${name}: ${cost.gates} compuertas · ${cost.inputs} entradas</span>${ic}</div>
-    <div class="stats">${cmp}</div>
+    <div class="stats">${cmp}</div>${noSave}
     <div><p class="sub">Cómo se arma · ${name}</p><div class="box">${(r.glist[t] || []).map((g, i) => `<div class="ev" style="grid-template-columns:34px 70px 1fr 1fr"><span style="color:var(--acc)">G${i + 1}</span><span class="op">${g.op}</span><span>${esc(g.ins.join(', '))}</span><span class="v" style="text-align:left">→ ${esc(g.out)}</span></div>`).join('') || '<div class="ev"><span>Sin compuertas</span></div>'}</div></div>`;
 }
 
