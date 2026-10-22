@@ -280,7 +280,10 @@ function bodyGates(r) {
   }
   const items = { orig: ['Original', r.ast, r.cost.orig], sop: ['Mínima SOP', r.min.sopAst, r.cost.min], pos: ['Mínima POS', r.min.posAst, r.cost.pos] };
   const [name, ast, cost] = items[t];
-  const svg = L.gateSvg(ast, { values: r.values, vars: r.vars });
+  const big = cost.inputs > 100; // un dibujo fijo con tantos cables no se puede leer
+  const svg = big
+    ? `<div style="padding:22px 18px;display:flex;flex-direction:column;gap:12px;align-items:flex-start"><p class="sub" style="margin:0">Circuito demasiado grande para un dibujo fijo</p><p style="margin:0;max-width:62ch;color:var(--muted)">${name} tiene ${cost.gates} compuertas y ${cost.inputs} entradas: dibujado así se vería como una maraña de cables. Ábrelo en el laboratorio (botón “${name}” de la izquierda), donde puedes acercar y mover las piezas, o revisa la tabla “Cómo se arma” de abajo.</p><button type="button" class="bt pri" data-act="gtab" data-m="lab">Abrir el laboratorio</button></div>`
+    : L.gateSvg(ast, { values: r.values, vars: r.vars });
   const tabs = `<div class="tabs"><button type="button" data-act="gtab" data-m="lab">Laboratorio interactivo</button>${Object.entries(items).map(([k, v]) => `<button type="button" class="${k === t ? 'on' : ''}" data-act="gtab" data-m="${k}">${v[0]}</button>`).join('')}</div>`;
   const ic = cost.ic.map(i => `<span class="pill">${i.code} ${i.name} × ${i.chips}</span>`).join('');
   const cmp = `<span class="pill hi">Original ${r.cost.orig.gates} compuertas</span><span class="pill hi">SOP ${r.cost.min.gates}</span><span class="pill hi">POS ${r.cost.pos.gates}</span>`;

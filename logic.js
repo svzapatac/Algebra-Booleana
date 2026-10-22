@@ -547,54 +547,88 @@ function gateSvg(ast, opts) {
   opts = opts || {};
   const vals = opts.values || null;
   const known = vals && opts.vars && opts.vars.every(v => vals[v] === 0 || vals[v] === 1);
-  const W = 44, ROW = 46, COLW = 100, LM = 44, ON = '#C4B5FD', OFF = '#524C6B', NEU = '#8B86A3';
-  let slot = 0;
+  const W = 44, ROW = 46, LM = 44, ON = '#C4B5FD', OFF = '#524C6B', NEU = '#8B86A3';
+  const order = opts.vars || [];
+  // una sola fila por variable (las entradas se comparten, como en un circuito real)
+  const leafKeys = [];
+  (function col(n) { if (n.t === 'var' || n.t === 'const') { const k = key(n); if (!leafKeys.includes(k)) leafKeys.push(k); } else kids(n).forEach(col); })(ast);
+  leafKeys.sort((a, b) => { const ia = order.indexOf(a), ib = order.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a < b ? -1 : 1); });
+  const slotOf = k => leafKeys.indexOf(k);
+  const hOf = (t, k) => t === 'not' ? 24 : Math.max(34, 12 * (k + 1));
+  const memoN = new Map(); // compuertas idénticas se dibujan una sola vez (p. ej. un solo inversor por variable)
   function lay(n) {
-    if (n.t === 'var' || n.t === 'const') return { n, leaf: true, level: 0, y: (slot++) * ROW + ROW / 2, kids: [] };
-    const ks = kids(n).map(lay);
-    return { n, kids: ks, level: Math.max(...ks.map(k => k.level)) + 1, y: ks.reduce((s, k) => s + k.y, 0) / ks.length };
+    const mk = key(n); if (memoN.has(mk)) return memoN.get(mk);
+    let r;
+    if (n.t === 'var' || n.t === 'const') r = { n, leaf: true, level: 0, y: slotOf(mk) * ROW + ROW / 2, kids: [] };
+    else { const ks = kids(n).map(lay); r = { n, kids: ks, level: Math.max(...ks.map(k => k.level)) + 1, y: 0 }; }
+    memoN.set(mk, r); return r;
   }
   const L = lay(ast);
   const maxLevel = L.level;
+  const byLv = [];
+  const vis = new Set();
+  (function walk(nd) { if (vis.has(nd)) return; vis.add(nd); nd.kids.forEach(walk); if (!nd.leaf) (byLv[nd.level] = byLv[nd.level] || []).push(nd); })(L);
+  // altura de cada compuerta = promedio de sus entradas; sin encimar compuertas de la misma columna
+  let bottom = Math.max(leafKeys.length * ROW, 60);
+  for (let lv = 1; lv <= maxLevel; lv++) {
+    const list = byLv[lv] || [];
+    list.forEach(nd => { nd.y = nd.kids.reduce((s, k) => s + k.y, 0) / nd.kids.length; nd.h = hOf(nd.n.t, nd.kids.length); });
+    list.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < list.length; i++) { const need = (list[i - 1].h + list[i].h) / 2 + 12; if (list[i].y - list[i - 1].y < need) list[i].y = list[i - 1].y + need; }
+    list.forEach(nd => { bottom = Math.max(bottom, nd.y + nd.h / 2 + 8); });
+  }
+  // ancho de cada columna según cuántos cables llegan (cada cable tiene su propio canal vertical)
+  const colX = [LM], wiresAt = [];
+  for (let lv = 1; lv <= maxLevel; lv++) {
+    const list = byLv[lv] || [];
+    const ws = [];
+    list.slice().sort((a, b) => a.y - b.y).forEach(nd => nd.kids.forEach((c, i) => ws.push({ nd, c, i })));
+    wiresAt[lv] = ws;
+    const gap = Math.min(900, 28 + 4 * ws.length);
+    colX[lv] = (lv === 1 ? LM : colX[lv - 1] + 52) + gap;
+  }
   const parts = [];
-  const colOf = lv => LM + 16 + (lv - 1) * COLW;
-  const wireCol = nd => !known ? NEU : (ev(nd.n, vals) ? ON : OFF);
   const shape = { and: 'and', nand: 'and', or: 'or', nor: 'or', xor: 'or', xnor: 'or' };
-  function draw(nd) {
-    nd.kids.forEach(draw);
-    if (nd.leaf) { nd.ox = LM; return; }
-    const n = nd.n, t = n.t, k = nd.kids.length;
-    const x = colOf(nd.level), y = nd.y;
-    const h = t === 'not' ? 24 : Math.max(34, 12 * (k + 1));
-    const bub = t === 'not' || t === 'nand' || t === 'nor' || t === 'xnor';
-    const bw = t === 'not' ? 24 : bub ? W - 4 : W;
-    const sh = shape[t];
-    const top = y - h / 2, bot = y + h / 2;
-    const stroke = 'stroke="#A78BFA" stroke-width="1.6" fill="#12101C" stroke-linejoin="round"';
-    let body = '';
-    if (t === 'not') body = `<path d="M${x},${y - 11} L${x + 24},${y} L${x},${y + 11} Z" ${stroke}/>`;
-    else if (sh === 'and') body = `<path d="M${x},${top} H${x + bw / 2} A${bw / 2} ${h / 2} 0 0 1 ${x + bw / 2} ${bot} H${x} Z" ${stroke}/>`;
-    else {
-      body = `<path d="M${x},${top} Q${x + bw * 0.55},${top} ${x + bw},${y} Q${x + bw * 0.55},${bot} ${x},${bot} Q${x + bw * 0.3},${y} ${x},${top} Z" ${stroke}/>`;
-      if (t === 'xor' || t === 'xnor') body += `<path d="M${x - 6},${top} Q${x + bw * 0.3 - 6},${y} ${x - 6},${bot}" fill="none" stroke="#A78BFA" stroke-width="1.6"/>`;
-    }
-    nd.ox = x + bw;
-    if (bub) { body += `<circle cx="${x + bw + 4}" cy="${y}" r="4" ${stroke}/>`; nd.ox = x + bw + 8; }
-    // entradas
-    const xorShift = (t === 'xor' || t === 'xnor') ? 6 : 0;
-    nd.kids.forEach((c, i) => {
-      const py = t === 'not' ? y : top + h * (i + 1) / (k + 1);
+  const wireCol = nd => !known ? NEU : (ev(nd.n, vals) ? ON : OFF);
+  const stroke = 'stroke="#A78BFA" stroke-width="1.6" fill="#12101C" stroke-linejoin="round"';
+  const bodies = [];
+  (function setOx(nd) { nd.kids.forEach(setOx); if (nd.leaf) { nd.ox = LM; return; } const t = nd.n.t; const bub = t === 'not' || t === 'nand' || t === 'nor' || t === 'xnor'; const bw = t === 'not' ? 24 : bub ? W - 4 : W; nd.ox = colX[nd.level] + bw + (bub ? 8 : 0); })(L);
+  for (let lv = 1; lv <= maxLevel; lv++) {
+    const ws = wiresAt[lv];
+    ws.forEach((w, idx) => {
+      const nd = w.nd, c = w.c, t = nd.n.t, k = nd.kids.length;
+      const x = colX[lv], y = nd.y, h = nd.h;
+      const bw = t === 'not' ? 24 : (t === 'nand' || t === 'nor' || t === 'xnor') ? W - 4 : W;
+      const sh = shape[t], top = y - h / 2;
+      const xorShift = (t === 'xor' || t === 'xnor') ? 6 : 0;
+      const py = t === 'not' ? y : top + h * (w.i + 1) / (k + 1);
       let px = x - xorShift;
       if (sh === 'or') { const d = (py - y) / (h / 2); px += bw * 0.15 * (1 - d * d); }
-      const ch = x - xorShift - 12 - 5 * i;
-      parts.push(`<path d="M${c.ox},${c.y} H${ch} V${py} H${px}" fill="none" stroke="${wireCol(c)}" stroke-width="1.8" stroke-linejoin="round"/>`);
+      const chx = (lv === 1 ? LM : colX[lv - 1] + 52) + 14 + 4 * idx;
+      parts.push(`<path d="M${c.ox},${c.y} H${chx} V${py} H${px}" fill="none" stroke="${wireCol(c)}" stroke-width="1.6" stroke-linejoin="round"/>`);
     });
-    parts.push(body);
+    (byLv[lv] || []).forEach(nd => {
+      const t = nd.n.t, k = nd.kids.length, x = colX[lv], y = nd.y, h = nd.h;
+      const bub = t === 'not' || t === 'nand' || t === 'nor' || t === 'xnor';
+      const bw = t === 'not' ? 24 : bub ? W - 4 : W;
+      const sh = shape[t], top = y - h / 2, bot = y + h / 2;
+      let body = '';
+      if (t === 'not') body = `<path d="M${x},${y - 11} L${x + 24},${y} L${x},${y + 11} Z" ${stroke}/>`;
+      else if (sh === 'and') body = `<path d="M${x},${top} H${x + bw / 2} A${bw / 2} ${h / 2} 0 0 1 ${x + bw / 2} ${bot} H${x} Z" ${stroke}/>`;
+      else {
+        body = `<path d="M${x},${top} Q${x + bw * 0.55},${top} ${x + bw},${y} Q${x + bw * 0.55},${bot} ${x},${bot} Q${x + bw * 0.3},${y} ${x},${top} Z" ${stroke}/>`;
+        if (t === 'xor' || t === 'xnor') body += `<path d="M${x - 6},${top} Q${x + bw * 0.3 - 6},${y} ${x - 6},${bot}" fill="none" stroke="#A78BFA" stroke-width="1.6"/>`;
+      }
+      if (bub) body += `<circle cx="${x + bw + 4}" cy="${y}" r="4" ${stroke}/>`;
+      bodies.push(body);
+    });
   }
-  draw(L);
-  // etiquetas de hojas
+  parts.push(...bodies);
+  // etiquetas de entradas (una por variable)
+  const seen = new Set();
   (function leaves(nd) {
     if (nd.leaf) {
+      const k = key(nd.n); if (seen.has(k)) return; seen.add(k);
       const lab = nd.n.t === 'var' ? nd.n.n : String(nd.n.v);
       parts.push(`<text x="${LM - 8}" y="${nd.y + 4.5}" text-anchor="end" fill="#EDEAF7" font-family="Geist Mono, monospace" font-size="13">${lab}</text>`);
       if (nd.n.t === 'var' && known) parts.push(`<text x="${LM - 8}" y="${nd.y + 4.5}" dx="-14" text-anchor="end" fill="${vals[nd.n.n] ? ON : OFF}" font-family="Geist Mono, monospace" font-size="10">${vals[nd.n.n]}</text>`);
@@ -603,7 +637,7 @@ function gateSvg(ast, opts) {
     nd.kids.forEach(leaves);
   })(L);
   const outX = L.ox, outY = L.y;
-  const totalW = outX + 64, totalH = Math.max(slot * ROW, 60) + 8;
+  const totalW = outX + 64, totalH = bottom + 8;
   const fv = known ? ev(ast, vals) : null;
   parts.push(`<path d="M${outX},${outY} H${outX + 26}" stroke="${known ? (fv ? ON : OFF) : NEU}" stroke-width="1.8" fill="none"/>`);
   parts.push(`<text x="${outX + 32}" y="${outY + 4.5}" fill="#DDD6FE" font-family="Geist Mono, monospace" font-size="13" font-weight="600">F${known ? ' = ' + fv : ''}</text>`);
@@ -613,8 +647,10 @@ function gateSvg(ast, opts) {
 
 function gateStats(ast) {
   const s = { NOT: 0, AND: 0, OR: 0, XOR: 0, NAND: 0, NOR: 0, XNOR: 0, inputs: 0 };
+  const seenG = new Set(); // una compuerta idéntica se cuenta una sola vez (se comparte, como en el laboratorio)
   (function w(n) {
     if (n.t === 'var' || n.t === 'const') return;
+    const gk = key(n); if (seenG.has(gk)) return; seenG.add(gk);
     kids(n).forEach(w);
     const k = kids(n).length;
     if (n.t === 'not') { s.NOT++; s.inputs++; }
