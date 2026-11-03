@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lab 2 · Aritmética digital con Logisim</title>
+<link rel="stylesheet" href="lab2.css?v=1">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">L2</span><div><b>Aritmética digital</b><small>Lab 2 · Diseño Lógico</small></div></div>
+  <nav><a href="index.html">← Lab 1 · Álgebra booleana</a></nav>
+</header>
+
+<main>
+<section class="hero">
+  <h1>Sumador, restador, multiplicador y divisor de <em id="hN">4</em> bits</h1>
+  <p>Elige la operación y el tamaño. La página calcula el paso a paso, genera el circuito <b>Logisim (.circ)</b> en tu navegador y te da el plano para armarlo con chips <b>TTL</b>.</p>
+</section>
+
+<section class="panel ctl">
+  <div class="tabs" id="ops" role="tablist">
+    <button data-op="add" class="on">Sumador</button><button data-op="sub">Restador</button>
+    <button data-op="mul">Multiplicador</button><button data-op="div">Divisor</button>
+  </div>
+  <div class="row">
+    <label>Bits (N)<input id="n" type="range" min="1" max="8" value="4"><output id="nv">4</output></label>
+    <label>A<input id="a" type="number" min="0" value="11"></label>
+    <label id="lb">B<input id="b" type="number" min="0" value="6"></label>
+    <button id="rnd" class="ghost">Aleatorio</button>
+  </div>
+  <div id="warn" class="warn" hidden></div>
+</section>
+
+<section class="grid">
+  <article class="panel" id="resBox"></article>
+  <article class="panel">
+    <h2>Descargar para Logisim</h2>
+    <p class="muted">Los archivos se crean al instante en tu navegador (no hay servidor). Se abren con <b>File → Open</b> en Logisim.</p>
+    <div class="dl">
+      <button id="dlG" class="pri">⬇ Compuertas (.circ)</button>
+      <button id="dlB" class="pri alt">⬇ Bloques Logisim (.circ)</button>
+      <button id="dlT" class="ghost">⬇ Plano TTL (.txt)</button>
+    </div>
+    <div id="stats" class="stats"></div>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Paso a paso de <span id="opName"></span></h2>
+  <div id="steps"></div>
+</section>
+
+<section class="panel">
+  <h2>Plano TTL</h2>
+  <div id="ttl"></div>
+</section>
+
+<section class="panel how">
+  <h2>Cómo usar los archivos en Logisim</h2>
+  <ol>
+    <li>Descarga el <b>.circ</b> (compuertas = cada AND/OR/XOR/NOT dibujada; bloques = usa Adder/Subtractor/Multiplier/Divider de la librería Aritmética).</li>
+    <li>Ábrelo en Logisim (2.7.x, Logisim-evolution o <i>logisim.app</i> en el navegador) con <b>File → Open</b>.</li>
+    <li>Herramienta de la manita: haz clic en los pines de entrada para poner 0/1 y mira las salidas.</li>
+    <li>En la versión de compuertas las conexiones usan <b>túneles</b> (mismo nombre = mismo cable) para que el esquema quede ordenado.</li>
+  </ol>
+  <h3>¿Funciona en GitHub Pages?</h3>
+  <p>Sí. GitHub Pages solo sirve archivos estáticos, pero el <code>.circ</code> es texto XML: el JavaScript lo escribe en memoria, lo convierte en un <code>Blob</code> y el navegador lo descarga. Todo ocurre en tu equipo; no se envía nada a ningún servidor.</p>
+  <p class="muted">Cada circuito generado fue verificado con el motor de Logisim 2.7.1 contra la aritmética real para N de 1 a 8.</p>
+</section>
+</main>
+<footer>Lab 2 · Universidad Distrital · Diseño Lógico</footer>
+<script src="l2core.js?v=1"></script>
+<script src="lab2.js?v=1"></script>
+</body>
+</html>
