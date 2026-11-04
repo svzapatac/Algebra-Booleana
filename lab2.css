@@ -55,3 +55,29 @@ footer{text-align:center;color:var(--mut);padding:18px;font-size:13px}
 .gt{display:flex;justify-content:space-between;gap:6px;font:12px var(--mono);padding:2px 5px;margin:2px 0;border-radius:3px;background:#e6edf7;color:#4a6285}
 .gt.on{background:#2f8cff;color:#fff}
 .sw .vv{font:700 13px var(--mono);color:var(--b1);margin-left:8px}
+.top nav{display:flex;gap:14px;flex-wrap:wrap}
+.tabs.mini button{min-width:90px;padding:7px 10px;font-size:14px}
+.row3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.inl{flex-direction:row;align-items:center;gap:6px}
+.edtools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.ed-bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.ed-bar button{padding:6px 10px;border:2px solid var(--line);background:#fff;border-radius:4px;color:var(--b2);font-weight:600;font-size:13px}
+.ed-bar button.on{background:var(--b2);color:#fff;border-color:var(--b2)}
+.ed-svg{width:100%;height:auto;max-height:640px;border:2px solid var(--b2);border-radius:4px;background:#f7faff;touch-action:none;display:block}
+.ed-svg:focus{outline:2px solid var(--b1)}
+.ed-info{font-size:13px;color:var(--mut);margin-top:6px}.ed-props{font-size:13px;color:var(--mut);margin-top:6px}
+.ed-props input{padding:4px 6px;border:2px solid var(--line);border-radius:4px;font:14px var(--mono);width:110px}
+select{padding:7px;border:2px solid var(--line);border-radius:4px;font:14px var(--mono);background:#fff;color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.code{background:#0b1d3a;color:#d6e6ff;padding:14px;border-radius:6px;overflow:auto;max-height:460px;font:13px/1.45 var(--mono);white-space:pre}
+.pager{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.ttlcard{margin:12px 0;border:1px solid var(--line);border-radius:6px;padding:12px;background:#fbfdff}
+.ttlcard figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.ttlcard figcaption b{font-size:18px;color:var(--b2)}.ttlcard figcaption small{color:var(--mut)}
+.ttlcard .num{font:700 12px var(--mono);color:#fff;background:var(--b1);border-radius:99px;padding:1px 8px;align-self:flex-start}
+svg.ic{width:100%;max-width:620px;height:auto;display:block;margin:0 auto}
+.ttlist{font-size:14px;padding-left:18px}.ttlist li{margin:3px 0}
+details summary{cursor:pointer;color:var(--b2);font-weight:600;margin:8px 0}
+main{grid-template-columns:minmax(0,1fr)}
+.panel,.grid>*{min-width:0}
+.cells{max-width:100%}

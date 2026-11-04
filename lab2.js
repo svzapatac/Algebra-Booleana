@@ -4,6 +4,7 @@
   const NAMES = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor' };
   let op = 'add';
   const bin = L2.bin;
+  window.Lab2 = { download: null };
 
   function download(name, text) {
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -12,6 +13,7 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   }
+  window.Lab2.download = download;
   const N = () => +$('#n').value;
   const maxV = () => (1n << BigInt(N())) - 1n;
   function vals() {
@@ -70,16 +72,6 @@
     return h;
   }
 
-  function ttlText(nl, plan, n) {
-    let t = `PLANO TTL · ${NAMES[op]} de ${n} bits\nAlimentación: pin 14 = +5 V, pin 7 = GND en todos los chips.\n\nCHIPS (${plan.total}):\n`;
-    plan.chips.forEach(c => t += `  ${c.id}  ${c.desc}  (usadas ${c.used}/${c.cap})\n`);
-    t += '\nCONEXIONES (cada línea es un cable):\n';
-    plan.nets.forEach(x => t += `  ${x.net}: ${x.from}  →  ${x.to.join(', ')}\n`);
-    t += '\nNota: las entradas de compuertas sin usar de un chip se conectan a GND.\n';
-    return t;
-  }
-
-
   /* ---- simulador en la página ---- */
   let simNL = null, simV = {};
   function simSync(n, v) {
@@ -130,17 +122,8 @@
     $('#steps').innerHTML = renderSteps(n, v.a, v.b);
     const nl = L2.BUILD[op](n), s = L2.stats(nl);
     $('#stats').innerHTML = ['AND', 'OR', 'XOR', 'NOT'].map(k => `<span class="chip">${k}: ${s[k]}</span>`).join('') + `<span class="chip">total: ${s.total}</span>`;
-    const plan = L2.ttlPlan(nl);
-    const rows = plan.chips.map(c => [c.chip, c.id, c.desc, c.used + '/' + c.cap]);
-    let t = `<p class="muted">Con compuertas SSI: <b>${plan.total}</b> chips (${plan.spare} compuertas libres). Todos usan pin 14 = +5 V y pin 7 = GND.</p>` + tbl(['TTL', 'id', 'contenido', 'usadas'], rows);
-    if (n > 5) t += '<p class="warn">Para ' + n + ' bits el montaje en protoboard es grande; en clase normalmente se arman 4 o 5 bits.</p>';
-    const show = plan.nets.slice(0, 60).map(x => [x.net, x.from, x.to.join(', ')]);
-    t += '<h3>Cableado</h3>' + tbl(['red', 'sale de', 'llega a'], show) + (plan.nets.length > 60 ? `<p class="muted">… ${plan.nets.length - 60} redes más en el .txt descargable.</p>` : '');
-    $('#ttl').innerHTML = t;
     simSync(n, v);
-    $('#dlG').onclick = () => download(`${NAMES[op]}_${n}bits_compuertas.circ`, L2.toCirc(nl));
-    $('#dlB').onclick = () => download(`${NAMES[op]}_${n}bits_bloques.circ`, L2.toCircBlocks(op, n));
-    $('#dlT').onclick = () => download(`${NAMES[op]}_${n}bits_TTL.txt`, ttlText(nl, plan, n));
+    if (window.Lab2Hook) window.Lab2Hook(op, n, v);
   }
 
   document.querySelectorAll('#ops button').forEach(b => b.onclick = () => {
