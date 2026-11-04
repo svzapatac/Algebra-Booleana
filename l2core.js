@@ -260,7 +260,7 @@
   const HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<project source="5.0.0" version="1.0">\n' +
     '  This file is intended to be loaded by Logisim-evolution v5.0.0(https://github.com/logisim-evolution/).\n' +
     '  <lib desc="#Wiring" name="0"/>\n  <lib desc="#Gates" name="1"/>\n  <lib desc="#Plexers" name="2"/>\n' +
-    '  <lib desc="#Arithmetic" name="3"/>\n  <lib desc="#Memory" name="4"/>\n  <lib desc="#I/O" name="5"/>\n  <lib desc="#TTL" name="6"/>\n  <lib desc="#TCL" name="7"/>\n  <lib desc="#Base" name="8"/>\n  <lib desc="#BFH-Praktika" name="9"/>\n  <lib desc="#Input/Output-Extra" name="10"/>\n  <lib desc="#Soc" name="11"/>\n' +
+    '  <lib desc="#Arithmetic" name="3"/>\n  <lib desc="#Memory" name="4"/>\n  <lib desc="#I/O" name="5"/>\n  <lib desc="#Base" name="8"/>\n' +
     '  <main name="main"/>\n  <options>\n    <a name="gateUndefined" val="ignore"/>\n    <a name="simlimit" val="1000"/>\n    <a name="simrand" val="0"/>\n  </options>\n' +
     '  <circuit name="main">\n    <a name="appearance" val="logisim_evolution"/>\n    <a name="circuit" val="main"/>\n';
   const TAIL = '  </circuit>\n</project>\n';
