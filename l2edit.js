@@ -6,7 +6,7 @@
   'use strict';
   const NS = 'http://www.w3.org/2000/svg';
   const G2 = ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'];
-  const TOOLS = [['hand', '🖐 Mano'], ['SW', 'Interruptor'], ['CLK', 'Reloj'], ['LED', 'LED'], ['AND', 'AND'], ['OR', 'OR'], ['NOT', 'NOT'], ['XOR', 'XOR'], ['NAND', 'NAND'], ['NOR', 'NOR'], ['XNOR', 'XNOR'], ['DFF', 'Flip-flop D'], ['VCC', '1'], ['GND', '0'], ['del', '🗑 Borrar']];
+  const TOOLS = [['hand', 'Mano'], ['SW', 'Interruptor'], ['CLK', 'Reloj'], ['LED', 'LED'], ['AND', 'AND'], ['OR', 'OR'], ['NOT', 'NOT'], ['XOR', 'XOR'], ['NAND', 'NAND'], ['NOR', 'NOR'], ['XNOR', 'XNOR'], ['DFF', 'Flip-flop D'], ['VCC', '1'], ['GND', '0'], ['del', 'Borrar']];
   /* pines: [id, dx, dy, dir]  dir 'o' salida, 'i' entrada */
   const PINS = {
     SW: [['out', 44, 12, 'o']], CLK: [['out', 44, 12, 'o']], VCC: [['out', 30, 10, 'o']], GND: [['out', 30, 10, 'o']],
@@ -90,13 +90,13 @@
     function symbol(c) {
       const [w, h] = SIZE[c.type]; const g = el('g', {});
       const on = st.val && st.val[st.f(st.key(c.id, PINS[c.type].find(p => p[3] === 'o') ? PINS[c.type].find(p => p[3] === 'o')[0] : 'in0'))];
-      const stroke = { stroke: '#0a3d91', 'stroke-width': 2, fill: '#fff' };
+      const stroke = { stroke: '#12356e', 'stroke-width': 2, fill: '#fff' };
       const T = c.type;
-      if (T === 'SW') { g.append(el('rect', Object.assign({ x: 0, y: 0, width: 44, height: 24, rx: 4 }, stroke, { fill: c.v ? '#1d6fe8' : '#fff' })), el('text', { x: 22, y: 17, 'text-anchor': 'middle', fill: c.v ? '#fff' : '#0a3d91', 'font-weight': 700, 'font-size': 14 }, [c.label + '=' + c.v])); }
-      else if (T === 'CLK') { g.append(el('rect', Object.assign({ x: 0, y: 0, width: 44, height: 24, rx: 4 }, stroke, { fill: c.v ? '#1d6fe8' : '#fff' })), el('path', { d: 'M6 18 h8 v-12 h8 v12 h8 v-12 h6', fill: 'none', stroke: c.v ? '#fff' : '#0a3d91', 'stroke-width': 2 }), el('text', { x: 22, y: 36, 'text-anchor': 'middle', 'font-size': 11, fill: '#4a6285' }, [c.label])); }
-      else if (T === 'VCC' || T === 'GND') g.append(el('rect', Object.assign({ x: 0, y: 0, width: 30, height: 20, rx: 3 }, stroke)), el('text', { x: 15, y: 15, 'text-anchor': 'middle', 'font-weight': 700, fill: '#0a3d91' }, [T === 'VCC' ? '1' : '0']));
-      else if (T === 'LED') { const v = st.val && st.val[st.f(st.key(c.id, 'in0'))]; g.append(el('circle', { cx: 18, cy: 12, r: 11, stroke: '#0a3d91', 'stroke-width': 2, fill: v ? '#2f8cff' : '#e6edf7', style: v ? 'filter:drop-shadow(0 0 6px #2f8cff)' : '' }), el('line', { x1: 0, y1: 12, x2: 7, y2: 12, stroke: '#0a3d91', 'stroke-width': 2 }), el('text', { x: 18, y: 38, 'text-anchor': 'middle', 'font-size': 11, fill: '#4a6285' }, [c.label])); }
-      else if (T === 'DFF') g.append(el('rect', Object.assign({ x: 12, y: 0, width: 46, height: 70 }, stroke)), el('text', { x: 18, y: 24, 'font-size': 11 }, ['CLK']), el('text', { x: 18, y: 54, 'font-size': 11 }, ['D']), el('text', { x: 40, y: 24, 'font-size': 11 }, ['Q']), el('path', { d: 'M12 14 l8 6 l-8 6', fill: 'none', stroke: '#0a3d91', 'stroke-width': 2 }), el('text', { x: 35, y: 66, 'font-size': 9, fill: '#4a6285' }, ['q=' + (st.sim['q' + c.id] || 0)]));
+      if (T === 'SW') { g.append(el('rect', Object.assign({ x: 0, y: 0, width: 44, height: 24, rx: 4 }, stroke, { fill: c.v ? '#1f5fbf' : '#fff' })), el('text', { x: 22, y: 17, 'text-anchor': 'middle', fill: c.v ? '#fff' : '#12356e', 'font-weight': 700, 'font-size': 14 }, [c.label + '=' + c.v])); }
+      else if (T === 'CLK') { g.append(el('rect', Object.assign({ x: 0, y: 0, width: 44, height: 24, rx: 4 }, stroke, { fill: c.v ? '#1f5fbf' : '#fff' })), el('path', { d: 'M6 18 h8 v-12 h8 v12 h8 v-12 h6', fill: 'none', stroke: c.v ? '#fff' : '#12356e', 'stroke-width': 2 }), el('text', { x: 22, y: 36, 'text-anchor': 'middle', 'font-size': 11, fill: '#4a6285' }, [c.label])); }
+      else if (T === 'VCC' || T === 'GND') g.append(el('rect', Object.assign({ x: 0, y: 0, width: 30, height: 20, rx: 3 }, stroke)), el('text', { x: 15, y: 15, 'text-anchor': 'middle', 'font-weight': 700, fill: '#12356e' }, [T === 'VCC' ? '1' : '0']));
+      else if (T === 'LED') { const v = st.val && st.val[st.f(st.key(c.id, 'in0'))]; g.append(el('circle', { cx: 18, cy: 12, r: 11, stroke: '#12356e', 'stroke-width': 2, fill: v ? '#2f8cff' : '#e6edf7', style: v ? 'filter:drop-shadow(0 0 6px #2f8cff)' : '' }), el('line', { x1: 0, y1: 12, x2: 7, y2: 12, stroke: '#12356e', 'stroke-width': 2 }), el('text', { x: 18, y: 38, 'text-anchor': 'middle', 'font-size': 11, fill: '#4a6285' }, [c.label])); }
+      else if (T === 'DFF') g.append(el('rect', Object.assign({ x: 12, y: 0, width: 46, height: 70 }, stroke)), el('text', { x: 18, y: 24, 'font-size': 11 }, ['CLK']), el('text', { x: 18, y: 54, 'font-size': 11 }, ['D']), el('text', { x: 40, y: 24, 'font-size': 11 }, ['Q']), el('path', { d: 'M12 14 l8 6 l-8 6', fill: 'none', stroke: '#12356e', 'stroke-width': 2 }), el('text', { x: 35, y: 66, 'font-size': 9, fill: '#4a6285' }, ['q=' + (st.sim['q' + c.id] || 0)]));
       else {
         const base = T.replace(/^N(?=AND|OR)/, '').replace(/^X?N(?=OR)/, '');
         const bubble = ['NAND', 'NOR', 'XNOR', 'NOT'].includes(T);
@@ -105,12 +105,12 @@
         else if (T === 'AND' || T === 'NAND') d = 'M8 2 H30 A18 18 0 0 1 30 38 H8 Z';
         else d = 'M6 2 Q28 2 50 20 Q28 38 6 38 Q18 20 6 2 Z';
         g.append(el('path', Object.assign({ d }, stroke)));
-        if (T === 'XOR' || T === 'XNOR') g.append(el('path', { d: 'M0 2 Q12 20 0 38', fill: 'none', stroke: '#0a3d91', 'stroke-width': 2 }));
-        if (bubble) g.append(el('circle', { cx: T === 'NOT' ? 49 : 54, cy: 20, r: 4, fill: '#fff', stroke: '#0a3d91', 'stroke-width': 2 }));
-        g.append(el('line', { x1: 0, y1: 10, x2: 8, y2: 10, stroke: '#0a3d91', 'stroke-width': 2 }));
-        if (T !== 'NOT') g.append(el('line', { x1: 0, y1: 30, x2: 8, y2: 30, stroke: '#0a3d91', 'stroke-width': 2 }));
-        if (T === 'NOT') { g.querySelectorAll('line').forEach(l => l.remove()); g.append(el('line', { x1: 0, y1: 20, x2: 8, y2: 20, stroke: '#0a3d91', 'stroke-width': 2 })); }
-        { const x0 = T === 'NOT' ? 53 : bubble ? 58 : (T === 'AND' ? 48 : 50), x1 = T === 'NOT' ? 56 : 60; g.append(el('line', { x1: x0, y1: 20, x2: x1, y2: 20, stroke: '#0a3d91', 'stroke-width': 2 })); }
+        if (T === 'XOR' || T === 'XNOR') g.append(el('path', { d: 'M0 2 Q12 20 0 38', fill: 'none', stroke: '#12356e', 'stroke-width': 2 }));
+        if (bubble) g.append(el('circle', { cx: T === 'NOT' ? 49 : 54, cy: 20, r: 4, fill: '#fff', stroke: '#12356e', 'stroke-width': 2 }));
+        g.append(el('line', { x1: 0, y1: 10, x2: 8, y2: 10, stroke: '#12356e', 'stroke-width': 2 }));
+        if (T !== 'NOT') g.append(el('line', { x1: 0, y1: 30, x2: 8, y2: 30, stroke: '#12356e', 'stroke-width': 2 }));
+        if (T === 'NOT') { g.querySelectorAll('line').forEach(l => l.remove()); g.append(el('line', { x1: 0, y1: 20, x2: 8, y2: 20, stroke: '#12356e', 'stroke-width': 2 })); }
+        { const x0 = T === 'NOT' ? 53 : bubble ? 58 : (T === 'AND' ? 48 : 50), x1 = T === 'NOT' ? 56 : 60; g.append(el('line', { x1: x0, y1: 20, x2: x1, y2: 20, stroke: '#12356e', 'stroke-width': 2 })); }
         g.append(el('text', { x: 30, y: 24, 'text-anchor': 'middle', 'font-size': 9, fill: '#4a6285' }, [T === 'NOT' ? '' : T]));
       }
       return g;
@@ -125,19 +125,19 @@
         const a = byId(w.a.c), b = byId(w.b.c); if (!a || !b) return;
         const p = pinPos(a, w.a.p), q = pinPos(b, w.b.p);
         const v = st.val[st.f(st.key(w.a.c, w.a.p))];
-        const path = el('path', { d: wirePath(p, q), fill: 'none', stroke: v ? '#1d6fe8' : '#7c8fa9', 'stroke-width': st.sel && st.sel.w === i ? 5 : 3, 'stroke-linejoin': 'round', 'data-w': i });
+        const path = el('path', { d: wirePath(p, q), fill: 'none', stroke: v ? '#1f5fbf' : '#7c8fa9', 'stroke-width': st.sel && st.sel.w === i ? 5 : 3, 'stroke-linejoin': 'round', 'data-w': i });
         svg.appendChild(path);
       });
       st.comps.forEach(c => {
         const g = el('g', { transform: `translate(${c.x},${c.y})`, 'data-c': c.id, style: 'cursor:' + (c.type === 'SW' || c.type === 'CLK' ? 'pointer' : 'move') });
         g.appendChild(symbol(c));
-        if (st.sel && st.sel.c === c.id) g.insertBefore(el('rect', { x: -6, y: -6, width: SIZE[c.type][0] + 12, height: SIZE[c.type][1] + 12, fill: 'none', stroke: '#1d6fe8', 'stroke-dasharray': '4 3' }), g.firstChild);
-        PINS[c.type].forEach(p => g.appendChild(el('circle', { cx: p[1], cy: p[2], r: 5, class: 'pin', 'data-p': p[0], 'data-c': c.id, fill: '#fff', stroke: '#1d6fe8', 'stroke-width': 1.5 })));
+        if (st.sel && st.sel.c === c.id) g.insertBefore(el('rect', { x: -6, y: -6, width: SIZE[c.type][0] + 12, height: SIZE[c.type][1] + 12, fill: 'none', stroke: '#1f5fbf', 'stroke-dasharray': '4 3' }), g.firstChild);
+        PINS[c.type].forEach(p => g.appendChild(el('circle', { cx: p[1], cy: p[2], r: 5, class: 'pin', 'data-p': p[0], 'data-c': c.id, fill: '#fff', stroke: '#1f5fbf', 'stroke-width': 1.5 })));
         svg.appendChild(g);
       });
-      if (st.wiring) { const a = byId(st.wiring.c); const p = pinPos(a, st.wiring.p); svg.appendChild(el('path', { d: `M${p[0]} ${p[1]} L${st.mouse.x} ${st.mouse.y}`, stroke: '#1d6fe8', 'stroke-dasharray': '5 4', fill: 'none', 'stroke-width': 2, style: 'pointer-events:none' })); }
+      if (st.wiring) { const a = byId(st.wiring.c); const p = pinPos(a, st.wiring.p); svg.appendChild(el('path', { d: `M${p[0]} ${p[1]} L${st.mouse.x} ${st.mouse.y}`, stroke: '#1f5fbf', 'stroke-dasharray': '5 4', fill: 'none', 'stroke-width': 2, style: 'pointer-events:none' })); }
       const nIn = st.comps.filter(c => c.type === 'SW' || c.type === 'CLK').length, nG = st.comps.filter(c => !['SW', 'CLK', 'LED', 'VCC', 'GND'].includes(c.type)).length;
-      info.textContent = (st.status ? st.status + ' · ' : '') + `${st.comps.length} componentes, ${st.wires.length} cables, ${nG} compuertas/FF, ${nIn} entradas` + (st.conflict ? ' · ⚠ dos salidas conectadas al mismo cable' : '');
+      info.textContent = (st.status ? st.status + ' · ' : '') + `${st.comps.length} componentes, ${st.wires.length} cables, ${nG} compuertas/FF, ${nIn} entradas` + (st.conflict ? ' · conflicto: dos salidas en un mismo cable' : '');
       drawProps();
       if (onChange) onChange();
     }
@@ -149,7 +149,7 @@
         const i = document.createElement('input'); i.value = c.label; i.maxLength = 12;
         i.onchange = () => { c.label = (i.value.replace(/[^A-Za-z0-9]/g, '') || c.label).replace(/^(\d)/, 'X$1'); draw(); };
         l.appendChild(i); props.appendChild(l);
-      } else props.textContent = 'Elige una herramienta y haz clic en el lienzo. Con la mano: arrastra un pin hasta otro pin para tender un cable; clic en un interruptor para cambiarlo; selecciona algo y pulsa Suprimir para borrarlo.';
+      } else props.textContent = '';
     }
 
     /* ---------- interacción ---------- */

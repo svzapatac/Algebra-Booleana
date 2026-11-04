@@ -66,29 +66,58 @@
   }
 
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  /* SVG de un chip: muesca a la izquierda; pines 1-7 abajo (izq→der) y 8-14 arriba (der→izq) */
+  /* SVG de un chip DIP (14 o 16 pines): muesca a la izquierda; pines 1..n/2 abajo y el resto arriba */
   function svg(ch) {
-    const W = 560, H = 230, bx = 40, bw = 480, by = 80, bh = 70, px = i => bx + 26 + i * 70, pw = 24, ph = 22;
-    const col = k => ({ in: '#1d6fe8', out: '#0a8f5b', pwr: '#c62f3d', free: '#9aa9bf' }[k] || '#555');
+    const n = ch.n || 14, half = n / 2, sp = 66, bx = 40, bw = 30 + half * sp, by = 80, bh = 70, W = bw + 80, H = 230, pw = 24, ph = 22;
+    const px = i => bx + 30 + i * sp;
+    const col = k => ({ in: '#1f5fbf', out: '#0a7a4f', pwr: '#b3261e', free: '#8a96a8' }[k] || '#555');
     let s = `<svg viewBox="0 0 ${W} ${H}" class="ic" role="img" aria-label="${esc(ch.title)}" xmlns="http://www.w3.org/2000/svg">`;
-    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="#16233b" stroke="#0a3d91" stroke-width="2"/>`;
-    s += `<path d="M${bx} ${by + bh / 2 - 12} a12 12 0 0 1 0 24" fill="#eaf2fb" stroke="#0a3d91"/>`;
-    s += `<circle cx="${bx + 26}" cy="${by + bh - 16}" r="5" fill="#2b3f63"/>`;
-    s += `<text x="${bx + bw / 2}" y="${by + 32}" fill="#eaf2fb" font-family="monospace" font-size="20" text-anchor="middle" font-weight="700">SN${esc(ch.spec.chip)}N</text>`;
-    s += `<text x="${bx + bw / 2}" y="${by + 54}" fill="#9db7e0" font-family="monospace" font-size="12" text-anchor="middle">${esc(ch.id)}</text>`;
-    for (let i = 0; i < 7; i++) {
-      const pb = i + 1, pt = 14 - i;
-      [[pb, true], [pt, false]].forEach(([n, bottom]) => {
-        const p = ch.pins[n] || { role: '', net: '', kind: 'free' }, x = px(i), c = col(p.kind);
+    s += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="4" fill="#1b2433" stroke="#0f1f3d" stroke-width="2"/>`;
+    s += `<path d="M${bx} ${by + bh / 2 - 12} a12 12 0 0 1 0 24" fill="#f4f6f9" stroke="#0f1f3d"/>`;
+    s += `<circle cx="${bx + 28}" cy="${by + bh - 14}" r="5" fill="#36445c"/>`;
+    s += `<text x="${bx + bw / 2}" y="${by + 32}" fill="#eef2f8" font-family="monospace" font-size="20" text-anchor="middle" font-weight="700">SN${esc(ch.spec.chip)}N</text>`;
+    s += `<text x="${bx + bw / 2}" y="${by + 54}" fill="#9db0cf" font-family="monospace" font-size="12" text-anchor="middle">${esc(ch.id)}</text>`;
+    for (let i = 0; i < half; i++) {
+      const pb = i + 1, pt = n - i;
+      [[pb, true], [pt, false]].forEach(([k, bottom]) => {
+        const p = ch.pins[k] || { role: '', net: '', kind: 'free' }, x = px(i), c = col(p.kind);
         const y0 = bottom ? by + bh : by - ph;
         s += `<rect x="${x - pw / 2}" y="${y0}" width="${pw}" height="${ph}" fill="#d9dee7" stroke="#7f8da3"/>`;
-        s += `<text x="${x}" y="${bottom ? y0 + 15 : y0 + 15}" font-family="monospace" font-size="12" text-anchor="middle" fill="#0b2545" font-weight="700">${n}</text>`;
+        s += `<text x="${x}" y="${y0 + 15}" font-family="monospace" font-size="12" text-anchor="middle" fill="#0f1f3d" font-weight="700">${k}</text>`;
         const ty = bottom ? y0 + ph + 16 : y0 - 22;
         s += `<text x="${x}" y="${ty}" font-family="monospace" font-size="11" text-anchor="middle" fill="${c}" font-weight="700">${esc(p.role)}</text>`;
-        s += `<text x="${x}" y="${bottom ? ty + 14 : ty - 13}" font-family="monospace" font-size="10" text-anchor="middle" fill="#0b2545">${esc(String(p.net).length > 9 ? String(p.net).slice(0, 9) + '…' : p.net)}</text>`;
+        s += `<text x="${x}" y="${bottom ? ty + 14 : ty - 13}" font-family="monospace" font-size="10" text-anchor="middle" fill="#0f1f3d">${esc(String(p.net).length > 9 ? String(p.net).slice(0, 9) + '…' : p.net)}</text>`;
       });
     }
     return s + '</svg>';
+  }
+
+  /* comparador de magnitud 74LS85 (4 bits por chip, en cascada) */
+  function cmp85(N) {
+    const k = Math.ceil(N / 4), chips = [], nets = [];
+    for (let c = 0; c < k; c++) {
+      const bit = (j, L) => (4 * c + j < N ? L + (4 * c + j) : 'GND');
+      const last = c === k - 1;
+      const outNet = t => (last ? { gt: 'Mayor', eq: 'Igual', lt: 'Menor' }[t] : t + c);
+      const lo = c === 0;
+      const pins = {
+        1: { role: 'B3', net: bit(3, 'B'), kind: 'in' }, 2: { role: 'A<B in', net: lo ? 'GND' : 'lt' + (c - 1), kind: 'in' },
+        3: { role: 'A=B in', net: lo ? 'VCC' : 'eq' + (c - 1), kind: 'in' }, 4: { role: 'A>B in', net: lo ? 'GND' : 'gt' + (c - 1), kind: 'in' },
+        5: { role: 'A>B out', net: outNet('gt'), kind: 'out' }, 6: { role: 'A=B out', net: outNet('eq'), kind: 'out' }, 7: { role: 'A<B out', net: outNet('lt'), kind: 'out' },
+        8: { role: 'GND', net: 'GND', kind: 'pwr' }, 9: { role: 'B0', net: bit(0, 'B'), kind: 'in' }, 10: { role: 'A0', net: bit(0, 'A'), kind: 'in' },
+        11: { role: 'B1', net: bit(1, 'B'), kind: 'in' }, 12: { role: 'A1', net: bit(1, 'A'), kind: 'in' }, 13: { role: 'A2', net: bit(2, 'A'), kind: 'in' },
+        14: { role: 'B2', net: bit(2, 'B'), kind: 'in' }, 15: { role: 'A3', net: bit(3, 'A'), kind: 'in' }, 16: { role: 'VCC', net: '+5 V', kind: 'pwr' }
+      };
+      const lines = [`Compara A${Math.min(N - 1, 4 * c + 3)}..A${4 * c} con B${Math.min(N - 1, 4 * c + 3)}..B${4 * c}`,
+        lo ? 'Entradas en cascada: pin 2 = GND, pin 3 = +5 V, pin 4 = GND' : `Entradas en cascada: pines 2, 3, 4 vienen del chip ${c} (salidas 7, 6, 5)`,
+        last ? 'Salidas finales: pin 5 = Mayor, pin 6 = Igual, pin 7 = Menor' : `Salidas: pines 5, 6, 7 van a las entradas en cascada del chip ${c + 2}`,
+        'Pin 16 = +5 V · Pin 8 = GND'];
+      if (4 * c + 4 > N) lines.splice(1, 0, `Bits sin usar: A y B a GND (pines ${[15, 1, 13, 14, 11, 12, 10, 9].slice(0, 0).join('')}iguales en ambos)`);
+      chips.push({ id: '7485-' + (c + 1), n: 16, spec: { chip: '74LS85', sym: '7485', name: 'COMP', big: 'comparador de magnitud de 4 bits' }, type: 'CMP', pins, slots: [], lines,
+        title: '74LS85 · comparador de magnitud de 4 bits', sub: `Chip ${c + 1} de ${k} · bits ${4 * c}–${Math.min(N - 1, 4 * c + 3)}`, used: 1, cap: 1, idx: c + 1 });
+    }
+    chips.forEach(ch => { Object.entries(ch.pins).forEach(([p, v]) => { if (v.kind === 'in' || v.kind === 'out') nets.push({ net: v.net, from: v.kind === 'out' ? ch.id + ' pin ' + p : 'Entrada', to: v.kind === 'in' ? [ch.id + ' pin ' + p] : ['Salida'] }); }); });
+    return { chips, nets, total: k, spare: 0, counts: { '74LS85': k }, skippedFF: 0 };
   }
 
   function chipText(ch) {
@@ -97,5 +126,5 @@
     if (ch.cap > ch.used) t += `  Compuertas libres: ${ch.cap - ch.used} (conecta sus entradas a GND)\n`;
     return t;
   }
-  return { plan, svg, chipText, CHIP, TTLTYPES, prepare };
+  return { plan, svg, chipText, cmp85, CHIP, TTLTYPES, prepare };
 });

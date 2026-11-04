@@ -2,10 +2,12 @@
 (function () {
   'use strict';
   const $ = s => document.querySelector(s);
-  const NM = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor' };
-  const NAME = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor' };
+  const NM = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor', cmp: 'comparador' };
+  const NAME = NM;
   const dl = (n, t) => window.Lab2.download(n, t);
-  let cur = { op: 'add', n: 4, nl: null }, cache = {}, hLang = 'v', hKind = 's', tIdx = 0, ttlPlan = null;
+  let cur = { op: 'add', n: 4, nl: null }, cache = {}, hLang = 'v', hKind = 's', tIdx = 0, ttlPlan = null, tMode = 'g';
+  const setPlan = () => { ttlPlan = (cur.op === 'cmp' && tMode === '85') ? L2T.cmp85(cur.n) : L2T.plan(cur.nl); $('#tMode').hidden = cur.op !== 'cmp'; };
+  document.querySelectorAll('#tMode button').forEach(x => x.onclick = () => { document.querySelectorAll('#tMode button').forEach(y => y.classList.remove('on')); x.classList.add('on'); tMode = x.dataset.m; tIdx = 0; setPlan(); renderTtl(); });
   const tbl = (head, rows) => '<div class="tw"><table><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr>' + rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</table></div>';
   const cnt = nl => { const c = { AND: 0, OR: 0, XOR: 0, NOT: 0 }; nl.gates.forEach(g => c[g.t] = (c[g.t] || 0) + 1); return c; };
   const base = () => NM[cur.op] + cur.n;
@@ -14,10 +16,8 @@
   window.Lab2Hook = function (op, n) {
     const same = cur.op === op && cur.n === n && cur.nl;
     cur.op = op; cur.n = n;
-    if (!same) { cur.nl = L2.BUILD[op](n); cur.min = cur.orig = null; cache = {}; tIdx = 0; ttlPlan = L2T.plan(cur.nl); renderCmp(); renderTtl(); renderHdl(); }
+    if (!same) { cur.nl = L2.BUILD[op](n); cur.min = cur.orig = null; cache = {}; tIdx = 0; setPlan(); renderCmp(); renderTtl(); renderHdl(); }
     $('#dlO').disabled = n > 3; $('#dlM').disabled = n > 5;
-    $('#dlO').title = n > 3 ? 'Solo hasta 3 bits (6 variables): con más, el circuito de minitérminos es enorme' : '';
-    $('#dlM').title = n > 5 ? 'Hasta 5 bits (10 variables)' : '';
     $('#edLoadM').disabled = n > 3;
   };
   $('#dlW').onclick = () => dl(`${base()}_cables.circ`, L2W.toCirc(cur.nl));
@@ -36,10 +36,7 @@
       else rows.push(['Original (minitérminos)', '—', '—', '—', '—', '—', 'muy grande', '—']);
       if (n <= 5) { const t0 = performance.now(); const m = L2M.build(op, n, 'min'); rows.push(['Reducida (Quine-McCluskey)', ...stat(m), m.info.products, m.info.literals]); cur.minMs = Math.round(performance.now() - t0); }
       else rows.push(['Reducida (Quine-McCluskey)', '—', '—', '—', '—', '—', '—', '—']);
-      let note = `<p class="muted">Variables de entrada: <b>${2 * n}</b> (${n <= 2 ? 'caben en un mapa de Karnaugh grande' : n === 2.5 ? '' : 'se reduce con Quine-McCluskey'}). Conteo en compuertas de 2 entradas + NOT. `;
-      if (n >= 3) note += 'Nota: la forma por etapas suele ser <b>más pequeña</b> que cualquier suma de productos de dos niveles, porque reutiliza el acarreo; la reducción por QM acorta cada salida por separado.';
-      box.innerHTML = tbl(['Versión', 'Compuertas', 'AND', 'OR', 'XOR', 'NOT', 'Productos', 'Literales'], rows) + note + '</p>' +
-        (n <= 5 ? `<p class="muted">QM calculado en ${cur.minMs} ms en tu navegador. Todas las versiones se comprobaron con la tabla completa en Logisim.</p>` : '');
+      box.innerHTML = tbl(['Versión', 'Compuertas', 'AND', 'OR', 'XOR', 'NOT', 'Productos', 'Literales'], rows);
     }, 20);
   }
 
@@ -60,13 +57,8 @@
   function renderHdl() {
     const t = hdlText(); cache.h = t;
     $('#hCode').textContent = t.code;
-    const lat = { add: '1 ciclo', sub: '1 ciclo', mul: cur.n + 1 + ' ciclos', div: cur.n + 1 + ' ciclos' }[cur.op];
-    $('#hNote').textContent = hKind === 'q'
-      ? `Con reloj: señales clk, rst, start y done. Aplica A y B, sube start un ciclo y espera done (${lat}).`
-      : hKind === 's' ? 'Estructural: una asignación por compuerta, igual que el circuito de Logisim.' : 'Comportamental: describe la operación y deja que la herramienta de síntesis arme el circuito.';
-    $('#hNote').textContent += ' Probado con ' + (hLang === 'v' ? 'Icarus Verilog' : 'GHDL') + ' contra la aritmética real (todas las combinaciones hasta 5 bits).';
   }
-  $('#hCopy').onclick = () => { const t = cache.h.code; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('#hCopy').textContent = 'Copiado ✔'; setTimeout(() => $('#hCopy').textContent = 'Copiar', 1200); }).catch(() => { const r = document.createRange(); r.selectNodeContents($('#hCode')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }); };
+  $('#hCopy').onclick = () => { const t = cache.h.code; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('#hCopy').textContent = 'Copiado'; setTimeout(() => $('#hCopy').textContent = 'Copiar', 1200); }).catch(() => { const r = document.createRange(); r.selectNodeContents($('#hCode')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }); };
   $('#hDl').onclick = () => dl(cache.h.name + '.' + cache.h.ext, cache.h.code);
   $('#hTb').onclick = () => dl(cache.h.name + '_tb.' + cache.h.ext, cache.h.tb);
 
@@ -74,17 +66,15 @@
   function renderTtl() {
     const p = ttlPlan, n = cur.n;
     const parts = Object.entries(p.counts).map(([k, v]) => `${v} × ${k}`).join(' · ');
-    $('#ttlSum').innerHTML = `<p><b>${p.total}</b> chips en total: ${parts}. Alimenta todos con +5 V en el pin 14 y GND en el pin 7. Entradas: interruptores DIP; salidas: LED con resistencia de 330 Ω a GND.</p>` +
-      (n > 5 ? '<p class="warn">Con ' + n + ' bits son muchos chips; en clase se arman 4 o 5 bits.</p>' : '') +
-      (p.spare ? `<p class="muted">Quedan ${p.spare} compuertas libres: conecta sus entradas a GND.</p>` : '');
+    $('#ttlSum').innerHTML = `<p class="tx"><b>${p.total}</b> chips: ${parts}. Alimentación: +5 V en el pin VCC y GND en el pin GND de cada chip. Entradas con interruptores DIP; salidas con LED y resistencia de 330 Ω a GND.` +
+      (p.spare ? ` Compuertas libres: ${p.spare}; sus entradas van a GND.` : '') + (n > 5 && cur.op !== 'cmp' ? ` Con ${n} bits el montaje es grande; en clase se arman 4 o 5 bits.` : '') + '</p>';
     const sel = $('#tSel'); sel.innerHTML = p.chips.map((c, i) => `<option value="${i}">${i + 1}. ${c.id} · ${c.spec.chip}</option>`).join('');
     drawCards();
-    $('#ttlQuick').innerHTML = `TTL: <b>${p.total}</b> chips (${parts}) → <a href="#ttl">ver cada chip</a>`;
     $('#ttlNets').innerHTML = tbl(['red', 'sale de', 'llega a'], p.nets.map(x => [x.net, x.from, x.to.join(', ')]));
   }
   function card(ch, i) {
-    const lines = ch.slots.map(s => `<li><b>Compuerta ${s.n}</b>: <code>${s.expr}</code> — entradas: pin ${s.ins.map(x => x.pin).join(' y pin ')}, salida: pin ${s.outPin}${s.dest.length ? ' → ' + s.dest.join(', ') : ''}</li>`).join('');
-    return `<figure class="ttlcard"><figcaption><span class="num">${i + 1} / ${ttlPlan.total}</span><b>${ch.title}</b><small>${ch.sub} · ${ch.used}/${ch.cap} compuertas en uso</small></figcaption>${L2T.svg(ch)}<ul class="ttlist">${lines}${ch.cap > ch.used ? `<li class="muted">${ch.cap - ch.used} compuerta(s) libre(s): entradas a GND.</li>` : ''}<li class="muted">Pin 14 = +5 V · Pin 7 = GND</li></ul></figure>`;
+    const lines = ch.lines ? ch.lines.map(t => `<li>${t}</li>`).join('') : ch.slots.map(s => `<li><b>Compuerta ${s.n}</b>: <code>${s.expr}</code> — entradas: pin ${s.ins.map(x => x.pin).join(' y pin ')}, salida: pin ${s.outPin}${s.dest.length ? ' → ' + s.dest.join(', ') : ''}</li>`).join('');
+    return `<figure class="ttlcard"><figcaption><span class="num">${i + 1} / ${ttlPlan.total}</span><b>${ch.title}</b><small>${ch.sub} · ${ch.used}/${ch.cap} compuertas en uso</small></figcaption>${L2T.svg(ch)}<ul class="ttlist">${lines}${ch.cap > ch.used ? `<li>${ch.cap - ch.used} compuerta(s) libre(s): entradas a GND.</li>` : ''}${ch.lines ? '' : '<li>Pin 14 = +5 V · Pin 7 = GND</li>'}</ul></figure>`;
   }
   function drawCards() {
     const p = ttlPlan, all = $('#tAll').checked;
@@ -105,34 +95,34 @@
   /* ---------- editor ---------- */
   const ed = L2E.init($('#edHost'));
   let running = false, savedNL = null;
-  const msg = (t, bad) => { $('#edMsg').textContent = t || ''; $('#edMsg').className = bad ? 'warn' : 'muted'; };
+  const msg = (t) => { $('#edMsg').textContent = t || ''; $('#edMsg').hidden = !t; };
   function loadNL(nl, what) {
-    if (nl.gates.length > 300) { msg(`El circuito de ${what} tiene ${nl.gates.length} compuertas: demasiado grande para dibujarlo aquí. Usa 1–3 bits o descarga el .circ.`, true); return; }
-    ed.loadNetlist(nl, L2W); msg(`Cargado: ${what} (${nl.gates.length} compuertas). Cambia los interruptores y mira los LED.`); $('#edBack').hidden = true;
+    if (nl.gates.length > 300) { msg(`${what}: ${nl.gates.length} compuertas, demasiado grande para el editor (máx. 300)`, true); return; }
+    ed.loadNetlist(nl, L2W); msg(`${what}: ${nl.gates.length} compuertas`); $('#edBack').hidden = true;
   }
   $('#edLoad').onclick = () => loadNL(cur.nl, `${NAME[cur.op]} de ${cur.n} bits`);
   $('#edLoadM').onclick = () => loadNL(L2M.build(cur.op, cur.n, 'min'), `${NAME[cur.op]} de ${cur.n} bits, reducido por QM`);
-  $('#edRun').onclick = () => { running = ed.run(!running, +$('#edSpd').value); $('#edRun').textContent = running ? '⏸ Pausar reloj' : '▶ Reloj'; };
+  $('#edRun').onclick = () => { running = ed.run(!running, +$('#edSpd').value); $('#edRun').textContent = running ? 'Pausar' : 'Reloj'; };
   $('#edSpd').onchange = () => { if (running) ed.run(true, +$('#edSpd').value); };
   $('#edTick').onclick = () => ed.tick();
-  $('#edClr').onclick = () => { ed.clear(); msg('Lienzo vacío.'); $('#edTab').innerHTML = ''; };
+  $('#edClr').onclick = () => { ed.clear(); msg(''); $('#edTab').innerHTML = ''; };
   $('#edTT').onclick = () => {
     const t = ed.truth(); if (t.error) { msg(t.error, true); return; }
-    if (!t.ins.length || !t.nl.outputs.length) { msg('Necesitas al menos un interruptor y un LED conectados.', true); return; }
-    $('#edTab').innerHTML = tbl([...t.ins, ...t.nl.outputs.map(o => o.label)], t.rows.map(r => [...t.ins.map(i => r.v[i]), ...t.nl.outputs.map(o => '<b>' + r.out[o.label] + '</b>')])); msg(`Tabla de ${t.rows.length} filas del circuito dibujado.`);
+    if (!t.ins.length || !t.nl.outputs.length) { msg('Falta al menos un interruptor y un LED conectados', true); return; }
+    $('#edTab').innerHTML = tbl([...t.ins, ...t.nl.outputs.map(o => o.label)], t.rows.map(r => [...t.ins.map(i => r.v[i]), ...t.nl.outputs.map(o => '<b>' + r.out[o.label] + '</b>')])); msg(`${t.rows.length} filas`);
   };
   $('#edRed').onclick = () => {
     const t = ed.truth(); if (t.error) { msg(t.error, true); return; }
-    if (!t.ins.length || !t.nl.outputs.length) { msg('Dibuja el circuito primero (interruptores, compuertas y LED).', true); return; }
+    if (!t.ins.length || !t.nl.outputs.length) { msg('Falta dibujar el circuito (interruptores, compuertas y LED)', true); return; }
     const tt = t.nl.outputs.map(o => ({ label: o.label, ones: [], dc: [] }));
     t.rows.forEach((r, k) => t.nl.outputs.forEach((o, j) => { if (r.out[o.label]) tt[j].ones.push(k); }));
     const red = L2M.buildTT(tt, t.ins, t.ins, 'min', 'reducido');
     const before = t.nl.gates.length; savedNL = t.nl;
     ed.loadNetlist(red, L2W); $('#edBack').hidden = false;
-    msg(`Reducido con Quine-McCluskey: ${before} → ${red.gates.length} compuertas (suma de productos mínima por salida; ${red.info.products} productos, ${red.info.literals} literales).` + (red.gates.length > before ? ' La suma de productos de dos niveles puede ser mayor que usar compuertas XOR/XNOR.' : ''));
+    msg(`QM: ${before} → ${red.gates.length} compuertas (${red.info.products} productos, ${red.info.literals} literales)`);
   };
-  $('#edBack').onclick = () => { if (savedNL) { ed.loadNetlist(savedNL, L2W); $('#edBack').hidden = true; msg('Circuito original restaurado.'); } };
-  const nlOk = () => { const nl = ed.toNetlist(); if (!nl.inputs.length || !nl.outputs.length) { msg('Agrega al menos un interruptor (o reloj) y un LED antes de exportar.', true); return null; } if (nl.warns.length) msg('Aviso: ' + nl.warns.join('; ')); return nl; };
+  $('#edBack').onclick = () => { if (savedNL) { ed.loadNetlist(savedNL, L2W); $('#edBack').hidden = true; msg('Circuito original'); } };
+  const nlOk = () => { const nl = ed.toNetlist(); if (!nl.inputs.length || !nl.outputs.length) { msg('Falta al menos un interruptor (o reloj) y un LED', true); return null; } if (nl.warns.length) msg(nl.warns.join('; ')); return nl; };
   $('#edCirc').onclick = () => { const nl = nlOk(); if (nl) dl('circuito_editor.circ', L2W.toCirc(nl)); };
   $('#edV').onclick = () => { const nl = nlOk(); if (nl) dl('circuito_editor.v', L2H.verilogStruct(nl, 'circuito')); };
   $('#edVH').onclick = () => { const nl = nlOk(); if (nl) dl('circuito_editor.vhd', L2H.vhdlStruct(nl, 'circuito')); };

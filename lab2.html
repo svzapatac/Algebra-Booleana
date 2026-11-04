@@ -4,135 +4,109 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache">
-<title>Lab 2 · Aritmética digital con Logisim</title>
-<link rel="stylesheet" href="lab2.css?v=4">
+<title>Lab 2 · Aritmética digital</title>
+<link rel="stylesheet" href="lab2.css?v=5">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="logo">L2</span><div><b>Aritmética digital</b><small>Lab 2 · Diseño Lógico</small></div></div>
-  <nav><a href="#ttl">TTL</a><a href="#editor">Editor</a><a href="#reducida">Original vs reducida</a><a href="#hdl">HDL</a><a href="index.html">← Lab 1</a></nav>
+  <div class="wrap bar">
+    <div class="brand"><span class="tag">LAB 2</span><span>Aritmética digital</span></div>
+    <nav>
+      <a href="#resultado">Resultado</a><a href="#pasos">Paso a paso</a><a href="#ttl">TTL</a><a href="#editor">Editor</a><a href="#reduccion">Reducción</a><a href="#hdl">HDL</a><a href="index.html" class="ext">Lab 1</a>
+    </nav>
+  </div>
 </header>
 
-<main>
-<section class="hero">
-  <h1>Sumador, restador, multiplicador y divisor de <em id="hN">4</em> bits</h1>
-  <p>Elige la operación y el tamaño. La página calcula el paso a paso, genera el circuito <b>Logisim-evolution 5.0 (.circ)</b> en tu navegador y te da el plano para armarlo con chips <b>TTL</b>.</p>
-</section>
-
-<section class="panel ctl">
-  <div class="tabs" id="ops" role="tablist">
-    <button data-op="add" class="on">Sumador</button><button data-op="sub">Restador</button>
-    <button data-op="mul">Multiplicador</button><button data-op="div">Divisor</button>
+<main class="wrap">
+<section class="sec" id="operacion">
+  <h2><span>01</span>Operación</h2>
+  <div class="seg" id="ops" role="tablist">
+    <button data-op="add" class="on">Sumador</button><button data-op="sub">Restador</button><button data-op="mul">Multiplicador</button><button data-op="div">Divisor</button><button data-op="cmp">Comparador</button>
   </div>
-  <div class="row">
-    <label>Bits (N)<input id="n" type="range" min="1" max="8" value="4"><output id="nv">4</output></label>
+  <div class="fields">
+    <label>Bits<input id="n" type="range" min="1" max="8" value="4"><output id="nv">4</output></label>
     <label>A<input id="a" type="number" min="0" value="11"></label>
     <label id="lb">B<input id="b" type="number" min="0" value="6"></label>
-    <button id="rnd" class="ghost">Aleatorio</button>
+    <button id="rnd" class="btn">Aleatorio</button>
   </div>
-  <div id="warn" class="warn" hidden></div>
+  <div id="warn" class="note" hidden></div>
 </section>
 
-<section class="grid">
-  <article class="panel" id="resBox"></article>
-  <article class="panel">
-    <h2>Descargar para Logisim</h2>
-    <p class="muted">Los archivos se crean al instante en tu navegador (no hay servidor). Se abren con <b>File → Open</b> en <b>Logisim-evolution 5.0.0</b> (formato nativo, sin avisos).</p>
+<section class="sec cols" id="resultado">
+  <div>
+    <h2><span>02</span>Resultado</h2>
+    <div id="resBox"></div>
+  </div>
+  <div>
+    <h2><span></span>Descargas Logisim-evolution 5.0</h2>
     <div class="dl">
-      <button id="dlW" class="pri">⬇ Circuito con cables (.circ)</button>
-      <button id="dlB" class="pri alt">⬇ Bloques Logisim (.circ)</button>
-      <button id="dlO" class="ghost">⬇ Original · minitérminos (.circ)</button>
-      <button id="dlM" class="ghost">⬇ Reducida · Quine-McCluskey (.circ)</button>
+      <button id="dlW" class="btn solid">Circuito con cables</button>
+      <button id="dlB" class="btn">Bloques Logisim</button>
+      <button id="dlO" class="btn">Original (minitérminos)</button>
+      <button id="dlM" class="btn">Reducida (Quine-McCluskey)</button>
     </div>
-    <div id="stats" class="stats"></div>
-    <p class="muted" id="ttlQuick"></p>
-  </article>
+    <div id="stats" class="tags"></div>
+  </div>
 </section>
 
-<section class="panel">
-  <h2>Paso a paso de <span id="opName"></span></h2>
+<section class="sec" id="pasos">
+  <h2><span>03</span>Paso a paso · <em id="opName"></em></h2>
   <div id="steps"></div>
 </section>
 
-<section class="panel" id="ttl">
-  <h2>Plano TTL, chip por chip</h2>
+<section class="sec" id="ttl">
+  <h2><span>04</span>Plano TTL</h2>
+  <div class="seg small" id="tMode" hidden><button data-m="g" class="on">Con compuertas</button><button data-m="85" >74LS85</button></div>
   <div id="ttlSum"></div>
-  <div class="pager"><button id="tPrev" class="ghost">◀</button><select id="tSel"></select><button id="tNext" class="ghost">▶</button><label class="inl"><input type="checkbox" id="tAll"> ver todos</label><button id="dlT" class="ghost">⬇ Plano (.txt)</button></div>
+  <div class="pager"><button id="tPrev" class="btn">Anterior</button><select id="tSel"></select><button id="tNext" class="btn">Siguiente</button><label class="inl"><input type="checkbox" id="tAll"> Ver todos</label><button id="dlT" class="btn">Descargar plano</button></div>
   <div id="ttlCards"></div>
-  <details><summary>Tabla de cableado completa</summary><div id="ttlNets"></div></details>
+  <details><summary>Tabla de cableado</summary><div id="ttlNets"></div></details>
 </section>
 
-<section class="panel" id="simBox">
-  <h2>Vista por etapas en vivo</h2>
-  <p class="muted">Haz clic en los interruptores de entrada para cambiar 0/1. Cada compuerta del circuito muestra su valor en vivo (azul = 1, gris = 0). Es el mismo circuito que se descarga en el .circ.</p>
-  <div id="simIn" class="sw"></div>
-  <div id="simOut" class="leds"></div>
-  <div id="simCells" class="cells"></div>
-</section>
-
-<section class="panel" id="editor">
-  <h2>Editor estilo Logisim <small class="muted">(todo dentro de la página)</small></h2>
-  <p class="muted">Elige una pieza de la paleta y haz clic en el lienzo. Con <b>🖐 Mano</b>: arrastra de un pin a otro para tender un cable, clic en un interruptor para cambiarlo, arrastra una pieza para moverla y pulsa <b>Suprimir</b> para borrar. Todo se simula en vivo.</p>
-  <div class="edtools">
-    <button id="edLoad" class="pri">Cargar la operación actual</button>
-    <button id="edLoadM" class="ghost">Cargar la versión reducida</button>
-    <button id="edRun" class="ghost">▶ Reloj</button>
-    <button id="edTick" class="ghost">Paso de reloj</button>
-    <label class="inl">Velocidad <select id="edSpd"><option value="1000">lenta</option><option value="500" selected>media</option><option value="150">rápida</option></select></label>
-    <button id="edTT" class="ghost">Tabla de verdad</button>
-    <button id="edRed" class="ghost">Reducir lo dibujado (QM)</button>
-    <button id="edBack" class="ghost" hidden>Volver al original</button>
-    <button id="edClr" class="ghost">Limpiar</button>
+<section class="sec" id="editor">
+  <h2><span>05</span>Editor</h2>
+  <div class="tools">
+    <button id="edLoad" class="btn solid">Cargar operación</button>
+    <button id="edLoadM" class="btn">Cargar reducida</button>
+    <button id="edRun" class="btn">Reloj</button>
+    <button id="edTick" class="btn">Paso</button>
+    <select id="edSpd"><option value="1000">Lenta</option><option value="500" selected>Media</option><option value="150">Rápida</option></select>
+    <button id="edTT" class="btn">Tabla de verdad</button>
+    <button id="edRed" class="btn">Reducir (QM)</button>
+    <button id="edBack" class="btn" hidden>Volver al original</button>
+    <button id="edClr" class="btn">Limpiar</button>
   </div>
   <div id="edHost"></div>
-  <div class="dl row3">
-    <button id="edCirc" class="pri">⬇ .circ (cables)</button>
-    <button id="edV" class="ghost">⬇ Verilog</button>
-    <button id="edVH" class="ghost">⬇ VHDL</button>
+  <div class="tools">
+    <button id="edCirc" class="btn solid">.circ</button><button id="edV" class="btn">Verilog</button><button id="edVH" class="btn">VHDL</button>
   </div>
-  <div id="edMsg" class="muted"></div>
+  <div id="edMsg" class="note" hidden></div>
   <div id="edTab"></div>
 </section>
 
-<section class="panel" id="reducida">
-  <h2>Original vs reducida con métodos</h2>
-  <p class="muted">Cada salida se escribe como tabla de verdad de las 2N entradas. <b>Original</b> = suma de todos los minitérminos. <b>Reducida</b> = Quine-McCluskey (en la división, B = 0 se toma como indiferente). <b>Estructural</b> = la construcción por etapas (sumador completo, etc.).</p>
+<section class="sec" id="reduccion">
+  <h2><span>06</span>Estructural · original · reducida</h2>
   <div id="cmp"></div>
 </section>
 
-<section class="panel" id="hdl">
-  <h2>Código HDL con reloj</h2>
-  <div class="row">
-    <div class="tabs mini" id="hLang"><button data-v="v" class="on">Verilog</button><button data-v="h">VHDL</button></div>
-    <div class="tabs mini" id="hKind"><button data-v="s" class="on">Estructural</button><button data-v="b">Comportamental</button><button data-v="q">Con reloj (secuencial)</button></div>
+<section class="sec" id="hdl">
+  <h2><span>07</span>HDL</h2>
+  <div class="fields">
+    <div class="seg small" id="hLang"><button data-v="v" class="on">Verilog</button><button data-v="h">VHDL</button></div>
+    <div class="seg small" id="hKind"><button data-v="s" class="on">Estructural</button><button data-v="b">Comportamental</button><button data-v="q">Con reloj</button></div>
+    <button id="hCopy" class="btn">Copiar</button><button id="hDl" class="btn solid">Descargar</button><button id="hTb" class="btn">Banco de prueba</button>
   </div>
-  <div class="dl row3"><button id="hCopy" class="ghost">Copiar</button><button id="hDl" class="pri">⬇ Descargar</button><button id="hTb" class="ghost">⬇ Banco de prueba</button></div>
-  <p id="hNote" class="muted"></p>
   <pre id="hCode" class="code"></pre>
 </section>
-
-
-<section class="panel how">
-  <h2>Cómo usar los archivos en Logisim</h2>
-  <ol>
-    <li>Descarga el <b>.circ</b> (compuertas = cada AND/OR/XOR/NOT dibujada; bloques = usa Adder/Subtractor/Multiplier/Divider de la librería Aritmética).</li>
-    <li>Ábrelo en <b>Logisim-evolution 5.0.0</b> con <b>File → Open</b>. Los archivos están en el formato nativo de esa versión, así que no aparece el aviso de «formato antiguo».</li>
-    <li>Herramienta de la manita: haz clic en los pines de entrada para poner 0/1 y mira las salidas.</li>
-    <li>Los circuitos con cables se tienden con wires reales (sin túneles); cada red tiene su propia pista para que no se toquen.</li>
-  </ol>
-  <h3>¿Funciona en GitHub Pages?</h3>
-  <p>Sí. GitHub Pages solo sirve archivos estáticos, pero el <code>.circ</code> es texto XML: el JavaScript lo escribe en memoria, lo convierte en un <code>Blob</code> y el navegador lo descarga. Todo ocurre en tu equipo; no se envía nada a ningún servidor.</p>
-  <p class="muted">Los circuitos generados se verificaron con Logisim-evolution 5.0.0 (tabla de verdad completa) contra la aritmética real.</p>
-</section>
 </main>
-<footer>Lab 2 · Universidad Distrital · Diseño Lógico · build 4-nov-2026 (v4)</footer>
-<script src="l2core.js?v=4"></script>
-<script src="l2wire.js?v=4"></script>
-<script src="l2min.js?v=4"></script>
-<script src="l2hdl.js?v=4"></script>
-<script src="l2ttl.js?v=4"></script>
-<script src="l2edit.js?v=4"></script>
-<script src="lab2.js?v=4"></script>
-<script src="lab2b.js?v=4"></script>
+<footer class="wrap">Lab 2 · Universidad Distrital · Diseño Lógico · build 4-nov-2026 v5</footer>
+<script src="l2core.js?v=5"></script>
+<script src="l2wire.js?v=5"></script>
+<script src="l2min.js?v=5"></script>
+<script src="l2hdl.js?v=5"></script>
+<script src="l2ttl.js?v=5"></script>
+<script src="l2edit.js?v=5"></script>
+<script src="lab2.js?v=5"></script>
+<script src="lab2b.js?v=5"></script>
 </body>
 </html>

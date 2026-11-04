@@ -70,6 +70,20 @@
     return { op: 'div', N, a, b, rows, quotient: Q, remainder: A, ok: Q === a / b && A === a % b };
   }
 
+  function stepsCmp(N, a, b) {
+    a = B(a); b = B(b);
+    const rows = []; let eq = 1, res = null, first = -1;
+    for (let i = N - 1; i >= 0; i--) {
+      const x = bit(a, i), y = bit(b, i), xi = x === y ? 1 : 0, gt = x & (1 - y), lt = (1 - x) & y;
+      const before = eq;
+      if (before && !xi && res === null) { res = gt ? '>' : '<'; first = i; }
+      eq = before & xi;
+      rows.push({ i, a: x, b: y, x: xi, gt, lt, prefix: before, eq });
+    }
+    if (res === null) res = '=';
+    return { op: 'cmp', N, a, b, rows, rel: res, first, mayor: a > b ? 1 : 0, igual: a === b ? 1 : 0, menor: a < b ? 1 : 0 };
+  }
+
   /* ================= NETLIST DE COMPUERTAS ================= */
   function NL(name) {
     const nl = { name, gates: [], inputs: [], outputs: [], cellInfo: {}, cur: null, uid: 0 };
@@ -194,7 +208,32 @@
     return nl;
   }
 
-  const BUILD = { add: buildAdd, sub: buildSub, mul: buildMul, div: buildDiv };
+  function buildCmp(N) {
+    const nl = NL('comparador');
+    for (let i = 0; i < N; i++) nl.input('A' + i);
+    for (let i = 0; i < N; i++) nl.input('B' + i);
+    const x = [], gt = [], lt = [];
+    for (let i = 0; i < N; i++) {
+      nl.cell(i, 0, 'Bit ' + i);
+      const nA = nl.NOT('A' + i, 'nA' + i), nB = nl.NOT('B' + i, 'nB' + i);
+      x.push(nl.NOT(nl.XOR('A' + i, 'B' + i, 'd' + i), 'x' + i));
+      gt.push(nl.AND('A' + i, nB, 'gt' + i));
+      lt.push(nl.AND(nA, 'B' + i, 'lt' + i));
+    }
+    // prefijos de igualdad desde el bit más significativo
+    const pre = new Array(N); pre[N - 1] = null;           // sin condición previa
+    for (let i = N - 2; i >= 0; i--) pre[i] = pre[i + 1] == null ? x[i + 1] : nl.AND(pre[i + 1], x[i + 1], 'e' + i);
+    const orAll = (arr, tag) => { let c = arr[0]; for (let k = 1; k < arr.length; k++) c = nl.OR(c, arr[k], tag + k); return c; };
+    const termG = [], termL = [];
+    for (let i = N - 1; i >= 0; i--) {
+      termG.push(pre[i] == null ? gt[i] : nl.AND(pre[i], gt[i], 'tg' + i));
+      termL.push(pre[i] == null ? lt[i] : nl.AND(pre[i], lt[i], 'tl' + i));
+    }
+    let eq = x[0]; for (let i = 1; i < N; i++) eq = nl.AND(eq, x[i], 'q' + i);
+    nl.output('Mayor', orAll(termG, 'og')); nl.output('Igual', eq); nl.output('Menor', orAll(termL, 'ol'));
+    return nl;
+  }
+  const BUILD = { add: buildAdd, sub: buildSub, mul: buildMul, div: buildDiv, cmp: buildCmp };
 
   /* evaluación de la netlist (para verificar contra la aritmética) */
   function evalNL(nl, vals) {
@@ -303,6 +342,7 @@
 
   /* bloques de la librería Aritmética de Logisim, con buses de N bits */
   function toCircBlocks(op, N) {
+    if (op === 'cmp') return toCircCmp(N);
     const name = { add: 'Adder', sub: 'Subtractor', mul: 'Multiplier', div: 'Divider' }[op];
     const cx = 520, cy = 200;
     let out = HEAD;
@@ -320,6 +360,18 @@
     const botLabel = { add: 'Cout', sub: 'Prestamo', mul: 'P_alto', div: 'R' }[op];
     const botW = (op === 'mul' || op === 'div') ? N : 1;
     out += W(cx - 20, cy + 20, cx - 20, cy + 70) + W(cx - 20, cy + 70, cx + 100, cy + 70) + pinOut(cx + 100, cy + 70, botLabel, botW);
+    return out + TAIL;
+  }
+
+  function toCircCmp(N) {
+    const cx = 520, cy = 200;
+    let out = HEAD;
+    out += pinIn(100, cy - 10, 'A', N) + W(100, cy - 10, cx - 40, cy - 10);
+    out += pinIn(100, cy + 50, 'B', N) + W(100, cy + 50, 140, cy + 50) + W(140, cy + 50, 140, cy + 10) + W(140, cy + 10, cx - 40, cy + 10);
+    out += `    <comp lib="3" loc="(${cx},${cy})" name="Comparator">\n      <a name="width" val="${N}"/>\n      <a name="mode" val="unsigned"/>\n    </comp>\n`;
+    out += W(cx, cy - 10, cx + 40, cy - 10) + W(cx + 40, cy - 10, cx + 40, cy - 50) + W(cx + 40, cy - 50, cx + 100, cy - 50) + pinOut(cx + 100, cy - 50, 'Mayor', 1);
+    out += W(cx, cy, cx + 100, cy) + pinOut(cx + 100, cy, 'Igual', 1);
+    out += W(cx, cy + 10, cx + 20, cy + 10) + W(cx + 20, cy + 10, cx + 20, cy + 50) + W(cx + 20, cy + 50, cx + 100, cy + 50) + pinOut(cx + 100, cy + 50, 'Menor', 1);
     return out + TAIL;
   }
 
@@ -357,5 +409,5 @@
     return { chips, total, nets: list, spare: chips.reduce((s, c) => s + (c.cap - c.used), 0) };
   }
 
-  return { stepsAdd, stepsSub, stepsMul, stepsDiv, BUILD, evalNL, stats, toCirc, toCircBlocks, ttlPlan, bin, bit, mask };
+  return { stepsAdd, stepsSub, stepsMul, stepsDiv, stepsCmp, BUILD, evalNL, stats, toCirc, toCircBlocks, ttlPlan, bin, bit, mask };
 });

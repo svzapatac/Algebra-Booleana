@@ -11,6 +11,7 @@
     const names = op === 'add' ? [...Array(N).keys()].map(i => 'S' + i).concat('Cout')
       : op === 'sub' ? [...Array(N).keys()].map(i => 'D' + i).concat('Prestamo')
         : op === 'mul' ? [...Array(2 * N).keys()].map(i => 'P' + i)
+          : op === 'cmp' ? ['Mayor', 'Igual', 'Menor']
           : [...Array(N).keys()].map(i => 'Q' + i).concat([...Array(N).keys()].map(i => 'R' + i));
     names.forEach(n => outs.push({ label: n, ones: [], dc: [] }));
     for (let a = 0; a < M; a++) for (let b = 0; b < M; b++) {
@@ -18,6 +19,7 @@
       if (op === 'add') { const s = a + b; v = (s & (M - 1)) | ((s >> N) << N); }
       else if (op === 'sub') { v = ((a - b) & (M - 1)) | ((a < b ? 1 : 0) << N); }
       else if (op === 'mul') v = a * b;
+      else if (op === 'cmp') v = (a > b ? 1 : 0) | (a === b ? 2 : 0) | (a < b ? 4 : 0);
       else { if (b === 0) { outs.forEach(o => o.dc.push(idx)); continue; } v = Math.floor(a / b) | ((a % b) << N); }
       outs.forEach((o, k) => { if ((v >> k) & 1) o.ones.push(idx); });
     }

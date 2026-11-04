@@ -81,6 +81,7 @@
     const hd = (nm, io) => `module ${nm}(\n${io}\n);\n`;
     if (op === 'add') return hd('sumador' + N, `  input [${n1}:0] A, B,\n  input Cin,\n  output [${n1}:0] S,\n  output Cout`) + `  assign {Cout, S} = A + B + Cin;\nendmodule\n`;
     if (op === 'sub') return hd('restador' + N, `  input [${n1}:0] A, B,\n  output [${n1}:0] D,\n  output Cout, Prestamo`) + `  wire [${N}:0] t = {1'b0, A} + {1'b0, ~B} + 1'b1;\n  assign D = t[${n1}:0];\n  assign Cout = t[${N}];\n  assign Prestamo = ~t[${N}];\nendmodule\n`;
+    if (op === 'cmp') return hd('comparador' + N, `  input [${n1}:0] A, B,\n  output Mayor, Igual, Menor`) + `  assign Mayor = (A > B);\n  assign Igual = (A == B);\n  assign Menor = (A < B);\nendmodule\n`;
     if (op === 'mul') return hd('multiplicador' + N, `  input [${n1}:0] A, B,\n  output [${2 * N - 1}:0] P`) + `  assign P = A * B;\nendmodule\n`;
     return hd('divisor' + N, `  input [${n1}:0] A, B,\n  output [${n1}:0] Q, R`) + `  assign Q = (B == 0) ? {${N}{1'b0}} : A / B;\n  assign R = (B == 0) ? {${N}{1'b0}} : A % B;\nendmodule\n`;
   }
@@ -107,6 +108,21 @@ module ${isA ? 'sumador' : 'restador'}${N}_seq(
 endmodule
 `;
     }
+    if (op === 'cmp') return `// Comparador de ${N} bits con registro de salida (un ciclo de reloj)
+module comparador${N}_seq(
+  input clk, rst, start,
+  input [${n1}:0] A, B,
+  output reg Mayor, Igual, Menor, done
+);
+  always @(posedge clk) begin
+    if (rst) begin Mayor <= 0; Igual <= 0; Menor <= 0; done <= 0; end
+    else begin
+      done <= start;
+      if (start) begin Mayor <= (A > B); Igual <= (A == B); Menor <= (A < B); end
+    end
+  end
+endmodule
+`;
     if (op === 'mul') return `// Multiplicador de ${N} bits secuencial (suma y desplazamiento): ${N} ciclos
 module multiplicador${N}_seq(
   input clk, rst, start,
@@ -195,6 +211,16 @@ begin
   Prestamo <= not t(${N});
 end architecture;
 `;
+    if (op === 'cmp') return VH + `entity comparador${N} is
+  port (A, B : in ${SLV(n1)}; Mayor, Igual, Menor : out std_logic);
+end entity;
+architecture rtl of comparador${N} is
+begin
+  Mayor <= '1' when unsigned(A) > unsigned(B) else '0';
+  Igual <= '1' when unsigned(A) = unsigned(B) else '0';
+  Menor <= '1' when unsigned(A) < unsigned(B) else '0';
+end architecture;
+`;
     if (op === 'mul') return VH + `entity multiplicador${N} is
   port (A, B : in ${SLV(n1)}; P : out ${SLV(2 * N - 1)});
 end entity;
@@ -249,6 +275,29 @@ begin
 end architecture;
 `;
     }
+    if (op === 'cmp') return VH + `-- Comparador de ${N} bits con registro de salida (un ciclo)
+entity comparador${N}_seq is
+  port (clk, rst, start : in std_logic; A, B : in ${SLV(n1)}; Mayor, Igual, Menor, done : out std_logic);
+end entity;
+architecture rtl of comparador${N}_seq is
+  signal g, e, l, dn : std_logic := '0';
+begin
+  Mayor <= g; Igual <= e; Menor <= l; done <= dn;
+  process(clk) begin
+    if rising_edge(clk) then
+      if rst = '1' then g <= '0'; e <= '0'; l <= '0'; dn <= '0';
+      else
+        dn <= start;
+        if start = '1' then
+          if unsigned(A) > unsigned(B) then g <= '1'; else g <= '0'; end if;
+          if unsigned(A) = unsigned(B) then e <= '1'; else e <= '0'; end if;
+          if unsigned(A) < unsigned(B) then l <= '1'; else l <= '0'; end if;
+        end if;
+      end if;
+    end if;
+  end process;
+end architecture;
+`;
     if (op === 'mul') return VH + `-- Multiplicador de ${N} bits secuencial (suma y desplazamiento)
 entity multiplicador${N}_seq is
   port (clk, rst, start : in std_logic; A, B : in ${SLV(n1)}; P : out ${SLV(2 * N - 1)}; done : out std_logic);
@@ -320,22 +369,23 @@ end architecture;
   }
 
   /* ---------- bancos de prueba ---------- */
-  const NM = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor' };
+  const NM = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor', cmp: 'comparador' };
   function exp(op) { return { add: 'S + (Cout<<N)', sub: '', mul: '', div: '' }[op]; }
 
   function verilogTB(op, N, dut, seq, noCin) {
     const M = 1 << N, full = N <= 5;
-    const ports = { add: noCin ? '.S(S), .Cout(Cout)' : '.S(S), .Cout(Cout), .Cin(Cin)', sub: '.D(D), .Cout(Cout), .Prestamo(Prestamo)', mul: '.P(P)', div: '.Q(Q), .R(R)' }[op];
-    const decl = { add: `wire [${N - 1}:0] S; wire Cout; reg Cin = 0;`, sub: `wire [${N - 1}:0] D; wire Cout, Prestamo;`, mul: `wire [${2 * N - 1}:0] P;`, div: `wire [${N - 1}:0] Q, R;` }[op];
+    const ports = { add: noCin ? '.S(S), .Cout(Cout)' : '.S(S), .Cout(Cout), .Cin(Cin)', sub: '.D(D), .Cout(Cout), .Prestamo(Prestamo)', mul: '.P(P)', div: '.Q(Q), .R(R)', cmp: '.Mayor(Mayor), .Igual(Igual), .Menor(Menor)' }[op];
+    const decl = { add: `wire [${N - 1}:0] S; wire Cout; reg Cin = 0;`, sub: `wire [${N - 1}:0] D; wire Cout, Prestamo;`, mul: `wire [${2 * N - 1}:0] P;`, div: `wire [${N - 1}:0] Q, R;`, cmp: 'wire Mayor, Igual, Menor;' }[op];
     const chk = {
       add: `{Cout, S} !== a + b + Cin`,
       sub: `D !== ((a - b) & ${M - 1}) || Prestamo !== (a < b)`,
       mul: `P !== a * b`,
-      div: `Q !== a / b || R !== a % b`
+      div: `Q !== a / b || R !== a % b`,
+      cmp: `Mayor !== (a > b) || Igual !== (a == b) || Menor !== (a < b)`
     }[op];
     const seqIo = seq ? `reg clk = 0, rst = 1, start = 0; wire done; ${op === 'div' ? 'wire error;' : ''}\n  always #5 clk = ~clk;` : '';
     const extra = seq ? `, .clk(clk), .rst(rst), .start(start), .done(done)${op === 'div' ? ', .error(error)' : ''}` : '';
-    const apply = seq ? `A = a; B = b; ${op === 'add' ? 'Cin = cn; ' : ''}start = 1; @(posedge clk); #1 start = 0; ${op === 'add' || op === 'sub' ? '@(posedge clk); #1;' : 'while (!done) @(posedge clk); #1;'}` : `A = a; B = b; ${op === 'add' ? 'Cin = cn; ' : ''}#1;`;
+    const apply = seq ? `A = a; B = b; ${op === 'add' ? 'Cin = cn; ' : ''}start = 1; @(posedge clk); #1 start = 0; ${op === 'add' || op === 'sub' || op === 'cmp' ? '@(posedge clk); #1;' : 'while (!done) @(posedge clk); #1;'}` : `A = a; B = b; ${op === 'add' ? 'Cin = cn; ' : ''}#1;`;
     return `\`timescale 1ns/1ps
 module tb;
   reg [${N - 1}:0] A, B; ${decl}
@@ -375,17 +425,19 @@ endmodule
       add: `signal S : std_logic_vector(${n1} downto 0); signal Cout, Cin : std_logic := '0';`,
       sub: `signal D : std_logic_vector(${n1} downto 0); signal Cout, Prestamo : std_logic;`,
       mul: `signal P : std_logic_vector(${2 * N - 1} downto 0);`,
-      div: `signal Q, R : std_logic_vector(${n1} downto 0);${seq ? ' signal err : std_logic;' : ''}`
+      div: `signal Q, R : std_logic_vector(${n1} downto 0);${seq ? ' signal err : std_logic;' : ''}`,
+      cmp: 'signal Mayor, Igual, Menor : std_logic;'
     }[op];
-    const pm = { add: 'S => S, Cout => Cout, Cin => Cin', sub: 'D => D, Cout => Cout, Prestamo => Prestamo', mul: 'P => P', div: 'Q => Q, R => R' }[op] + (seq ? ', clk => clk, rst => rst, start => start, done => done' + (op === 'div' ? ', error => err' : '') : '');
+    const pm = { add: 'S => S, Cout => Cout, Cin => Cin', sub: 'D => D, Cout => Cout, Prestamo => Prestamo', mul: 'P => P', div: 'Q => Q, R => R', cmp: 'Mayor => Mayor, Igual => Igual, Menor => Menor' }[op] + (seq ? ', clk => clk, rst => rst, start => start, done => done' + (op === 'div' ? ', error => err' : '') : '');
     const chk = {
       add: `(unsigned(Cout & S) /= to_unsigned(va + vb + cn, ${N + 1}))`,
       sub: `(unsigned(D) /= to_unsigned((va - vb + ${M}) mod ${M}, ${N})) or ((Prestamo = '1') /= (va < vb))`,
       mul: `(unsigned(P) /= to_unsigned(va * vb, ${2 * N}))`,
-      div: `(unsigned(Q) /= to_unsigned(va / vb, ${N})) or (unsigned(R) /= to_unsigned(va mod vb, ${N}))`
+      div: `(unsigned(Q) /= to_unsigned(va / vb, ${N})) or (unsigned(R) /= to_unsigned(va mod vb, ${N}))`,
+      cmp: `((Mayor = '1') /= (va > vb)) or ((Igual = '1') /= (va = vb)) or ((Menor = '1') /= (va < vb))`
     }[op];
     const body = seq
-      ? `A <= std_logic_vector(to_unsigned(va, ${N})); B <= std_logic_vector(to_unsigned(vb, ${N}));${op === 'add' ? " if cn = 1 then Cin <= '1'; else Cin <= '0'; end if;" : ''} start <= '1'; wait until rising_edge(clk); wait for 1 ns; start <= '0';\n      ${op === 'add' || op === 'sub' ? 'wait until rising_edge(clk); wait for 1 ns;' : "while done = '0' loop wait until rising_edge(clk); wait for 1 ns; end loop;"}`
+      ? `A <= std_logic_vector(to_unsigned(va, ${N})); B <= std_logic_vector(to_unsigned(vb, ${N}));${op === 'add' ? " if cn = 1 then Cin <= '1'; else Cin <= '0'; end if;" : ''} start <= '1'; wait until rising_edge(clk); wait for 1 ns; start <= '0';\n      ${op === 'add' || op === 'sub' || op === 'cmp' ? 'wait until rising_edge(clk); wait for 1 ns;' : "while done = '0' loop wait until rising_edge(clk); wait for 1 ns; end loop;"}`
       : `A <= std_logic_vector(to_unsigned(va, ${N})); B <= std_logic_vector(to_unsigned(vb, ${N}));${op === 'add' ? " if cn = 1 then Cin <= '1'; else Cin <= '0'; end if;" : ''} wait for 1 ns;`;
     const loop = full ? `for it in 0 to ${M * M * (op === 'add' ? 2 : 1) - 1} loop va := (it / ${M}) mod ${M}; vb := it mod ${M}; cn := it / ${M * M};` : `for it in 0 to 599 loop uniform(s1, s2, rr); va := integer(rr * real(${M}) - 0.5); uniform(s1, s2, rr); vb := integer(rr * real(${M}) - 0.5); cn := va mod 2;`;
     return `library ieee;

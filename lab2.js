@@ -1,10 +1,10 @@
 (function () {
   'use strict';
   const $ = s => document.querySelector(s);
-  const NAMES = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor' };
+  const NAMES = { add: 'sumador', sub: 'restador', mul: 'multiplicador', div: 'divisor', cmp: 'comparador' };
   let op = 'add';
   const bin = L2.bin;
-  window.Lab2 = { download: null };
+  window.Lab2 = {};
 
   function download(name, text) {
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -17,112 +17,72 @@
   const N = () => +$('#n').value;
   const maxV = () => (1n << BigInt(N())) - 1n;
   function vals() {
-    const m = maxV(); let a = BigInt(Math.max(0, Math.floor(+$('#a').value || 0))), b = BigInt(Math.max(0, Math.floor(+$('#b').value || 0)));
+    const m = maxV(); const a = BigInt(Math.max(0, Math.floor(+$('#a').value || 0))), b = BigInt(Math.max(0, Math.floor(+$('#b').value || 0)));
     return { a: a > m ? m : a, b: b > m ? m : b, clipped: a > m || b > m };
   }
   const tbl = (head, rows) => '<div class="tw"><table><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr>' +
     rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</table></div>';
-  const st = (t, body) => '<div class="st"><b>' + t + '</b><div>' + body + '</div></div>';
+  const st = (t, body) => '<div class="st"><h3>' + t + '</h3>' + body + '</div>';
+  const RL = r => (r === '<' ? '&lt;' : r === '>' ? '&gt;' : '=');
+  const eq = t => '<div class="eq">' + t + '</div>';
 
   function renderSteps(n, a, b) {
     const A = bin(a, n), Bs = bin(b, n);
+    const bins = st('Binario', eq(`A = ${a} = ${A}\nB = ${b} = ${Bs}`));
     if (op === 'add') {
       const s = L2.stepsAdd(n, a, b);
-      return st('1. Escribe A y B en binario', `<div class="eq">A = ${a} = ${A}\nB = ${b} = ${Bs}</div>`) +
-        st('2. Suma bit a bit desde el bit 0 (derecha)', 'En cada columna: <code>S = A ⊕ B ⊕ Cin</code> y <code>Cout = A·B + Cin·(A ⊕ B)</code>. El acarreo de salida pasa a la columna siguiente.' +
-          tbl(['bit', 'A', 'B', 'Cin', 'S', 'Cout'], s.rows.map(r => [r.i, r.a, r.b, r.cin, r.s, r.cout]))) +
-        st('3. Lee el resultado', `<div class="eq">Cout final = ${s.carry}\nS = ${bin(s.result, n)} (${s.result})\nCon acarreo: ${s.carry}${bin(s.result, n)} = ${s.total}</div>` +
-          (s.overflow ? '<span class="no">Hay desbordamiento: el resultado no cabe en ' + n + ' bits (Cout = 1).</span>' : '<span class="ok">Sin desbordamiento.</span>')) +
-        st('4. Comprobación', `${a} + ${b} = ${a + b} ${s.total === a + b ? '<span class="ok">✔</span>' : '<span class="no">✘</span>'}`) +
-        st('5. En Logisim / TTL', 'Cadena de ' + n + ' sumadores completos (2 XOR + 2 AND + 1 OR cada uno; el bit 0 con Cin = 0 se reduce a semisumador si lo prefieres).');
+      return bins + st('Suma por columnas', tbl(['bit', 'A', 'B', 'Cin', 'S', 'Cout'], s.rows.map(r => [r.i, r.a, r.b, r.cin, r.s, r.cout]))) +
+        st('Resultado', eq(`Cout = ${s.carry}\nS    = ${bin(s.result, n)} (${s.result})\nTotal = ${s.carry}${bin(s.result, n)} = ${s.total}\nDesbordamiento: ${s.overflow ? 'sí' : 'no'}`)) +
+        st('Comprobación', eq(`${a} + ${b} = ${a + b}   ${s.total === a + b ? 'OK' : 'ERROR'}`));
     }
     if (op === 'sub') {
       const s = L2.stepsSub(n, a, b);
-      return st('1. Idea', 'A − B = A + (complemento a 2 de B) = A + NOT(B) + 1. Se reutiliza el sumador.') +
-        st('2. Invierte B (NOT bit a bit)', `<div class="eq">B  = ${Bs}\n~B = ${bin(s.nb, n)}   (complemento a 1)\n+1 = ${bin(s.twos, n)}   (complemento a 2)</div>`) +
-        st('3. Suma A + ~B con acarreo inicial Cin = 1', tbl(['bit', 'A', '~B', 'Cin', 'D', 'Cout'], s.rows.map(r => [r.i, r.a, r.bn, r.cin, r.s, r.cout]))) +
-        st('4. Interpreta el acarreo', `Cout = ${s.carry}. ` + (s.borrow
-          ? `<span class="no">Cout = 0 → hubo préstamo (A &lt; B).</span> Resultado en complemento a 2: ${bin(s.result, n)} = −${s.magnitude}.`
-          : `<span class="ok">Cout = 1 → no hay préstamo (A ≥ B).</span> Resultado: ${bin(s.result, n)} = ${s.result}.`)) +
-        st('5. Comprobación', `${a} − ${b} = ${s.diff} ${('' + (s.borrow ? (s.result - (1n << BigInt(n))) : s.result)) === ('' + s.diff) ? '<span class="ok">✔</span>' : '<span class="no">✘</span>'}`);
+      return bins + st('Complemento a 2 de B', eq(`B  = ${Bs}\n~B = ${bin(s.nb, n)}\n-B = ${bin(s.twos, n)}`)) +
+        st('A + ~B + 1', tbl(['bit', 'A', '~B', 'Cin', 'D', 'Cout'], s.rows.map(r => [r.i, r.a, r.bn, r.cin, r.s, r.cout]))) +
+        st('Resultado', eq(`Cout = ${s.carry}\nPréstamo = ${s.borrow ? 1 : 0}\nD = ${bin(s.result, n)}${s.borrow ? '  (complemento a 2, valor −' + s.magnitude + ')' : '  (' + s.result + ')'}`)) +
+        st('Comprobación', eq(`${a} − ${b} = ${s.diff}   ${(s.borrow ? s.result - (1n << BigInt(n)) : s.result) === s.diff ? 'OK' : 'ERROR'}`));
     }
     if (op === 'mul') {
       const s = L2.stepsMul(n, a, b);
-      return st('1. Productos parciales', 'Por cada bit Bi de B: si Bi = 1 se copia A desplazada i lugares; si Bi = 0 la fila es 0. Cada celda es una compuerta AND (<code>Aj·Bi</code>).') +
-        st('2. Filas', tbl(['i', 'Bi', 'fila (A · Bi · 2^i)', 'acumulado'], s.rows.map(r => [r.i, r.bi, r.ppStr, r.accStr]))) +
-        st('3. Suma de las filas', 'Las filas se suman con sumadores (la primera fila pasa directo; las demás se acumulan con una fila de semisumadores/sumadores completos). Resultado de 2N = ' + (2 * n) + ' bits.') +
-        st('4. Resultado', `<div class="eq">${a} × ${b} = ${s.result}\nP = ${bin(s.result, 2 * n)}</div>`) +
-        st('5. Comprobación', s.check ? '<span class="ok">✔ la suma de filas coincide</span>' : '<span class="no">✘</span>');
+      return bins + st('Productos parciales', tbl(['i', 'Bi', 'A·Bi·2^i', 'acumulado'], s.rows.map(r => [r.i, r.bi, r.ppStr, r.accStr]))) +
+        st('Resultado', eq(`P = ${bin(s.result, 2 * n)} = ${s.result}`)) +
+        st('Comprobación', eq(`${a} × ${b} = ${a * b}   ${s.check ? 'OK' : 'ERROR'}`));
+    }
+    if (op === 'cmp') {
+      const s = L2.stepsCmp(n, a, b);
+      return bins + st('Bits de mayor a menor', tbl(['bit', 'Ai', 'Bi', 'Xi = Ai⊙Bi', 'iguales antes', 'Ai·Bi′', 'Ai′·Bi'], s.rows.map(r => [r.i, r.a, r.b, r.x, r.prefix, r.gt, r.lt]))) +
+        st('Resultado', eq(`Mayor (A>B) = ${s.mayor}\nIgual (A=B) = ${s.igual}\nMenor (A&lt;B) = ${s.menor}\n${s.rel === '=' ? 'A = B' : 'Primer bit distinto: ' + s.first + ' → A ' + RL(s.rel) + ' B'}`)) +
+        st('Comprobación', eq(`${a} ${RL(s.rel)} ${b}   ${(s.rel === '>' ? a > b : s.rel === '<' ? a < b : a === b) ? 'OK' : 'ERROR'}`));
     }
     const s = L2.stepsDiv(n, a, b);
-    if (s.error) return '<span class="no">' + s.error + '</span>';
-    return st('1. Idea (división con restauración)', 'Se baja un bit del dividendo por etapa. Se resta el divisor B: si el resultado no es negativo, el bit del cociente es 1 y se conserva; si es negativo, el bit es 0 y se restaura el valor anterior.') +
-      st('2. Etapas', tbl(['etapa', 'resto desplazado', 'R − B', 'q', 'resto'], s.rows.map(r => [r.k, r.shiftA, r.tStr, r.q, r.restored ? r.A + ' (restaurado)' : r.A]))) +
-      st('3. Resultado', `<div class="eq">${a} ÷ ${b}\nCociente Q = ${bin(s.quotient, n)} = ${s.quotient}\nResiduo R = ${bin(s.remainder, n)} = ${s.remainder}</div>`) +
-      st('4. Comprobación', `${s.quotient} × ${b} + ${s.remainder} = ${s.quotient * b + s.remainder} ${s.ok ? '<span class="ok">✔</span>' : '<span class="no">✘</span>'}`) +
-      st('5. En Logisim / TTL', 'Son ' + n + ' etapas en cascada, cada una con un restador de N+1 bits y un multiplexor (AND/OR) que elige entre la diferencia y el resto anterior.');
+    return bins + st('Etapas', tbl(['etapa', 'resto desplazado', 'R − B', 'q', 'resto'], s.rows.map(r => [r.k, r.shiftA, r.tStr, r.q, r.restored ? r.A + ' (restaurado)' : r.A]))) +
+      st('Resultado', eq(`Q = ${bin(s.quotient, n)} = ${s.quotient}\nR = ${bin(s.remainder, n)} = ${s.remainder}`)) +
+      st('Comprobación', eq(`${s.quotient} × ${b} + ${s.remainder} = ${s.quotient * b + s.remainder}   ${s.ok ? 'OK' : 'ERROR'}`));
   }
 
   function result(n, a, b) {
-    let h = `<h2>Resultado · ${NAMES[op]} de ${n} bits</h2><div class="chips"><span class="chip">A = ${bin(a, n)}</span><span class="chip">B = ${bin(b, n)}</span></div>`;
-    if (op === 'add') { const s = L2.stepsAdd(n, a, b); h += `<div class="big">${s.total} = ${s.carry}·${bin(s.result, n)}</div><p class="muted">${a} + ${b}</p>`; }
-    if (op === 'sub') { const s = L2.stepsSub(n, a, b); h += `<div class="big">${s.diff}</div><p class="muted">${a} − ${b} · salida ${bin(s.result, n)} · préstamo ${s.borrow ? 1 : 0}</p>`; }
-    if (op === 'mul') { const s = L2.stepsMul(n, a, b); h += `<div class="big">${s.result}</div><p class="muted">${a} × ${b} · P = ${bin(s.result, 2 * n)}</p>`; }
-    if (op === 'div') { const s = L2.stepsDiv(n, a, b); h += s.error ? `<div class="warn">${s.error}</div>` : `<div class="big">Q=${s.quotient} · R=${s.remainder}</div><p class="muted">${a} ÷ ${b}</p>`; }
+    const row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
+    let h = `<dl class="kv">${row('A', bin(a, n) + ' (' + a + ')')}${row('B', bin(b, n) + ' (' + b + ')')}</dl>`;
+    if (op === 'add') { const s = L2.stepsAdd(n, a, b); h += `<div class="big">${s.total}</div><dl class="kv">${row('S', bin(s.result, n))}${row('Cout', s.carry)}</dl>`; }
+    if (op === 'sub') { const s = L2.stepsSub(n, a, b); h += `<div class="big">${s.diff}</div><dl class="kv">${row('D', bin(s.result, n))}${row('Préstamo', s.borrow ? 1 : 0)}</dl>`; }
+    if (op === 'mul') { const s = L2.stepsMul(n, a, b); h += `<div class="big">${s.result}</div><dl class="kv">${row('P', bin(s.result, 2 * n))}</dl>`; }
+    if (op === 'div') { const s = L2.stepsDiv(n, a, b); h += `<div class="big">Q = ${s.quotient} · R = ${s.remainder}</div><dl class="kv">${row('Q', bin(s.quotient, n))}${row('R', bin(s.remainder, n))}</dl>`; }
+    if (op === 'cmp') { const s = L2.stepsCmp(n, a, b); h += `<div class="big">A ${RL(s.rel)} B</div><dl class="kv">${row('Mayor', s.mayor)}${row('Igual', s.igual)}${row('Menor', s.menor)}</dl>`; }
     return h;
   }
 
-  /* ---- simulador en la página ---- */
-  let simNL = null, simV = {};
-  function simSync(n, v) {
-    simNL = L2.BUILD[op](n); simV = {};
-    for (let i = 0; i < n; i++) { simV['A' + i] = Number((v.a >> BigInt(i)) & 1n); simV['B' + i] = Number((v.b >> BigInt(i)) & 1n); }
-    if (op === 'add') simV.Cin = 0;
-    simDraw();
-  }
-  function simDraw() {
-    const nl = simNL, n = N();
-    const out = L2.evalNL(nl, simV);
-    const val = Object.assign({ GND: 0, VCC: 1 }, simV);
-    for (const g of nl.gates) { const a = val[g.i[0]], b = g.i.length > 1 ? val[g.i[1]] : 0; val[g.o] = g.t === 'AND' ? a & b : g.t === 'OR' ? a | b : g.t === 'XOR' ? a ^ b : 1 - a; }
-    const swb = nl.inputs.slice().reverse().map(k => `<button class="tg ${simV[k] ? 'on' : ''}" data-k="${k}">${k}=${simV[k]}</button>`).join('');
-    let ia = 0, ib = 0; for (let i = 0; i < n; i++) { ia += simV['A' + i] << i; ib += simV['B' + i] << i; }
-    $('#simIn').innerHTML = '<b>Entradas</b>' + swb + `<span class="vv">A=${ia} · B=${ib}</span>`;
-    const dec = p => { let r = 0, k = 0; while (out[p + k] !== undefined) { r += out[p + k] * Math.pow(2, k); k++; } return r; };
-    let sum = '';
-    if (op === 'add') sum = `S + Cout = ${dec('S') + out.Cout * Math.pow(2, n)}`;
-    if (op === 'sub') sum = `D = ${dec('D')} · préstamo ${out.Prestamo}`;
-    if (op === 'mul') sum = `P = ${dec('P')}`;
-    if (op === 'div') sum = `Q = ${dec('Q')} · R = ${dec('R')}` + (ib === 0 ? ' (B=0: indefinido)' : '');
-    $('#simOut').innerHTML = '<b>Salidas</b>' + nl.outputs.slice().reverse().map(o => `<span class="led ${val[o.net] ? 'on' : ''}">${o.label}=${val[o.net]}</span>`).join('') + `<span class="vv">${sum}</span>`;
-    const cells = {}; let maxc = 0;
-    for (const g of nl.gates) { (cells[g.cell] = cells[g.cell] || []).push(g); }
-    const keys = Object.keys(cells), cols = {};
-    keys.forEach(k => { const ci = nl.cellInfo[k]; maxc = Math.max(maxc, ci.col); });
-    const rowsSet = [...new Set(keys.map(k => nl.cellInfo[k].row))].sort((a, b) => a - b);
-    const wrap = $('#simCells'); wrap.style.gridTemplateColumns = `repeat(${maxc + 1},minmax(120px,1fr))`;
-    let html = '';
-    rowsSet.forEach(r => { for (let c = 0; c <= maxc; c++) {
-      const k = c + ',' + r, gs = cells[k];
-      html += gs ? `<div class="cell"><small>${nl.cellInfo[k].label}</small>` + gs.map(g => `<div class="gt ${val[g.o] ? 'on' : ''}"><span>${g.t}</span><span>${g.o}=${val[g.o]}</span></div>`).join('') + '</div>' : '<div></div>';
-    } });
-    wrap.innerHTML = html;
-    $('#simIn').querySelectorAll('.tg').forEach(bn => bn.onclick = () => { simV[bn.dataset.k] ^= 1; simDraw(); });
-  }
-
   function render() {
-    const n = N(); $('#nv').textContent = n; $('#hN').textContent = n;
+    const n = N(); $('#nv').textContent = n;
     $('#opName').textContent = NAMES[op];
     $('#lb').firstChild.textContent = op === 'div' ? 'B (divisor)' : 'B';
-    const v = vals();
-    const w = $('#warn');
-    if (op === 'div' && v.b === 0n) { v.b = 1n; $('#b').value = 1; }
-    if (v.clipped) { w.hidden = false; w.textContent = 'Los valores se limitaron a ' + n + ' bits (máx. ' + maxV() + ').'; $('#a').value = v.a; $('#b').value = v.b; } else w.hidden = true;
+    const v = vals(), w = $('#warn'); let msg = '';
+    if (op === 'div' && v.b === 0n) { v.b = 1n; $('#b').value = 1; msg = 'B no puede ser 0'; }
+    if (v.clipped) { msg = 'Valores limitados a ' + n + ' bits (máx. ' + maxV() + ')'; $('#a').value = v.a; $('#b').value = v.b; }
+    w.hidden = !msg; w.textContent = msg;
     $('#resBox').innerHTML = result(n, v.a, v.b);
     $('#steps').innerHTML = renderSteps(n, v.a, v.b);
     const nl = L2.BUILD[op](n), s = L2.stats(nl);
-    $('#stats').innerHTML = ['AND', 'OR', 'XOR', 'NOT'].map(k => `<span class="chip">${k}: ${s[k]}</span>`).join('') + `<span class="chip">total: ${s.total}</span>`;
-    simSync(n, v);
+    $('#stats').innerHTML = ['AND', 'OR', 'XOR', 'NOT'].map(k => `<span>${k} ${s[k]}</span>`).join('') + `<span>Total ${s.total}</span>`;
     if (window.Lab2Hook) window.Lab2Hook(op, n, v);
   }
 
