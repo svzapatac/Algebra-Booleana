@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>Diagrama de flujo - Lab 2</title>
+<style>
+:root{--bg:#f3f5f9;--ink:#10213f;--mut:#5b6b85;--line:#cfd7e4;--card:#fff;--b1:#1f5fbf;--b2:#12356e;--sky:#e6edf8;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:52px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600}
+.tag{font:600 11px var(--mono);letter-spacing:.08em;background:var(--b2);color:#fff;padding:3px 7px}
+nav{display:flex;gap:2px;flex-wrap:wrap}
+nav a{color:var(--mut);text-decoration:none;font-size:13px;padding:6px 10px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--ink);border-color:var(--b1)}nav a.ext{margin-left:10px;color:var(--b1)}
+h1{font-size:22px;margin:28px 0 14px;color:var(--b2)}
+h2{font-size:16px;margin:0 0 12px;color:var(--b2);display:flex;gap:10px;align-items:center}
+h2 b{font:600 12px var(--mono);background:var(--b1);color:#fff;padding:2px 7px}
+section{background:var(--card);border:1px solid var(--line);padding:16px;margin:0 0 22px}
+.legend{display:flex;flex-wrap:wrap;gap:20px;align-items:center;font-size:13px;color:var(--mut);background:var(--card);border:1px solid var(--line);padding:12px 16px;margin-bottom:22px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sc{overflow-x:auto}
+.sc svg{display:block;width:100%;min-width:760px;height:auto}
+.n-term{fill:var(--b2)}
+.n-proc{fill:#fff;stroke:#8fa3c4;stroke-width:1.4}
+.n-io{fill:var(--sky);stroke:var(--b1);stroke-width:1.4}
+.n-sub{fill:var(--sky);stroke:var(--b2);stroke-width:1.4}
+.n-dec{fill:#fff;stroke:var(--b1);stroke-width:1.8}
+.n-side{fill:#fff;stroke:#8fa3c4;stroke-width:1.4;stroke-dasharray:5 4}
+.ln{stroke:var(--b2);stroke-width:1.5;fill:none}
+.tx{font:13px "Segoe UI",system-ui,sans-serif;fill:var(--ink);text-anchor:middle}
+.tx.w{fill:#fff;font-weight:600}
+.lb{font:600 12px "Segoe UI",system-ui,sans-serif;fill:var(--b1)}
+footer{color:var(--mut);font-size:12px;padding:6px 0 30px}
+</style></head><body>
+<header class="top"><div class="wrap bar">
+<div class="brand"><span class="tag">LAB 2</span><span>Diagrama de flujo</span></div>
+<nav><a href="#d1">General</a><a href="#d2">Archivo .circ</a><a href="#d3">Original y reducida</a><a href="#d4">TTL</a><a href="#d5">Editor</a><a href="#d6">HDL y verificación</a><a href="lab2.html" class="ext">Volver al Lab 2</a></div>
+</div></header>
+<main class="wrap">
+<h1>Lab 2 - Aritmética digital: qué hace el proyecto</h1>
+<div class="legend" id="legend"></div>
+<div id="out"></div>
+<footer>build 4-nov-2026 flujo v1</footer>
+</main>
+<script>
+const W=1000,CX=480,GAP=38,LH=17;
+const cv=document.createElement('canvas').getContext('2d');
+cv.font='13px "Segoe UI",system-ui,sans-serif';
+const mw=s=>cv.measureText(s).width;
+function wrap(t,maxW){const ws=t.split(' ');const L=[];let c='';for(const w of ws){const n=c?c+' '+w:w;if(mw(n)>maxW&&c){L.push(c);c=w}else c=n}if(c)L.push(c);return L}
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function txt(lines,cx,cy,cls){const y0=cy-(lines.length-1)*LH/2+4.5;return '<text class="tx '+(cls||'')+'" x="'+cx+'" y="'+y0+'">'+lines.map((l,i)=>'<tspan x="'+cx+'" dy="'+(i?LH:0)+'">'+esc(l)+'</tspan>').join('')+'</text>'}
+function shape(k,cx,cy,w,h,lines,cls){
+  let s='';
+  if(k==='term')s='<rect class="n-term" x="'+(cx-w/2)+'" y="'+(cy-h/2)+'" width="'+w+'" height="'+h+'" rx="'+h/2+'"/>'+txt(lines,cx,cy,'w');
+  else if(k==='io'){const x=cx-w/2,y=cy-h/2,d=14;s='<polygon class="n-io" points="'+(x+d)+','+y+' '+(x+w)+','+y+' '+(x+w-d)+','+(y+h)+' '+x+','+(y+h)+'"/>'+txt(lines,cx,cy)}
+  else if(k==='sub'){const x=cx-w/2,y=cy-h/2;s='<rect class="n-sub" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'"/><path class="ln" d="M'+(x+9)+','+y+'v'+h+'M'+(x+w-9)+','+y+'v'+h+'" style="stroke-width:1"/>'+txt(lines,cx,cy)}
+  else if(k==='side')s='<rect class="n-side" x="'+(cx-w/2)+'" y="'+(cy-h/2)+'" width="'+w+'" height="'+h+'" rx="4"/>'+txt(lines,cx,cy);
+  else if(k==='dec')s='<polygon class="n-dec" points="'+cx+','+(cy-h/2)+' '+(cx+w/2)+','+cy+' '+cx+','+(cy+h/2)+' '+(cx-w/2)+','+cy+'"/>'+txt(lines,cx,cy);
+  else s='<rect class="n-proc" x="'+(cx-w/2)+'" y="'+(cy-h/2)+'" width="'+w+'" height="'+h+'" rx="4"/>'+txt(lines,cx,cy);
+  return s;
+}
+function size(k,t,maxW){
+  if(k==='dec'){const L=wrap(t,150);const tw=Math.max(...L.map(mw));return{L,w:Math.round(tw*1.9+60),h:L.length*LH+44}}
+  const L=wrap(t,maxW||330);const tw=Math.max(...L.map(mw));
+  if(k==='term')return{L,w:Math.round(tw+56),h:32};
+  return{L,w:Math.round(tw+(k==='io'?60:k==='sub'?52:32)),h:L.length*LH+20};
+}
+function diagram(items){
+  let o='',y=26,prevB=null,nextGap=GAP,loops=0,pos={},joins=[],pend=[];
+  const arrow=(x,y1,y2)=>'<path class="ln" d="M'+x+','+y1+'V'+(y2-1)+'" marker-end="url(#ah)"/>';
+  const lbl=(x,y,t)=>'<text class="lb" x="'+x+'" y="'+y+'">'+esc(t)+'</text>';
+  for(const it of items){
+    if(it.fan){
+      const n=it.fan.length,bw=Math.min(230,Math.floor((W-200-(n-1)*18)/n));
+      const S=it.fan.map(f=>{const L=wrap(f.t,bw-22);return{L,f}});
+      const h=Math.max(...S.map(s=>s.L.length))*LH+20;
+      const busY=(prevB===null?y:prevB+nextGap/2);
+      const y0=busY+nextGap/2+(S.some(s=>s.f.lab)?10:0), cy=y0+h/2;
+      const tot=n*bw+(n-1)*18,x0=CX-tot/2;
+      if(prevB!==null)o+='<path class="ln" d="M'+CX+','+prevB+'V'+busY+'"/>';
+      o+='<path class="ln" d="M'+(x0+bw/2)+','+busY+'H'+(x0+tot-bw/2)+'"/>';
+      S.forEach((s,i)=>{const cx=x0+i*(bw+18)+bw/2;
+        o+=arrow(cx,busY,y0);
+        if(s.f.lab)o+=lbl(cx+6,busY+18,s.f.lab);
+        o+=shape(s.f.k||'proc',cx,cy,bw,h,s.L);});
+      const b2=y0+h+nextGap/2;
+      S.forEach((s,i)=>{const cx=x0+i*(bw+18)+bw/2;o+='<path class="ln" d="M'+cx+','+(y0+h)+'V'+b2+'"/>'});
+      o+='<path class="ln" d="M'+(x0+bw/2)+','+b2+'H'+(x0+tot-bw/2)+'M'+CX+','+b2+'"/>';
+      if(it.id)pos[it.id]={left:x0,cy};
+      prevB=b2;nextGap=GAP;y=b2;
+      // after merge, next connector starts at b2 with half gap
+      prevB=b2;nextGap=GAP;it._fan=true;
+      continue;
+    }
+    const z=size(it.k,it.t);
+    const top=(prevB===null)?y:prevB+(it._fanPrev?0:nextGap);
+    let tp=top;
+    if(prevB!==null&&items[items.indexOf(it)-1]&&items[items.indexOf(it)-1].fan)tp=prevB+GAP/2;
+    const cy=tp+z.h/2;
+    if(prevB!==null){o+=arrow(CX,prevB,tp);if(it.lab)o+=lbl(CX+8,prevB+(tp-prevB)/2+4,it.lab)}
+    // joins arriving at this node
+    for(const j of pend.filter(p=>p.id===it.id)){const yj=tp-GAP/2;
+      o+='<path class="ln" d="M'+j.xr+','+j.cy+'H'+(W-22)+'V'+yj+'H'+CX+'"/>'}
+    pend=pend.filter(p=>p.id!==it.id);
+    o+=shape(it.k,CX,cy,z.w,z.h,z.L);
+    pos[it.id||('n'+items.indexOf(it))]={left:CX-z.w/2,cy};
+    let g=GAP;
+    if(it.k==='dec'){
+      o+=lbl(CX+8,cy+z.h/2+15,it.down!==undefined?it.down:'Sí');
+      if(it.side){
+        const lx=CX+z.w/2+70,sw=Math.min(270,W-44-lx),sl=wrap(it.side.t,sw-22),sh=sl.length*LH+20;
+        const scx=lx+sw/2;
+        o+='<path class="ln" d="M'+(CX+z.w/2)+','+cy+'H'+(lx-1)+'" marker-end="url(#ah)"/>';
+        o+=lbl(CX+z.w/2+6,cy-6,it.side.lab||'No');
+        o+=shape('side',scx,cy,sw,sh,sl);
+        if(it.side.join){pend.push({id:it.side.join,xr:lx+sw,cy})}
+        else{const need=sh/2-z.h/2+12;g=Math.max(GAP,2*need);const ym=cy+z.h/2+g/2;
+          o+='<path class="ln" d="M'+scx+','+(cy+sh/2)+'V'+ym+'H'+CX+'"/>';}
+      }
+      if(it.back){
+        const tg=pos[it.back],Lx=34+14*(loops++);
+        o+='<path class="ln" d="M'+(CX-z.w/2)+','+cy+'H'+Lx+'V'+tg.cy+'H'+(tg.left-1)+'" marker-end="url(#ah)"/>';
+        o+=lbl(Math.max(Lx+6,CX-z.w/2-30),cy-6,it.backLab||'Sí');
+      }
+    }
+    prevB=tp+z.h;nextGap=g;y=prevB;
+  }
+  const H=y+26;
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img"><defs><marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0L9,4.5L0,9z" fill="#12356e"/></marker></defs>'+o+'</svg>';
+}
+const D=[
+{id:'d1',n:'01',t:'Flujo general de la página',items:[
+ {k:'term',t:'Inicio: se abre lab2.html'},
+ {k:'io',t:'Entrada: operación (suma, resta, multiplicación, división, comparador), cantidad de bits N de 1 a 8, valores A y B'},
+ {id:'conv',k:'proc',t:'Convertir A y B a enteros (BigInt) y a binario de N bits'},
+ {k:'dec',t:'¿A o B exceden N bits?',down:'No',side:{lab:'Sí',t:'Limitar al máximo 2^N - 1 y ajustar el campo'}},
+ {k:'dec',t:'¿Operación = división y B = 0?',down:'No',side:{lab:'Sí',t:'Forzar B = 1 para evitar división por cero'}},
+ {k:'proc',t:'Calcular el paso a paso: stepsAdd, stepsSub, stepsMul, stepsDiv o stepsCmp'},
+ {k:'proc',t:'Construir el netlist de compuertas con BUILD[operación](N)'},
+ {k:'sub',t:'Evaluar el netlist (evalNL) con A y B y obtener el resultado'},
+ {k:'io',t:'Mostrar resultado, tabla de pasos y conteo de compuertas por tipo'},
+ {k:'dec',t:'¿El usuario cambia operación, N, A o B?',down:'No',back:'conv',backLab:'Sí'},
+ {fan:[{lab:'Sección 02',t:'Descargas Logisim: cables, bloques, original, reducida'},{lab:'Sección 04',t:'TTL: chip por chip con referencia visual'},{lab:'Sección 05',t:'Editor en vivo tipo Logisim'},{lab:'Sección 06',t:'Estructural, original y reducida'},{lab:'Sección 07',t:'Código HDL Verilog y VHDL'}]},
+ {k:'term',t:'Fin'}]},
+{id:'d2',n:'02',t:'Generación del archivo .circ con cables',items:[
+ {k:'term',t:'Inicio: clic en Descargar Logisim (cables)'},
+ {k:'proc',t:'Tomar el netlist: compuertas, entradas, salidas y las señales que las unen'},
+ {k:'proc',t:'Asignar un nivel a cada compuerta (levelización); el flip-flop D corta los ciclos'},
+ {k:'proc',t:'Agrupar las compuertas en columnas según su nivel'},
+ {k:'proc',t:'Ordenar las filas de cada columna por baricentro (promedio de filas de sus fuentes)'},
+ {k:'proc',t:'Desfasar verticalmente cada columna para que los tramos de salida de columnas contiguas no coincidan (módulo 40)'},
+ {k:'dec',t:'¿Fuente y destino están en columnas adyacentes?',down:'Sí',side:{t:'Red lejana: asignar un carril horizontal debajo del circuito',lab:'No'}},
+ {k:'proc',t:'Asignar pistas verticales únicas por canal (coloreado de intervalos por borde izquierdo)'},
+ {k:'proc',t:'Calcular las coordenadas X de columnas y pistas, y las Y de cada pin con la geometría de cada compuerta'},
+ {k:'sub',t:'selfCheck: ninguna red comparte segmentos con otra'},
+ {k:'dec',t:'¿Tipo de descarga?',down:'Cables',side:{t:'Bloques: usar Sumador, Restador, Multiplicador, Divisor o Comparador de N bits',lab:'Bloques',join:'xml'}},
+ {k:'proc',t:'Cables: emitir una compuerta AND, OR, NOT, XOR... por nodo del netlist y un wire por tramo'},
+ {id:'xml',k:'proc',t:'Escribir el XML de Logisim-evolution 5.0.0: project source 5.0.0, librerías #Wiring a #Soc, circuito con appearance logisim_evolution'},
+ {k:'proc',t:'Crear un Blob y disparar el enlace a download'},
+ {k:'term',t:'Fin: el .circ se abre en Logisim-evolution 5'}]},
+{id:'d3',n:'03',t:'Versión original y versión reducida',items:[
+ {k:'term',t:'Inicio: sección 06'},
+ {k:'proc',t:'Generar la tabla de verdad: una fila por cada combinación de las entradas (A, B y acarreo o préstamo)'},
+ {k:'dec',t:'¿Operación = división?',down:'No',side:{lab:'Sí',t:'Marcar las filas con B = 0 como indiferentes (dc)'}},
+ {k:'dec',t:'¿Modo original?',down:'No',side:{t:'Original: un AND por minitérmino con salida 1 y un OR con todos los productos',lab:'Sí',join:'arb'}},
+ {k:'proc',t:'Agrupar minitérminos e indiferentes por cantidad de unos'},
+ {id:'comb',k:'proc',t:'Combinar pares que difieren en un solo bit y marcar los usados'},
+ {k:'dec',t:'¿Hubo combinaciones nuevas?',down:'No',back:'comb',backLab:'Sí'},
+ {k:'proc',t:'Implicantes primos = términos que quedaron sin marcar'},
+ {k:'proc',t:'Tabla de cobertura: filas implicantes, columnas minitérminos (los dc no se cubren)'},
+ {k:'proc',t:'Seleccionar los implicantes esenciales'},
+ {k:'dec',t:'¿Quedan 16 candidatos o menos?',down:'Sí',side:{t:'Selección voraz (el que más cubre) y quitar productos redundantes'}},
+ {k:'proc',t:'Compartir los productos iguales entre las distintas salidas'},
+ {id:'arb',k:'proc',t:'Construir árboles AND y OR de 2 entradas, con NOT para los literales negados'},
+ {k:'io',t:'Conteo de compuertas: original, reducida y estructural, lado a lado'},
+ {k:'term',t:'Fin'}]},
+{id:'d4',n:'04',t:'Sección TTL: chip por chip',items:[
+ {k:'term',t:'Inicio: sección 04'},
+ {k:'proc',t:'Tomar el netlist y sustituir cada XNOR por XOR + NOT'},
+ {k:'dec',t:'¿Comparador en modo 74LS85?',down:'No',side:{lab:'Sí',t:'Cascada de ceil(N/4) chips 74LS85 (DIP-16). El menos significativo recibe A=B en 1; los demás reciben las salidas del anterior',join:'red'}},
+ {id:'cg',k:'proc',t:'Por cada compuerta elegir el chip: AND 7408, OR 7432, XOR 7486, NOT 7404, NAND 7400, NOR 7402'},
+ {k:'dec',t:'¿Hay una ranura libre en un chip de ese tipo?',down:'Sí',side:{t:'Añadir un chip nuevo (DIP-14; 4 ranuras, 6 en el 7404)'}},
+ {k:'proc',t:'Asignar a la compuerta los pines de la ranura (entradas y salida)'},
+ {k:'dec',t:'¿Quedan compuertas por asignar?',down:'No',back:'cg',backLab:'Sí'},
+ {id:'red',k:'proc',t:'Unir los pines en redes, una por cada señal del netlist'},
+ {k:'proc',t:'Llevar a GND las entradas de las ranuras sin usar'},
+ {k:'proc',t:'Alimentar cada chip: DIP-14 pin 14 a +5 V y pin 7 a GND; DIP-16 pin 16 y pin 8'},
+ {k:'proc',t:'Dibujar cada chip en SVG con su título, referencia (U1, U2...), rol y red de cada pin'},
+ {k:'proc',t:'Paginar los chips para verlos uno por uno'},
+ {k:'io',t:'Descarga .txt con la lista de chips y las conexiones pin a pin'},
+ {k:'term',t:'Fin'}]},
+{id:'d5',n:'05',t:'Editor en vivo y simulación',items:[
+ {k:'term',t:'Inicio: sección 05'},
+ {k:'proc',t:'Cargar el circuito de la operación actual (distribución con L2W.layout) o empezar con el lienzo vacío'},
+ {k:'io',t:'Elegir herramienta: Mano, Interruptor, Reloj, LED, AND, OR, NOT, XOR, NAND, NOR, XNOR, Flip-flop D, 1, 0, Borrar'},
+ {id:'acc',fan:[{t:'Colocar: clic en la rejilla'},{t:'Cablear: arrastrar de un pin a otro'},{t:'Mover o borrar componentes'},{t:'Interruptor: alternar 0 y 1'},{t:'Reloj: un temporizador alterna 0 y 1'}]},
+ {k:'proc',t:'Reconstruir las redes con unión-búsqueda (union-find) sobre pines y cables'},
+ {k:'proc',t:'Marcar las fuentes: interruptores, reloj y constantes 1 y 0'},
+ {k:'dec',t:'¿Hubo flanco de subida del reloj?',down:'No',side:{lab:'Sí',t:'Cada flip-flop D copia Q <- D'}},
+ {k:'proc',t:'Iterar las compuertas hasta que ninguna salida cambie (máximo 80 pasadas)'},
+ {k:'proc',t:'Pintar cables en alto o bajo y encender los LED'},
+ {k:'dec',t:'¿El usuario sigue editando?',down:'No',back:'acc',backLab:'Sí'},
+ {fan:[{t:'Exportar .circ: toNetlist y L2W.toCirc'},{t:'Exportar Verilog o VHDL desde el netlist'},{t:'Tabla de verdad: recorre las 2^k combinaciones de los interruptores'},{t:'Reducir con Quine-McCluskey'}]},
+ {k:'term',t:'Fin'}]},
+{id:'d6',n:'06',t:'Código HDL y verificación',items:[
+ {k:'term',t:'Inicio: sección 07'},
+ {k:'io',t:'Elegir lenguaje (Verilog o VHDL) y tipo de diseño'},
+ {fan:[{lab:'Estructural',t:'Una asignación por compuerta; los buses se detectan con índices contiguos desde 0'},{lab:'Comportamental',t:'Operadores +, -, *, / y comparaciones sobre vectores de N bits'},{lab:'Con reloj',t:'Suma, resta y comparación en 1 ciclo; multiplicación y división en N+1 ciclos con done y error'}]},
+ {k:'proc',t:'Añadir el banco de prueba: recorre los casos, compara con la aritmética y termina la simulación'},
+ {k:'io',t:'Copiar o descargar el archivo .v o .vhd'},
+ {id:'gen',k:'proc',t:'Verificación fuera de línea: generar los .circ (88 aritméticos y 22 comparadores) y los HDL'},
+ {fan:[{t:'Logisim-evolution 5.0.0 en modo tabla (--no-splash -t table)'},{t:'iverilog y vvp para Verilog'},{t:'ghdl con --std=08 para VHDL'},{t:'Playwright: editor, exportaciones y página'}]},
+ {k:'proc',t:'Comparar cada fila de salida contra la aritmética de enteros'},
+ {k:'dec',t:'¿Hay errores?',down:'No',back:'gen',backLab:'Sí'},
+ {k:'proc',t:'Hacer commit y push a la rama principal'},
+ {k:'proc',t:'GitHub Pages publica el sitio en 1 a 3 minutos'},
+ {k:'term',t:'Fin'}]}
+];
+document.getElementById('legend').innerHTML=
+ [['term','Inicio o fin'],['proc','Proceso'],['io','Entrada o salida'],['sub','Subproceso'],['dec','Decisión'],['side','Rama lateral']].map(([k,t])=>{
+  const z=k==='dec'?'<svg width="46" height="30" viewBox="0 0 46 30">'+shape('dec',23,15,42,28,[''])+'</svg>':'<svg width="52" height="26" viewBox="0 0 52 26">'+shape(k,26,13,46,22,[''])+'</svg>';
+  return '<span>'+z+t+'</span>'}).join('');
+document.getElementById('out').innerHTML=D.map(d=>'<section id="'+d.id+'"><h2><b>'+d.n+'</b>'+d.t+'</h2><div class="sc">'+diagram(d.items)+'</div></section>').join('');
+</script></body></html>
