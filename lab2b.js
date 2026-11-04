@@ -17,13 +17,11 @@
     const same = cur.op === op && cur.n === n && cur.nl;
     cur.op = op; cur.n = n;
     if (!same) { cur.nl = L2.BUILD[op](n); cur.min = cur.orig = null; cache = {}; tIdx = 0; setPlan(); renderCmp(); renderTtl(); renderHdl(); }
-    $('#dlO').disabled = n > 3; $('#dlM').disabled = n > 5;
-    $('#edLoadM').disabled = n > 3;
+    $('#dlO').disabled = n > 3;
   };
   $('#dlW').onclick = () => dl(`${base()}_cables.circ`, L2W.toCirc(cur.nl));
   $('#dlB').onclick = () => dl(`${base()}_bloques.circ`, L2.toCircBlocks(cur.op, cur.n));
   $('#dlO').onclick = () => dl(`${base()}_original.circ`, L2W.toCirc(L2M.build(cur.op, cur.n, 'orig')));
-  $('#dlM').onclick = () => dl(`${base()}_reducida.circ`, L2W.toCirc(L2M.build(cur.op, cur.n, 'min')));
 
   /* ---------- original vs reducida ---------- */
   function renderCmp() {
@@ -34,8 +32,6 @@
     setTimeout(() => {
       if (n <= 4) { const o = L2M.build(op, n, 'orig'); rows.push(['Original (minitérminos)', ...stat(o), o.info.products, o.info.literals]); }
       else rows.push(['Original (minitérminos)', '—', '—', '—', '—', '—', 'muy grande', '—']);
-      if (n <= 5) { const t0 = performance.now(); const m = L2M.build(op, n, 'min'); rows.push(['Reducida (Quine-McCluskey)', ...stat(m), m.info.products, m.info.literals]); cur.minMs = Math.round(performance.now() - t0); }
-      else rows.push(['Reducida (Quine-McCluskey)', '—', '—', '—', '—', '—', '—', '—']);
       box.innerHTML = tbl(['Versión', 'Compuertas', 'AND', 'OR', 'XOR', 'NOT', 'Productos', 'Literales'], rows);
     }, 20);
   }
@@ -98,10 +94,9 @@
   const msg = (t) => { $('#edMsg').textContent = t || ''; $('#edMsg').hidden = !t; };
   function loadNL(nl, what) {
     if (nl.gates.length > 300) { msg(`${what}: ${nl.gates.length} compuertas, demasiado grande para el editor (máx. 300)`, true); return; }
-    ed.loadNetlist(nl, L2W); msg(`${what}: ${nl.gates.length} compuertas`); $('#edBack').hidden = true;
+    ed.loadNetlist(nl, L2W); msg(`${what}: ${nl.gates.length} compuertas`);
   }
   $('#edLoad').onclick = () => loadNL(cur.nl, `${NAME[cur.op]} de ${cur.n} bits`);
-  $('#edLoadM').onclick = () => loadNL(L2M.build(cur.op, cur.n, 'min'), `${NAME[cur.op]} de ${cur.n} bits, reducido por QM`);
   $('#edRun').onclick = () => { running = ed.run(!running, +$('#edSpd').value); $('#edRun').textContent = running ? 'Pausar' : 'Reloj'; };
   $('#edSpd').onchange = () => { if (running) ed.run(true, +$('#edSpd').value); };
   $('#edTick').onclick = () => ed.tick();
@@ -111,17 +106,6 @@
     if (!t.ins.length || !t.nl.outputs.length) { msg('Falta al menos un interruptor y un LED conectados', true); return; }
     $('#edTab').innerHTML = tbl([...t.ins, ...t.nl.outputs.map(o => o.label)], t.rows.map(r => [...t.ins.map(i => r.v[i]), ...t.nl.outputs.map(o => '<b>' + r.out[o.label] + '</b>')])); msg(`${t.rows.length} filas`);
   };
-  $('#edRed').onclick = () => {
-    const t = ed.truth(); if (t.error) { msg(t.error, true); return; }
-    if (!t.ins.length || !t.nl.outputs.length) { msg('Falta dibujar el circuito (interruptores, compuertas y LED)', true); return; }
-    const tt = t.nl.outputs.map(o => ({ label: o.label, ones: [], dc: [] }));
-    t.rows.forEach((r, k) => t.nl.outputs.forEach((o, j) => { if (r.out[o.label]) tt[j].ones.push(k); }));
-    const red = L2M.buildTT(tt, t.ins, t.ins, 'min', 'reducido');
-    const before = t.nl.gates.length; savedNL = t.nl;
-    ed.loadNetlist(red, L2W); $('#edBack').hidden = false;
-    msg(`QM: ${before} → ${red.gates.length} compuertas (${red.info.products} productos, ${red.info.literals} literales)`);
-  };
-  $('#edBack').onclick = () => { if (savedNL) { ed.loadNetlist(savedNL, L2W); $('#edBack').hidden = true; msg('Circuito original'); } };
   const nlOk = () => { const nl = ed.toNetlist(); if (!nl.inputs.length || !nl.outputs.length) { msg('Falta al menos un interruptor (o reloj) y un LED', true); return null; } if (nl.warns.length) msg(nl.warns.join('; ')); return nl; };
   $('#edCirc').onclick = () => { const nl = nlOk(); if (nl) dl('circuito_editor.circ', L2W.toCirc(nl)); };
   $('#edV').onclick = () => { const nl = nlOk(); if (nl) dl('circuito_editor.v', L2H.verilogStruct(nl, 'circuito')); };

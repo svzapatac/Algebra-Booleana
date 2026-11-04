@@ -12,7 +12,7 @@
   <div class="wrap bar">
     <div class="brand"><span class="tag">LAB 2</span><span>Aritmética digital</span></div>
     <nav>
-      <a href="#resultado">Resultado</a><a href="#pasos">Paso a paso</a><a href="#ttl">TTL</a><a href="#editor">Editor</a><a href="#reduccion">Reducción</a><a href="#hdl">HDL</a><a href="flujo2.html">Diagrama de flujo</a><a href="index.html" class="ext">Lab 1</a>
+      <a href="#resultado">Resultado</a><a href="#pasos">Paso a paso</a><a href="#ttl">TTL</a><a href="#editor">Editor</a><a href="#reduccion">Original</a><a href="#hdl">HDL</a><a href="flujo2.html">Diagrama de flujo</a><a href="index.html" class="ext">Lab 1</a>
     </nav>
   </div>
 </header>
@@ -43,7 +43,6 @@
       <button id="dlW" class="btn solid">Circuito con cables</button>
       <button id="dlB" class="btn">Bloques Logisim</button>
       <button id="dlO" class="btn">Original (minitérminos)</button>
-      <button id="dlM" class="btn">Reducida (Quine-McCluskey)</button>
     </div>
     <div id="stats" class="tags"></div>
   </div>
@@ -67,13 +66,10 @@
   <h2><span>05</span>Editor</h2>
   <div class="tools">
     <button id="edLoad" class="btn solid">Cargar operación</button>
-    <button id="edLoadM" class="btn">Cargar reducida</button>
     <button id="edRun" class="btn">Reloj</button>
     <button id="edTick" class="btn">Paso</button>
     <select id="edSpd"><option value="1000">Lenta</option><option value="500" selected>Media</option><option value="150">Rápida</option></select>
     <button id="edTT" class="btn">Tabla de verdad</button>
-    <button id="edRed" class="btn">Reducir (QM)</button>
-    <button id="edBack" class="btn" hidden>Volver al original</button>
     <button id="edClr" class="btn">Limpiar</button>
   </div>
   <div id="edHost"></div>
@@ -85,7 +81,7 @@
 </section>
 
 <section class="sec" id="reduccion">
-  <h2><span>06</span>Estructural · original · reducida</h2>
+  <h2><span>06</span>Estructural · original</h2>
   <div id="cmp"></div>
 </section>
 
@@ -99,7 +95,7 @@
   <pre id="hCode" class="code"></pre>
 </section>
 </main>
-<footer class="wrap">Lab 2 · Universidad Distrital · Diseño Lógico · build 4-nov-2026 v6</footer>
+<footer class="wrap">Lab 2 · Universidad Distrital · Diseño Lógico · build 4-nov-2026 v7</footer>
 <script src="l2core.js?v=5"></script>
 <script src="l2wire.js?v=5"></script>
 <script src="l2min.js?v=5"></script>
@@ -107,6 +103,6 @@
 <script src="l2ttl.js?v=5"></script>
 <script src="l2edit.js?v=5"></script>
 <script src="lab2.js?v=5"></script>
-<script src="lab2b.js?v=5"></script>
+<script src="lab2b.js?v=7"></script>
 </body>
 </html>

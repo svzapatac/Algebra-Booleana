@@ -38,7 +38,7 @@ footer{color:var(--mut);font-size:12px;padding:6px 0 30px}
 </style></head><body>
 <header class="top"><div class="wrap bar">
 <div class="brand"><span class="tag">LAB 2</span><span>Diagrama de flujo</span></div>
-<nav><a href="#d1">General</a><a href="#d2">Archivo .circ</a><a href="#d3">Original y reducida</a><a href="#d4">TTL</a><a href="#d5">Editor</a><a href="#d6">HDL y verificación</a><a href="lab2.html" class="ext">Volver al Lab 2</a></div>
+<nav><a href="#d1">General</a><a href="#d2">Archivo .circ</a><a href="#d4">TTL</a><a href="#d5">Editor</a><a href="#d6">HDL y verificación</a><a href="lab2.html" class="ext">Volver al Lab 2</a></div>
 </div></header>
 <main class="wrap">
 <h1>Lab 2 - Aritmética digital: qué hace el proyecto</h1>
@@ -145,7 +145,7 @@ const D=[
  {k:'sub',t:'Evaluar el netlist (evalNL) con A y B y obtener el resultado'},
  {k:'io',t:'Mostrar resultado, tabla de pasos y conteo de compuertas por tipo'},
  {k:'dec',t:'¿El usuario cambia operación, N, A o B?',down:'No',back:'conv',backLab:'Sí'},
- {fan:[{lab:'Sección 02',t:'Descargas Logisim: cables, bloques, original, reducida'},{lab:'Sección 04',t:'TTL: chip por chip con referencia visual'},{lab:'Sección 05',t:'Editor en vivo tipo Logisim'},{lab:'Sección 06',t:'Estructural, original y reducida'},{lab:'Sección 07',t:'Código HDL Verilog y VHDL'}]},
+ {fan:[{lab:'Sección 02',t:'Descargas Logisim: cables, bloques, original'},{lab:'Sección 04',t:'TTL: chip por chip con referencia visual'},{lab:'Sección 05',t:'Editor en vivo tipo Logisim'},{lab:'Sección 06',t:'Estructural y original'},{lab:'Sección 07',t:'Código HDL Verilog y VHDL'}]},
  {k:'term',t:'Fin'}]},
 {id:'d2',n:'02',t:'Generación del archivo .circ con cables',items:[
  {k:'term',t:'Inicio: clic en Descargar Logisim (cables)'},
@@ -163,23 +163,7 @@ const D=[
  {id:'xml',k:'proc',t:'Escribir el XML de Logisim-evolution 5.0.0: project source 5.0.0, librerías #Wiring a #Soc, circuito con appearance logisim_evolution'},
  {k:'proc',t:'Crear un Blob y disparar el enlace a download'},
  {k:'term',t:'Fin: el .circ se abre en Logisim-evolution 5'}]},
-{id:'d3',n:'03',t:'Versión original y versión reducida',items:[
- {k:'term',t:'Inicio: sección 06'},
- {k:'proc',t:'Generar la tabla de verdad: una fila por cada combinación de las entradas (A, B y acarreo o préstamo)'},
- {k:'dec',t:'¿Operación = división?',down:'No',side:{lab:'Sí',t:'Marcar las filas con B = 0 como indiferentes (dc)'}},
- {k:'dec',t:'¿Modo original?',down:'No',side:{t:'Original: un AND por minitérmino con salida 1 y un OR con todos los productos',lab:'Sí',join:'arb'}},
- {k:'proc',t:'Agrupar minitérminos e indiferentes por cantidad de unos'},
- {id:'comb',k:'proc',t:'Combinar pares que difieren en un solo bit y marcar los usados'},
- {k:'dec',t:'¿Hubo combinaciones nuevas?',down:'No',back:'comb',backLab:'Sí'},
- {k:'proc',t:'Implicantes primos = términos que quedaron sin marcar'},
- {k:'proc',t:'Tabla de cobertura: filas implicantes, columnas minitérminos (los dc no se cubren)'},
- {k:'proc',t:'Seleccionar los implicantes esenciales'},
- {k:'dec',t:'¿Quedan 16 candidatos o menos?',down:'Sí',side:{t:'Selección voraz (el que más cubre) y quitar productos redundantes'}},
- {k:'proc',t:'Compartir los productos iguales entre las distintas salidas'},
- {id:'arb',k:'proc',t:'Construir árboles AND y OR de 2 entradas, con NOT para los literales negados'},
- {k:'io',t:'Conteo de compuertas: original, reducida y estructural, lado a lado'},
- {k:'term',t:'Fin'}]},
-{id:'d4',n:'04',t:'Sección TTL: chip por chip',items:[
+{id:'d4',n:'03',t:'Sección TTL: chip por chip',items:[
  {k:'term',t:'Inicio: sección 04'},
  {k:'proc',t:'Tomar el netlist y sustituir cada XNOR por XOR + NOT'},
  {k:'dec',t:'¿Comparador en modo 74LS85?',down:'No',side:{lab:'Sí',t:'Cascada de ceil(N/4) chips 74LS85 (DIP-16). El menos significativo recibe A=B en 1; los demás reciben las salidas del anterior',join:'red'}},
@@ -194,7 +178,7 @@ const D=[
  {k:'proc',t:'Paginar los chips para verlos uno por uno'},
  {k:'io',t:'Descarga .txt con la lista de chips y las conexiones pin a pin'},
  {k:'term',t:'Fin'}]},
-{id:'d5',n:'05',t:'Editor en vivo y simulación',items:[
+{id:'d5',n:'04',t:'Editor en vivo y simulación',items:[
  {k:'term',t:'Inicio: sección 05'},
  {k:'proc',t:'Cargar el circuito de la operación actual (distribución con L2W.layout) o empezar con el lienzo vacío'},
  {k:'io',t:'Elegir herramienta: Mano, Interruptor, Reloj, LED, AND, OR, NOT, XOR, NAND, NOR, XNOR, Flip-flop D, 1, 0, Borrar'},
@@ -205,9 +189,9 @@ const D=[
  {k:'proc',t:'Iterar las compuertas hasta que ninguna salida cambie (máximo 80 pasadas)'},
  {k:'proc',t:'Pintar cables en alto o bajo y encender los LED'},
  {k:'dec',t:'¿El usuario sigue editando?',down:'No',back:'acc',backLab:'Sí'},
- {fan:[{t:'Exportar .circ: toNetlist y L2W.toCirc'},{t:'Exportar Verilog o VHDL desde el netlist'},{t:'Tabla de verdad: recorre las 2^k combinaciones de los interruptores'},{t:'Reducir con Quine-McCluskey'}]},
+ {fan:[{t:'Exportar .circ: toNetlist y L2W.toCirc'},{t:'Exportar Verilog o VHDL desde el netlist'},{t:'Tabla de verdad: recorre las 2^k combinaciones de los interruptores'}]},
  {k:'term',t:'Fin'}]},
-{id:'d6',n:'06',t:'Código HDL y verificación',items:[
+{id:'d6',n:'05',t:'Código HDL y verificación',items:[
  {k:'term',t:'Inicio: sección 07'},
  {k:'io',t:'Elegir lenguaje (Verilog o VHDL) y tipo de diseño'},
  {fan:[{lab:'Estructural',t:'Una asignación por compuerta; los buses se detectan con índices contiguos desde 0'},{lab:'Comportamental',t:'Operadores +, -, *, / y comparaciones sobre vectores de N bits'},{lab:'Con reloj',t:'Suma, resta y comparación en 1 ciclo; multiplicación y división en N+1 ciclos con done y error'}]},
