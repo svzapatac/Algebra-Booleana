@@ -42,3 +42,16 @@ code{font-family:var(--mono);background:var(--sky);padding:1px 5px;border-radius
 .eq{font:15px var(--mono);background:#f4f8ff;border:1px dashed var(--line);padding:8px 10px;border-radius:4px;overflow-x:auto;white-space:pre}
 .ok{color:var(--ok);font-weight:700}.no{color:var(--bad);font-weight:700}
 footer{text-align:center;color:var(--mut);padding:18px;font-size:13px}
+
+.sw,.leds{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;align-items:center}
+.sw b,.leds b{font-size:13px;color:var(--mut);margin-right:4px}
+.tg{width:40px;padding:6px 0;border:2px solid var(--b2);border-radius:4px;background:#fff;color:var(--b2);font:700 13px var(--mono)}
+.tg.on{background:var(--b1);color:#fff;border-color:var(--b1)}
+.led{width:44px;text-align:center;border:2px solid var(--line);border-radius:4px;font:700 13px var(--mono);padding:3px 0;color:var(--mut)}
+.led.on{background:#2f8cff;color:#fff;border-color:#0a3d91;box-shadow:0 0 8px #2f8cff}
+.cells{display:grid;gap:8px;margin-top:10px;overflow-x:auto}
+.cell{border:1px solid var(--line);border-radius:4px;padding:6px;background:#f7faff;min-width:120px}
+.cell small{display:block;color:var(--mut);font-size:11px;margin-bottom:4px}
+.gt{display:flex;justify-content:space-between;gap:6px;font:12px var(--mono);padding:2px 5px;margin:2px 0;border-radius:3px;background:#e6edf7;color:#4a6285}
+.gt.on{background:#2f8cff;color:#fff}
+.sw .vv{font:700 13px var(--mono);color:var(--b1);margin-left:8px}

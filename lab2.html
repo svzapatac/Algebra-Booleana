@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lab 2 · Aritmética digital con Logisim</title>
-<link rel="stylesheet" href="lab2.css?v=1">
+<link rel="stylesheet" href="lab2.css?v=2">
 </head>
 <body>
 <header class="top">
@@ -51,6 +51,14 @@
   <div id="steps"></div>
 </section>
 
+<section class="panel" id="simBox">
+  <h2>Simulador en la página <small class="muted">(estilo Logisim, sin salir de aquí)</small></h2>
+  <p class="muted">Haz clic en los interruptores de entrada para cambiar 0/1. Cada compuerta del circuito muestra su valor en vivo (azul = 1, gris = 0). Es el mismo circuito que se descarga en el .circ.</p>
+  <div id="simIn" class="sw"></div>
+  <div id="simOut" class="leds"></div>
+  <div id="simCells" class="cells"></div>
+</section>
+
 <section class="panel">
   <h2>Plano TTL</h2>
   <div id="ttl"></div>
@@ -71,6 +79,6 @@
 </main>
 <footer>Lab 2 · Universidad Distrital · Diseño Lógico</footer>
 <script src="l2core.js?v=1"></script>
-<script src="lab2.js?v=1"></script>
+<script src="lab2.js?v=2"></script>
 </body>
 </html>

@@ -79,6 +79,45 @@
     return t;
   }
 
+
+  /* ---- simulador en la página ---- */
+  let simNL = null, simV = {};
+  function simSync(n, v) {
+    simNL = L2.BUILD[op](n); simV = {};
+    for (let i = 0; i < n; i++) { simV['A' + i] = Number((v.a >> BigInt(i)) & 1n); simV['B' + i] = Number((v.b >> BigInt(i)) & 1n); }
+    if (op === 'add') simV.Cin = 0;
+    simDraw();
+  }
+  function simDraw() {
+    const nl = simNL, n = N();
+    const out = L2.evalNL(nl, simV);
+    const val = Object.assign({ GND: 0, VCC: 1 }, simV);
+    for (const g of nl.gates) { const a = val[g.i[0]], b = g.i.length > 1 ? val[g.i[1]] : 0; val[g.o] = g.t === 'AND' ? a & b : g.t === 'OR' ? a | b : g.t === 'XOR' ? a ^ b : 1 - a; }
+    const swb = nl.inputs.slice().reverse().map(k => `<button class="tg ${simV[k] ? 'on' : ''}" data-k="${k}">${k}=${simV[k]}</button>`).join('');
+    let ia = 0, ib = 0; for (let i = 0; i < n; i++) { ia += simV['A' + i] << i; ib += simV['B' + i] << i; }
+    $('#simIn').innerHTML = '<b>Entradas</b>' + swb + `<span class="vv">A=${ia} · B=${ib}</span>`;
+    const dec = p => { let r = 0, k = 0; while (out[p + k] !== undefined) { r += out[p + k] * Math.pow(2, k); k++; } return r; };
+    let sum = '';
+    if (op === 'add') sum = `S + Cout = ${dec('S') + out.Cout * Math.pow(2, n)}`;
+    if (op === 'sub') sum = `D = ${dec('D')} · préstamo ${out.Prestamo}`;
+    if (op === 'mul') sum = `P = ${dec('P')}`;
+    if (op === 'div') sum = `Q = ${dec('Q')} · R = ${dec('R')}` + (ib === 0 ? ' (B=0: indefinido)' : '');
+    $('#simOut').innerHTML = '<b>Salidas</b>' + nl.outputs.slice().reverse().map(o => `<span class="led ${val[o.net] ? 'on' : ''}">${o.label}=${val[o.net]}</span>`).join('') + `<span class="vv">${sum}</span>`;
+    const cells = {}; let maxc = 0;
+    for (const g of nl.gates) { (cells[g.cell] = cells[g.cell] || []).push(g); }
+    const keys = Object.keys(cells), cols = {};
+    keys.forEach(k => { const ci = nl.cellInfo[k]; maxc = Math.max(maxc, ci.col); });
+    const rowsSet = [...new Set(keys.map(k => nl.cellInfo[k].row))].sort((a, b) => a - b);
+    const wrap = $('#simCells'); wrap.style.gridTemplateColumns = `repeat(${maxc + 1},minmax(120px,1fr))`;
+    let html = '';
+    rowsSet.forEach(r => { for (let c = 0; c <= maxc; c++) {
+      const k = c + ',' + r, gs = cells[k];
+      html += gs ? `<div class="cell"><small>${nl.cellInfo[k].label}</small>` + gs.map(g => `<div class="gt ${val[g.o] ? 'on' : ''}"><span>${g.t}</span><span>${g.o}=${val[g.o]}</span></div>`).join('') + '</div>' : '<div></div>';
+    } });
+    wrap.innerHTML = html;
+    $('#simIn').querySelectorAll('.tg').forEach(bn => bn.onclick = () => { simV[bn.dataset.k] ^= 1; simDraw(); });
+  }
+
   function render() {
     const n = N(); $('#nv').textContent = n; $('#hN').textContent = n;
     $('#opName').textContent = NAMES[op];
@@ -98,6 +137,7 @@
     const show = plan.nets.slice(0, 60).map(x => [x.net, x.from, x.to.join(', ')]);
     t += '<h3>Cableado</h3>' + tbl(['red', 'sale de', 'llega a'], show) + (plan.nets.length > 60 ? `<p class="muted">… ${plan.nets.length - 60} redes más en el .txt descargable.</p>` : '');
     $('#ttl').innerHTML = t;
+    simSync(n, v);
     $('#dlG').onclick = () => download(`${NAMES[op]}_${n}bits_compuertas.circ`, L2.toCirc(nl));
     $('#dlB').onclick = () => download(`${NAMES[op]}_${n}bits_bloques.circ`, L2.toCircBlocks(op, n));
     $('#dlT').onclick = () => download(`${NAMES[op]}_${n}bits_TTL.txt`, ttlText(nl, plan, n));
