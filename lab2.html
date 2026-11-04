@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
 <title>Lab 2 · Aritmética digital con Logisim</title>
-<link rel="stylesheet" href="lab2.css?v=3">
+<link rel="stylesheet" href="lab2.css?v=4">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">L2</span><div><b>Aritmética digital</b><small>Lab 2 · Diseño Lógico</small></div></div>
-  <nav><a href="#editor">Editor</a><a href="#reducida">Original vs reducida</a><a href="#hdl">HDL</a><a href="#ttl">TTL</a><a href="index.html">← Lab 1</a></nav>
+  <nav><a href="#ttl">TTL</a><a href="#editor">Editor</a><a href="#reducida">Original vs reducida</a><a href="#hdl">HDL</a><a href="index.html">← Lab 1</a></nav>
 </header>
 
 <main>
 <section class="hero">
   <h1>Sumador, restador, multiplicador y divisor de <em id="hN">4</em> bits</h1>
-  <p>Elige la operación y el tamaño. La página calcula el paso a paso, genera el circuito <b>Logisim (.circ)</b> en tu navegador y te da el plano para armarlo con chips <b>TTL</b>.</p>
+  <p>Elige la operación y el tamaño. La página calcula el paso a paso, genera el circuito <b>Logisim-evolution 5.0 (.circ)</b> en tu navegador y te da el plano para armarlo con chips <b>TTL</b>.</p>
 </section>
 
 <section class="panel ctl">
@@ -36,7 +37,7 @@
   <article class="panel" id="resBox"></article>
   <article class="panel">
     <h2>Descargar para Logisim</h2>
-    <p class="muted">Los archivos se crean al instante en tu navegador (no hay servidor). Se abren con <b>File → Open</b> en Logisim.</p>
+    <p class="muted">Los archivos se crean al instante en tu navegador (no hay servidor). Se abren con <b>File → Open</b> en <b>Logisim-evolution 5.0.0</b> (formato nativo, sin avisos).</p>
     <div class="dl">
       <button id="dlW" class="pri">⬇ Circuito con cables (.circ)</button>
       <button id="dlB" class="pri alt">⬇ Bloques Logisim (.circ)</button>
@@ -44,12 +45,21 @@
       <button id="dlM" class="ghost">⬇ Reducida · Quine-McCluskey (.circ)</button>
     </div>
     <div id="stats" class="stats"></div>
+    <p class="muted" id="ttlQuick"></p>
   </article>
 </section>
 
 <section class="panel">
   <h2>Paso a paso de <span id="opName"></span></h2>
   <div id="steps"></div>
+</section>
+
+<section class="panel" id="ttl">
+  <h2>Plano TTL, chip por chip</h2>
+  <div id="ttlSum"></div>
+  <div class="pager"><button id="tPrev" class="ghost">◀</button><select id="tSel"></select><button id="tNext" class="ghost">▶</button><label class="inl"><input type="checkbox" id="tAll"> ver todos</label><button id="dlT" class="ghost">⬇ Plano (.txt)</button></div>
+  <div id="ttlCards"></div>
+  <details><summary>Tabla de cableado completa</summary><div id="ttlNets"></div></details>
 </section>
 
 <section class="panel" id="simBox">
@@ -101,35 +111,28 @@
   <pre id="hCode" class="code"></pre>
 </section>
 
-<section class="panel" id="ttl">
-  <h2>Plano TTL, chip por chip</h2>
-  <div id="ttlSum"></div>
-  <div class="pager"><button id="tPrev" class="ghost">◀</button><select id="tSel"></select><button id="tNext" class="ghost">▶</button><label class="inl"><input type="checkbox" id="tAll"> ver todos</label><button id="dlT" class="ghost">⬇ Plano (.txt)</button></div>
-  <div id="ttlCards"></div>
-  <details><summary>Tabla de cableado completa</summary><div id="ttlNets"></div></details>
-</section>
 
 <section class="panel how">
   <h2>Cómo usar los archivos en Logisim</h2>
   <ol>
     <li>Descarga el <b>.circ</b> (compuertas = cada AND/OR/XOR/NOT dibujada; bloques = usa Adder/Subtractor/Multiplier/Divider de la librería Aritmética).</li>
-    <li>Ábrelo en Logisim (2.7.x, Logisim-evolution o <i>logisim.app</i> en el navegador) con <b>File → Open</b>.</li>
+    <li>Ábrelo en <b>Logisim-evolution 5.0.0</b> con <b>File → Open</b>. Los archivos están en el formato nativo de esa versión, así que no aparece el aviso de «formato antiguo».</li>
     <li>Herramienta de la manita: haz clic en los pines de entrada para poner 0/1 y mira las salidas.</li>
     <li>Los circuitos con cables se tienden con wires reales (sin túneles); cada red tiene su propia pista para que no se toquen.</li>
   </ol>
   <h3>¿Funciona en GitHub Pages?</h3>
   <p>Sí. GitHub Pages solo sirve archivos estáticos, pero el <code>.circ</code> es texto XML: el JavaScript lo escribe en memoria, lo convierte en un <code>Blob</code> y el navegador lo descarga. Todo ocurre en tu equipo; no se envía nada a ningún servidor.</p>
-  <p class="muted">Cada circuito generado fue verificado con el motor de Logisim 2.7.1 contra la aritmética real para N de 1 a 8.</p>
+  <p class="muted">Los circuitos generados se verificaron con Logisim-evolution 5.0.0 (tabla de verdad completa) contra la aritmética real.</p>
 </section>
 </main>
-<footer>Lab 2 · Universidad Distrital · Diseño Lógico</footer>
-<script src="l2core.js?v=3"></script>
-<script src="l2wire.js?v=3"></script>
-<script src="l2min.js?v=3"></script>
-<script src="l2hdl.js?v=3"></script>
-<script src="l2ttl.js?v=3"></script>
-<script src="l2edit.js?v=3"></script>
-<script src="lab2.js?v=3"></script>
-<script src="lab2b.js?v=3"></script>
+<footer>Lab 2 · Universidad Distrital · Diseño Lógico · build 4-nov-2026 (v4)</footer>
+<script src="l2core.js?v=4"></script>
+<script src="l2wire.js?v=4"></script>
+<script src="l2min.js?v=4"></script>
+<script src="l2hdl.js?v=4"></script>
+<script src="l2ttl.js?v=4"></script>
+<script src="l2edit.js?v=4"></script>
+<script src="lab2.js?v=4"></script>
+<script src="lab2b.js?v=4"></script>
 </body>
 </html>

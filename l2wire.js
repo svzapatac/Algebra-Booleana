@@ -16,15 +16,15 @@
     NOR: { name: 'NOR Gate', lib: 1, ins: [[-40, -10], [-40, 10]], sz: 30 },
     XNOR: { name: 'XNOR Gate', lib: 1, ins: [[-50, -10], [-50, 10]], sz: 30 },
     NOT: { name: 'NOT Gate', lib: 1, ins: [[-20, 0]], sz: 20 },
-    DFF: { name: 'D Flip-Flop', lib: 4, ins: [[-40, 0], [-40, 20]], sz: 0 }
+    DFF: { name: 'D Flip-Flop', lib: 4, ins: [[-10, 50], [-10, 10]], sz: 0, out: [50, 10] }
   };
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-  const HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<project source="2.7.1" version="1.0">\n' +
-    '  This file is intended to be loaded by Logisim (http://www.cburch.com/logisim/).\n' +
+  const HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<project source="5.0.0" version="1.0">\n' +
+    '  This file is intended to be loaded by Logisim-evolution v5.0.0(https://github.com/logisim-evolution/).\n' +
     '  <lib desc="#Wiring" name="0"/>\n  <lib desc="#Gates" name="1"/>\n  <lib desc="#Plexers" name="2"/>\n' +
-    '  <lib desc="#Arithmetic" name="3"/>\n  <lib desc="#Memory" name="4"/>\n  <lib desc="#I/O" name="5"/>\n  <lib desc="#Base" name="6"/>\n' +
+    '  <lib desc="#Arithmetic" name="3"/>\n  <lib desc="#Memory" name="4"/>\n  <lib desc="#I/O" name="5"/>\n  <lib desc="#TTL" name="6"/>\n  <lib desc="#TCL" name="7"/>\n  <lib desc="#Base" name="8"/>\n  <lib desc="#BFH-Praktika" name="9"/>\n  <lib desc="#Input/Output-Extra" name="10"/>\n  <lib desc="#Soc" name="11"/>\n' +
     '  <main name="main"/>\n  <options>\n    <a name="gateUndefined" val="ignore"/>\n    <a name="simlimit" val="1000"/>\n    <a name="simrand" val="0"/>\n  </options>\n' +
-    '  <circuit name="main">\n    <a name="circuit" val="main"/>\n';
+    '  <circuit name="main">\n    <a name="appearance" val="logisim_evolution"/>\n    <a name="circuit" val="main"/>\n';
   const TAIL = '  </circuit>\n</project>\n';
 
   /* intervalos con colores: asigna a cada intervalo el menor índice libre (algoritmo del borde izquierdo) */
@@ -80,23 +80,22 @@
       col.forEach((c, i) => { c.rowIdx = i; });
     });
     // desfase vertical por columna: los pines de entrada de la columna no coinciden con las salidas de la anterior
-    let o = 0; const pitchOf = col => col.some(c => c.kind === 'gate' && c.t === 'DFF') ? 60 : 40;
+    let o = 0, prevOutMod = 0; const pitchOf = col => col.some(c => c.kind === 'gate' && c.t === 'DFF') ? 80 : 40;
     cols.forEach((col, ci) => {
       const P = new Set(); col.forEach(c => (c.P.length ? c.P : [0]).forEach(p => P.add(p)));
       if (ci > 0) {
-        const prevOut = o; let found = null;
+        const prevOut = prevOutMod; let found = null;
         for (const d of [10, 20, 30, 0]) {
           const cand = (o + d) % 40;
           let ok = true;
-          for (const p of P) if (((cand + p) % 40 + 40) % 40 === prevOut % 40) ok = false;
-          const ffcol = col.some(c => c.kind === 'gate' && c.t === 'DFF');
-          if (ffcol) for (const p of [0, 20]) if (((cand + p) % 40 + 40) % 40 === prevOut % 40) ok = false;
+          for (const p of P) if (((cand + p) % 40 + 40) % 40 === prevOut) ok = false;
           if (ok) { found = cand; break; }
         }
         o = found === null ? (o + 20) % 40 : found;
       }
       col.off = o; col.pitch = pitchOf(col);
-      col.forEach(c => { c.y = 60 + o + c.rowIdx * col.pitch; });
+      col.isFF = col.some(c => c.kind === 'gate' && c.t === 'DFF'); prevOutMod = (o + (col.isFF ? 10 : 0)) % 40;
+      col.forEach(c => { c.y = 60 + o + c.rowIdx * col.pitch; c.outDy = col.isFF ? 10 : 0; c.outDx = col.isFF ? 50 : 0; });
     });
     return { comps, cols, srcOf };
   }
@@ -120,7 +119,7 @@
       r.near = r.groups[r.src.col + 1] || null;
       r.far = Object.keys(r.groups).map(Number).filter(cc => cc !== r.src.col + 1);
       const sy = sk => sk.c.y + TYPE_PIN(sk)[1];
-      r.srcY = r.src.y;
+      r.srcY = r.src.y + (r.src.outDy || 0);
     });
     function TYPE_PIN(sk) {
       const c = sk.c;
@@ -166,10 +165,10 @@
     // coordenadas x
     const X = []; let x = 120;
     for (let ci = 0; ci < nC; ci++) {
-      if (ci > 0) x += 20 + 10 * (T[ci] + 1) + 70;
+      if (ci > 0) x += (cols[ci - 1].isFF ? 50 : 0) + 20 + 10 * (T[ci] + 1) + 70;
       X.push(x);
     }
-    const chanX = (ch, k) => (ch === 0 ? 0 : X[ch - 1] + 20 + 10 * (k + 1));
+    const chanX = (ch, k) => (ch === 0 ? 0 : X[ch - 1] + (cols[ch - 1].isFF ? 50 : 0) + 20 + 10 * (k + 1));
     // segmentos
     let wires = '';
     const seen = new Set();
@@ -180,7 +179,7 @@
       wires += `    <wire from="(${x1},${y1})" to="(${x2},${y2})"/>\n`;
     };
     list.forEach(r => {
-      const sx = X[r.src.col], sy = r.srcY;
+      const sx = X[r.src.col] + (r.src.outDx || 0), sy = r.srcY;
       const tx = chanX(r.src.col + 1, r.srcTrack.k);
       W(sx, sy, tx, sy);
       W(tx, r.srcTrack.lo, tx, r.srcTrack.hi);

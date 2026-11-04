@@ -79,6 +79,7 @@
       (p.spare ? `<p class="muted">Quedan ${p.spare} compuertas libres: conecta sus entradas a GND.</p>` : '');
     const sel = $('#tSel'); sel.innerHTML = p.chips.map((c, i) => `<option value="${i}">${i + 1}. ${c.id} · ${c.spec.chip}</option>`).join('');
     drawCards();
+    $('#ttlQuick').innerHTML = `TTL: <b>${p.total}</b> chips (${parts}) → <a href="#ttl">ver cada chip</a>`;
     $('#ttlNets').innerHTML = tbl(['red', 'sale de', 'llega a'], p.nets.map(x => [x.net, x.from, x.to.join(', ')]));
   }
   function card(ch, i) {
