@@ -40,6 +40,12 @@ p{margin:0}
   background:linear-gradient(var(--stage1),var(--stage2));border:1px solid var(--line)}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #nogl{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted)}
+.ovl{position:absolute;left:10px;right:10px;top:10px;display:flex;gap:8px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;pointer-events:none}
+.ovl .eqb{background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);border-radius:12px;padding:6px 12px;font:600 1.05rem var(--mono);backdrop-filter:blur(4px)}
+.ovl .eqb small{display:block;font:500 .7rem var(--font);color:var(--muted)}
+.ovl .seg{pointer-events:auto;background:color-mix(in srgb,var(--panel) 90%,transparent)}
+.ovl .seg button{padding:8px 14px;font-size:.88rem;background:transparent}
+.ovl .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
 .views{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
 .views button{font:600 .8rem var(--font);padding:8px 12px;border-radius:999px;border:1px solid var(--line);
   background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--ink);cursor:pointer;backdrop-filter:blur(4px)}
@@ -118,6 +124,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 
   <section id="stage" aria-label="Maqueta 3D del circuito">
     <canvas id="c"></canvas>
+    <div class="ovl"><div class="eqb"><span id="ovEq"></span><small>Toca las palancas azules del interruptor</small></div>
+      <div class="seg" role="group" aria-label="Operación"><button id="ovAdd" aria-pressed="true">Sumar</button><button id="ovSub" aria-pressed="false">Restar</button></div></div>
     <div id="nogl">Este navegador no pudo abrir la vista 3D. La guía y las pruebas de abajo sí funcionan.</div>
     <div class="views" role="group" aria-label="Vistas de la maqueta">
       <button data-view="general">Todo</button>
@@ -379,7 +387,7 @@ function modPin(row,col){ return new THREE.Vector3(1.4+(row?-0.127:0.127),0.72,(
 /* ---------- Circuito (se reconstruye al cambiar 4/5 bits) ---------- */
 var GATE=[[1,2,3],[4,5,6],[9,10,8],[12,13,11]];
 var AP=[5,3,14,12], BP=[6,2,15,11], SP=[4,1,13,10];
-var BUS=12, dipLevers=[], colUse={}, railUsed={}, swList=[];
+var BUS=12, dipLevers=[], dipHits=[], colUse={}, railUsed={}, swList=[];
 function netColor(n){
   if(/^A/.test(n))return 0x3b9cff; if(/^B[0-9]/.test(n))return 0xc084fc; if(n==='M')return 0xf08a1c;
   if(/^Bp/.test(n))return 0xb8d82a; if(/^S/.test(n))return 0xf2c200; return 0xe8e8e8;
@@ -470,12 +478,14 @@ function makeDip(col0){
     for(var i=0;i<12;i++) x.fillText(String(i+1),(0.05+(i+0.5)*PX)*ppc,h-0.13*ppc);
   },200);
   lab.position.set(0,0.3+0.252,0); g.add(lab);
-  dipLevers=[];
+  dipLevers=[]; dipHits=[];
   for(var i=0;i<12;i++){
     var x=(i-5.5)*PX;
     box(0.19,0.02,0.5,dark,x,0.553,0,g,false);
     var lv=box(0.16,0.1,0.2,M.white,x,0.6,0.13,g,false); dipLevers.push(lv);
     [-1,1].forEach(function(sd){ box(0.05,0.3,0.05,M.metal,x,0.15,sd*0.381,g,false); });
+    var hb=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.5,0.9),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+    hb.position.set(x,0.65,0); hb.userData.sw=i; g.add(hb); dipHits.push(hb);
   }
   parts.push({obj:g,step:2});
   var A=ch5?'A1–A5':'A1–A4', B=ch5?'B1–B5':'B1–B4';
@@ -662,13 +672,14 @@ function renderSteps(){
 }
 
 /* ---------- UI ---------- */
+function live(){ if(STEP<=LAST) STEP=LAST+1; update(); }
 function $(id){return document.getElementById(id);}
 function mkBits(host,key,pre){
   host.innerHTML='';
   for(var i=N-1;i>=0;i--){ (function(i){
     var bt=document.createElement('button'); bt.className='bit'; bt.type='button';
     bt.innerHTML='<span class="n">'+pre+(i+1)+'</span><b>0</b>'; bt.dataset.k=key; bt.dataset.i=i;
-    bt.addEventListener('click',function(){state[key][i]^=1;update();});
+    bt.addEventListener('click',function(){state[key][i]^=1;live();});
     host.appendChild(bt);})(i); }
 }
 function mkLedsUI(){
@@ -680,7 +691,7 @@ function mkExamples(){
   var h=$('exs'); h.innerHTML='';
   var ex=N===4?[[11,6,0,'11 + 6'],[11,6,1,'11 − 6'],[3,6,1,'3 − 6'],[15,1,0,'15 + 1']]:[[21,9,0,'21 + 9'],[21,9,1,'21 − 9'],[5,9,1,'5 − 9'],[31,1,0,'31 + 1']];
   ex.forEach(function(e){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=e[3];
-    b.addEventListener('click',function(){state.A=bitsOf(e[0]);state.B=bitsOf(e[1]);state.M=e[2];state.power=true;update();});h.appendChild(b);});
+    b.addEventListener('click',function(){state.A=bitsOf(e[0]);state.B=bitsOf(e[1]);state.M=e[2];state.power=true;live();});h.appendChild(b);});
 }
 function setN(n){
   N=n; $('n4').setAttribute('aria-pressed',n===4?'true':'false'); $('n5').setAttribute('aria-pressed',n===5?'true':'false');
@@ -697,7 +708,8 @@ function update(){
   else if(!state.M){ var t=r.S+(r.cout<<N); eq=r.a+' + '+r.b+' = '+t; note='LED: '+top+'='+r.cout+' y '+bin(r.S,N)+'. Juntos son '+bin(t,N+1)+' en binario.'; }
   else if(r.cout){ eq=r.a+' − '+r.b+' = '+r.S; note=top+'=1 significa que no hubo préstamo. Los LED muestran '+bin(r.S,N)+'.'; }
   else { eq=r.a+' − '+r.b+' = −'+(r.b-r.a); note=top+'=0 significa que hubo préstamo: el resultado es negativo. Los LED muestran '+bin(r.S,N)+' ('+r.S+'), que es '+(1<<N)+' − '+(r.b-r.a)+'.'; }
-  $('eq').textContent=eq; $('note').textContent=note;
+  $('eq').textContent=eq; $('note').textContent=note; $('ovEq').textContent=eq;
+  $('ovAdd').setAttribute('aria-pressed',state.M?'false':'true'); $('ovSub').setAttribute('aria-pressed',state.M?'true':'false');
   document.querySelectorAll('#leds .led').forEach(function(d){
     var n=d.dataset.n, v=n[0]==='C'?r.cout:((r.S>>(+n[1]))&1); d.classList.toggle('on',pw&&!!v);
   });
@@ -794,9 +806,11 @@ function renderLive(r){
 }
 
 /* ---------- Eventos ---------- */
-$('opAdd').addEventListener('click',function(){state.M=0;update();});
-$('opSub').addEventListener('click',function(){state.M=1;update();});
-$('pwr').addEventListener('click',function(){state.power=!state.power;update();});
+$('opAdd').addEventListener('click',function(){state.M=0;live();});
+$('opSub').addEventListener('click',function(){state.M=1;live();});
+$('ovAdd').addEventListener('click',function(){state.M=0;live();});
+$('ovSub').addEventListener('click',function(){state.M=1;live();});
+$('pwr').addEventListener('click',function(){state.power=!state.power;live();});
 $('n4').addEventListener('click',function(){if(N!==4)setN(4);});
 $('n5').addEventListener('click',function(){if(N!==5)setN(5);});
 $('showIn').addEventListener('change',function(e){state.showIn=e.target.checked;update();});
@@ -807,6 +821,17 @@ $('next').addEventListener('click',function(){if(STEP<=LAST){STEP++;update();}})
 $('fin').addEventListener('click',function(){STEP=LAST+1;update();});
 document.querySelectorAll('[data-view]').forEach(function(bt){bt.addEventListener('click',function(){if(ok)goView(bt.dataset.view);});});
 
+var downAt=null, ray=null;
+function pickSwitch(ev){
+  if(!ok||!dipHits.length||STEP<2) return;
+  var rc=canvas.getBoundingClientRect();
+  var v=new THREE.Vector2(((ev.clientX-rc.left)/rc.width)*2-1,-((ev.clientY-rc.top)/rc.height)*2+1);
+  ray=ray||new THREE.Raycaster(); ray.setFromCamera(v,camera);
+  var h=ray.intersectObjects(dipHits,false); if(!h.length) return;
+  var i=h[0].object.userData.sw;
+  if(i<5&&i<N) state.A[i]^=1; else if(i>=5&&i<10&&(i-5)<N) state.B[i-5]^=1; else if(i===11) state.M^=1; else return;
+  live();
+}
 function resize(){
   if(!ok) return;
   var w=stage.clientWidth, h=stage.clientHeight;
@@ -824,6 +849,11 @@ function loop(now){
 }
 
 if(ok) initScene();
+canvas.addEventListener('pointerdown',function(e){downAt={x:e.clientX,y:e.clientY,t:performance.now()};});
+canvas.addEventListener('pointerup',function(e){
+  if(!downAt) return; var d=Math.hypot(e.clientX-downAt.x,e.clientY-downAt.y), t=performance.now()-downAt.t; downAt=null;
+  if(d<6&&t<500) pickSwitch(e);
+});
 if(!ok){ $('nogl').style.display='flex'; canvas.style.display='none'; document.querySelector('.views').style.display='none'; }
 else{
   resize(); goView(camera.aspect<1?'circuito':'general',true);
