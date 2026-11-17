@@ -73,6 +73,12 @@ ul.items code{font-family:var(--mono);font-size:.84rem}
 .led i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:transparent;display:block}
 .led.on i{background:#ff4d3d;border-color:#ff4d3d;box-shadow:0 0 12px #ff4d3d}
 .led.c4.on i{background:#2ee06a;border-color:#2ee06a;box-shadow:0 0 12px #2ee06a}
+#realLeds{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+#live table{min-width:0;font-size:.82rem}
+#live td,#live th{padding:5px 6px}
+.led.btn2{background:none;border:0;cursor:pointer;padding:4px 6px;font:600 .72rem var(--mono);color:var(--muted)}
+.cmp{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);font-size:.93rem}
+.cmp.ok{border-color:var(--good);color:var(--good)} .cmp.bad{border-color:var(--warn);color:var(--warn)}
 .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .row>.lab{width:100%;font-size:.8rem;color:var(--muted);font-weight:600}
 .bit{font-family:var(--mono);min-width:52px;height:56px;border-radius:12px;border:1px solid var(--line);
@@ -172,6 +178,17 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
       </div>
     </section>
   </div>
+
+  <section class="card" id="live">
+    <h2>Prueba en vivo con tu circuito</h2>
+    <p class="lead" style="margin-bottom:10px">1) Pon arriba las mismas palancas que tienes en tu interruptor. 2) Toca aquí los LED que ves encendidos en tu protoboard. Te digo si coincide con lo que debería pasar.</p>
+    <div class="leds" id="realLeds"></div>
+    <p class="cmp" id="cmp" hidden></p>
+    <details style="margin-top:12px"><summary>Qué debes medir en cada pin</summary>
+      <p class="foot" style="margin-top:8px">Multímetro en 20 V (V≂), punta negra en la tira −, punta roja en el pin. 1 es cerca de 5 V y 0 es cerca de 0 V.</p>
+      <div class="tw"><table><thead><tr><th>Chip</th><th>Pin</th><th>Señal</th><th>Debe marcar</th></tr></thead><tbody id="expRows"></tbody></table></div>
+    </details>
+  </section>
 
   <section class="card">
     <h2>Qué es cada cosa</h2>
@@ -668,7 +685,7 @@ function mkExamples(){
 function setN(n){
   N=n; $('n4').setAttribute('aria-pressed',n===4?'true':'false'); $('n5').setAttribute('aria-pressed',n===5?'true':'false');
   state.A=bitsOf(n===4?11:21); state.B=bitsOf(n===4?6:9); state.M=0;
-  mkBits($('bitsA'),'A','A'); mkBits($('bitsB'),'B','B'); mkLedsUI(); mkExamples();
+  mkBits($('bitsA'),'A','A'); mkBits($('bitsB'),'B','B'); mkLedsUI(); mkExamples(); mkRealLeds();
   if(ok){ buildCircuit(n); }
   update();
 }
@@ -689,6 +706,7 @@ function update(){
   });
   $('opAdd').setAttribute('aria-pressed',state.M?'false':'true'); $('opSub').setAttribute('aria-pressed',state.M?'true':'false');
   $('pwr').setAttribute('aria-pressed',pw?'true':'false'); $('pwr').textContent=pw?'Encendido (5 V)':'Apagado';
+  renderLive(r);
   renderSteps();
   if(!ok||!dyn) return;
   var fin=STEP>LAST, pulse=0.55;
@@ -714,6 +732,65 @@ function update(){
     u.mat.emissiveIntensity=on?1.1:0; u.mat.opacity=on?1:0.78; u.halo.visible=on;
   });
   modLed.material.emissiveIntensity=pw?1:0; modLed.material.color.set(pw?0x20c45a:0x1b2b20);
+}
+
+/* ---------- Prueba en vivo ---------- */
+var real={};
+function expectedPins(r){
+  var two=N===5, u7=two?['U1','U2']:['U1'], u2=two?['U3','U4']:['U2'], rows=[], i;
+  function add(chip,pin,sig,v){rows.push({chip:chip,pin:pin,sig:sig,v:v});}
+  for(i=0;i<N;i++){
+    var xc=(i<4?u7[0]:u7[1])+' (7486)', g=GATE[i%4], ac=(i<4?u2[0]:u2[1])+' (74LS283)', k=i%4, bpv=(r.bp>>i)&1;
+    add(xc,g[0],'B'+(i+1)+' entra',state.B[i]);
+    add(xc,g[1],'M',state.M);
+    add(xc,g[2],'B'+(i+1)+' sale (B XOR M)',bpv);
+    add(ac,AP[k],'A'+(i+1),state.A[i]);
+    add(ac,BP[k],'B'+(i+1)+' (invertido si restas)',bpv);
+  }
+  add(u2[0]+' (74LS283)',7,'C0 (acarreo de entrada)',state.M);
+  for(i=0;i<N;i++) add((i<4?u2[0]:u2[1])+' (74LS283)',SP[i%4],'S'+i+' (LED)',(r.S>>i)&1);
+  if(two){
+    add(u2[0]+' (74LS283)',9,'C4, va al C0 del segundo',r.c4);
+    add(u2[1]+' (74LS283)',7,'C0 (viene del primero)',r.c4);
+    [3,14,12,2,15,11].forEach(function(pn){add(u2[1]+' (74LS283)',pn,'sin usar, va a −',0);});
+    add(u2[1]+' (74LS283)',9,'C5 (LED verde)',r.cout);
+  } else add(u2[0]+' (74LS283)',9,'C4 (LED verde)',r.cout);
+  return rows;
+}
+function ledNames(){ var a=['C'+(N===5?5:4)]; for(var i=N-1;i>=0;i--) a.push('S'+i); return a; }
+function mkRealLeds(){
+  var h=$('realLeds'); h.innerHTML=''; real={};
+  ledNames().forEach(function(n){
+    var b=document.createElement('button'); b.type='button'; b.className='led btn2'+(n[0]==='C'?' c4':''); b.dataset.n=n;
+    b.setAttribute('aria-pressed','false'); b.setAttribute('aria-label','LED '+n+' encendido en mi circuito'); b.innerHTML='<i></i>'+n;
+    b.addEventListener('click',function(){real[n]=!real[n];update();}); h.appendChild(b);
+  });
+}
+function renderLive(r){
+  var exp={}; exp['C'+(N===5?5:4)]=r.cout; for(var i=0;i<N;i++) exp['S'+i]=(r.S>>i)&1;
+  var any=false, bad=[], extra=[], miss=[];
+  document.querySelectorAll('#realLeds .led').forEach(function(d){
+    var n=d.dataset.n, on=!!real[n]; d.classList.toggle('on',on); d.setAttribute('aria-pressed',on?'true':'false'); if(on) any=true;
+    var want=state.power&&!!exp[n]; if(on!==want){ bad.push(n); (on?extra:miss).push(n); }
+  });
+  var c=$('cmp');
+  c.hidden=false;
+  if(!state.power){ c.className='cmp'; c.textContent='El módulo está apagado en la maqueta. Enciéndelo para comparar.'; }
+  else if(!bad.length){ c.className='cmp ok'; c.textContent=any?'Coincide. Tu circuito hace lo esperado con estas palancas.':'Debería verse todo apagado y coincide con lo que marcaste.'; }
+  else {
+    c.className='cmp bad';
+    var t='No coincide. ';
+    if(extra.length) t+='Enciende de más: '+extra.join(', ')+'. ';
+    if(miss.length) t+='Debería encender y no enciende: '+miss.join(', ')+'. ';
+    t+=extra.length?'Un LED encendido de más suele ser una entrada suelta, sin su resistencia. Mide los pines de la tabla y busca el que marque 5 V cuando debe marcar 0.':'Un LED apagado de menos suele ser un cable flojo, o el LED al revés. Mide su pin de salida en la tabla.';
+    c.textContent=t;
+  }
+  var tb=$('expRows'); tb.innerHTML='';
+  expectedPins(r).forEach(function(x){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+x.chip+'</td><td><code>'+x.pin+'</code></td><td>'+x.sig+'</td><td><b>'+x.v+'</b> ('+(x.v?'≈ 5 V':'≈ 0 V')+')</td>';
+    tb.appendChild(tr);
+  });
 }
 
 /* ---------- Eventos ---------- */
