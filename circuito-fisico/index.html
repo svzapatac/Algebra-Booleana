@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sumador y restador 4 bits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Idea: maqueta 3D arriba; debajo, la guía de armado paso a paso y el panel de pruebas. */
+  --bg:#eef1f4; --panel:#ffffff; --ink:#14202b; --muted:#546372; --line:#d2dae2;
+  --accent:#0b7a85; --on-accent:#ffffff; --good:#15803d; --warn:#b45309;
+  --stage1:#e3e9ee; --stage2:#c7d2dc;
+  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e161d; --panel:#162029; --ink:#e7edf2; --muted:#9aa9b6; --line:#2a3a47;
+    --accent:#4cc3cf; --on-accent:#06242a; --good:#4ade80; --warn:#fbbf24;
+    --stage1:#1d2b36; --stage2:#0f1a22; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e161d; --panel:#162029; --ink:#e7edf2; --muted:#9aa9b6; --line:#2a3a47;
+  --accent:#4cc3cf; --on-accent:#06242a; --good:#4ade80; --warn:#fbbf24;
+  --stage1:#1d2b36; --stage2:#0f1a22; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.5}
+main{max-width:980px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+h1{font-size:1.45rem;line-height:1.2;margin:0 0 4px;text-wrap:balance}
+h2{font-size:1rem;margin:0 0 8px}
+p{margin:0}
+.lead{color:var(--muted);max-width:64ch}
+#stage{position:relative;height:min(62vh,560px);min-height:340px;border-radius:14px;overflow:hidden;
+  background:linear-gradient(var(--stage1),var(--stage2));border:1px solid var(--line)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#nogl{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--muted)}
+.views{position:absolute;left:10px;right:10px;bottom:10px;display:flex;gap:6px;flex-wrap:wrap}
+.views button{font:600 .8rem var(--font);padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+  background:color-mix(in srgb,var(--panel) 88%,transparent);color:var(--ink);cursor:pointer;backdrop-filter:blur(4px)}
+.views button:hover{border-color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:820px){.grid{grid-template-columns:1fr 1fr}}
+/* guía por pasos */
+.stephead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.stephead .k{font:600 .8rem var(--mono);color:var(--muted)}
+.dots{display:flex;gap:5px;margin:8px 0 12px;flex-wrap:wrap}
+.dots button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--muted);font:600 .8rem var(--mono);cursor:pointer;padding:0}
+.dots button[aria-current="step"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.dots button.done{color:var(--ink);border-color:var(--accent)}
+.steptxt{max-width:66ch}
+ul.items{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+ul.items li{display:grid;grid-template-columns:20px 1fr;gap:8px;align-items:start;font-size:.93rem;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+ul.items li.chk{opacity:.55}
+ul.items input{width:18px;height:18px;margin-top:2px;accent-color:var(--accent)}
+ul.items code{font-family:var(--mono);font-size:.84rem}
+.nav{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{font:600 .92rem var(--font);padding:11px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn[disabled]{opacity:.4;cursor:default}
+.warn{margin-top:10px;font-size:.9rem;color:var(--warn)}
+/* pruebas */
+.result .eq{font:600 1.7rem var(--mono);letter-spacing:-.01em;word-break:break-word}
+.result .note{color:var(--muted);margin-top:6px;font-size:.92rem}
+.result .leds{display:flex;gap:8px;margin-top:12px}
+.led{display:flex;flex-direction:column;align-items:center;gap:4px;font:600 .72rem var(--mono);color:var(--muted)}
+.led i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:transparent;display:block}
+.led.on i{background:#ff4d3d;border-color:#ff4d3d;box-shadow:0 0 12px #ff4d3d}
+.led.c4.on i{background:#2ee06a;border-color:#2ee06a;box-shadow:0 0 12px #2ee06a}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.row>.lab{width:100%;font-size:.8rem;color:var(--muted);font-weight:600}
+.bit{font-family:var(--mono);min-width:52px;height:56px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0}
+.bit .n{font-size:.68rem;color:var(--muted)}
+.bit b{font-size:1.2rem;line-height:1.1}
+.bit[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.bit[aria-pressed="true"] .n{color:inherit;opacity:.85}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{font:600 .95rem var(--font);padding:11px 18px;border:0;background:var(--panel);color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.chip{font:600 .85rem var(--font);padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="false"]{color:var(--muted)}
+label.chk{display:flex;gap:8px;align-items:center;font-size:.92rem;cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent)}
+ul.legend{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:.92rem}
+ul.legend li{display:grid;grid-template-columns:14px 1fr;gap:10px;align-items:start}
+ul.legend i{width:14px;height:14px;border-radius:4px;margin-top:4px;display:block}
+details{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600}
+.tw{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.88rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td code{font-family:var(--mono);font-size:.85rem}
+.foot{font-size:.85rem;color:var(--muted)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Sumador y restador con 74LS283</h1>
+    <p class="lead">Maqueta en una sola protoboard, con un interruptor DIP de 12 para las entradas, un sumador 74LS283 y un 7486. Sigue los pasos para armarlo y mueve las palancas para probarlo. Arrastra para girar y pellizca para acercar.</p>
+  </header>
+
+  <section id="stage" aria-label="Maqueta 3D del circuito">
+    <canvas id="c"></canvas>
+    <div id="nogl">Este navegador no pudo abrir la vista 3D. La guía y las pruebas de abajo sí funcionan.</div>
+    <div class="views" role="group" aria-label="Vistas de la maqueta">
+      <button data-view="general">Todo</button>
+      <button data-view="circuito">Circuito</button>
+      <button data-view="energia">Energía</button>
+      <button data-view="arriba">Desde arriba</button>
+    </div>
+  </section>
+
+  <section class="card" aria-live="polite">
+    <div class="stephead">
+      <h2 id="stepTitle" style="margin:0">Paso</h2>
+      <span class="k" id="stepK"></span>
+    </div>
+    <div class="dots" id="dots" role="group" aria-label="Pasos"></div>
+    <p class="steptxt" id="stepTxt"></p>
+    <ul class="items" id="stepItems"></ul>
+    <p class="warn" id="stepWarn" hidden></p>
+    <div class="nav">
+      <button class="btn" id="prev">Anterior</button>
+      <button class="btn pri" id="next">Siguiente</button>
+      <button class="btn" id="fin">Ver terminado</button>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card result" aria-live="polite">
+      <h2>Resultado</h2>
+      <div class="eq" id="eq">11 + 6 = 17</div>
+      <p class="note" id="note"></p>
+      <div class="leds" id="leds" aria-hidden="true"></div>
+    </section>
+
+    <section class="card">
+      <h2>Prueba el circuito</h2>
+      <div class="row"><span class="lab">Tamaño</span>
+        <div class="seg" role="group" aria-label="Número de bits">
+          <button id="n4" aria-pressed="true">4 bits</button>
+          <button id="n5" aria-pressed="false">5 bits</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Operación (cable M)</span>
+        <div class="seg" role="group" aria-label="Operación">
+          <button id="opAdd" aria-pressed="true">Sumar</button>
+          <button id="opSub" aria-pressed="false">Restar</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Número A (palanca arriba = 1, abajo = 0)</span><div id="bitsA" class="row" style="margin:0"></div></div>
+      <div class="row"><span class="lab">Número B</span><div id="bitsB" class="row" style="margin:0"></div></div>
+      <div class="row"><span class="lab">Ejemplos</span><span id="exs" class="row" style="margin:0"></span></div>
+      <div class="row"><span class="lab">Módulo negro</span>
+        <button class="chip" id="pwr" aria-pressed="true">Encendido (5 V)</button>
+      </div>
+      <div class="row" style="margin-bottom:0"><span class="lab">Mostrar</span>
+        <label class="chk"><input type="checkbox" id="showIn" checked> Cables del interruptor al chip</label>
+        <label class="chk"><input type="checkbox" id="showInt" checked> Otros cables</label>
+        <label class="chk"><input type="checkbox" id="showLbl" checked> Etiquetas</label>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Qué es cada cosa</h2>
+    <ul class="legend">
+      <li><i style="background:#1f78c8"></i><span><b>Interruptor DIP de 12:</b> cada palanca es un interruptor. Hacia ON deja pasar el 5 V (vale 1). Hacia abajo queda en 0. Palancas 1 a 5 son A, 6 a 10 son B, la 12 es M (suma o resta).</span></li>
+      <li><i style="background:#d9b98a"></i><span><b>Resistencia de cada palanca:</b> empuja la entrada a 0 cuando la palanca está abajo. Debe ser de 330 Ω a 1 kΩ.</span></li>
+      <li><i style="background:#2c2c30"></i><span><b>7486:</b> cuatro compuertas XOR. Dan vuelta los bits de B cuando restas. <b>74LS283:</b> suma 4 bits por sí solo. Para 5 bits se usan dos de cada uno.</span></li>
+      <li><i style="background:#f08a1c"></i><span><b>Columna M:</b> una columna donde llega la palanca 12 y desde donde sale M a cada compuerta y al acarreo de entrada.</span></li>
+      <li><i style="background:#ff4d3d"></i><span><b>LED:</b> muestran el resultado, cada uno con su resistencia de 330 Ω a GND. Pata larga hacia el cable, pata corta hacia la resistencia.</span></li>
+    </ul>
+  </section>
+
+  <details>
+    <summary>Pines de los chips y del interruptor</summary>
+    <div class="tw">
+    <table>
+      <thead><tr><th>74LS283 (16 pines)</th><th>Pines</th></tr></thead>
+      <tbody>
+        <tr><td>Entradas A1 a A4</td><td><code>5, 3, 14, 12</code></td></tr>
+        <tr><td>Entradas B1 a B4</td><td><code>6, 2, 15, 11</code></td></tr>
+        <tr><td>Acarreo de entrada C0</td><td><code>7</code></td></tr>
+        <tr><td>Salidas Σ1 a Σ4</td><td><code>4, 1, 13, 10</code></td></tr>
+        <tr><td>Acarreo de salida C4</td><td><code>9</code></td></tr>
+        <tr><td>VCC (5 V) y GND</td><td><code>16</code> y <code>8</code></td></tr>
+      </tbody>
+    </table>
+    <table style="margin-top:12px">
+      <thead><tr><th>7486 (14 pines)</th><th>Entrada, entrada → salida</th></tr></thead>
+      <tbody>
+        <tr><td>Compuerta 1</td><td><code>1, 2 → 3</code></td></tr>
+        <tr><td>Compuerta 2</td><td><code>4, 5 → 6</code></td></tr>
+        <tr><td>Compuerta 3</td><td><code>9, 10 → 8</code></td></tr>
+        <tr><td>Compuerta 4</td><td><code>12, 13 → 11</code></td></tr>
+        <tr><td>VCC (5 V) y GND</td><td><code>14</code> y <code>7</code></td></tr>
+      </tbody>
+    </table>
+    <table style="margin-top:12px">
+      <thead><tr><th>Interruptor DIP de 12</th><th>Qué hace</th></tr></thead>
+      <tbody>
+        <tr><td>Palancas 1 a 5</td><td>A1 a A5 (en 4 bits no uses la 5)</td></tr>
+        <tr><td>Palancas 6 a 10</td><td>B1 a B5 (en 4 bits no uses la 10)</td></tr>
+        <tr><td>Palanca 11</td><td>No se usa</td></tr>
+        <tr><td>Palanca 12</td><td>M: abajo suma, arriba resta</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </details>
+
+  <p class="foot">En la maqueta, el pin 1 de cada chip es la patita pegada a la muesca, abajo a la izquierda. Los números de los pines están dibujados sobre cada chip. Cada palanca gasta unos 15 mA cuando está en ON, así que el USB aguanta sin problema.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- Estado y lógica ---------- */
+var state={A:[1,1,0,1,0],B:[0,1,1,0,0],M:0,power:true,showIn:true,showInt:true,showLbl:true};
+var N=4, STEP=8;
+function valBits(a,n){var s=0;for(var i=0;i<n;i++)s+=(a[i]<<i);return s;}
+function bin(x,l){var s=x.toString(2);while(s.length<l)s='0'+s;return s;}
+function bitsOf(x){return [x&1,(x>>1)&1,(x>>2)&1,(x>>3)&1,(x>>4)&1];}
+function compute(n,A,B,M){
+  var mask=(1<<n)-1, a=valBits(A,n), b=valBits(B,n);
+  var bp=M?((~b)&mask):b, sum=a+bp+M, S=sum&mask, cout=(sum>>n)&1;
+  var c4=(((a&15)+(bp&15)+M)>>4)&1;
+  return {a:a,b:b,bp:bp,S:S,cout:cout,c4:c4,sum:sum};
+}
+window.__compute=compute;
+
+/* ---------- Escena ---------- */
+var THREE=window.THREE, ok=!!THREE&&!!THREE.OrbitControls;
+var stage=document.getElementById('stage'), canvas=document.getElementById('c');
+var renderer,scene,camera,controls,ground,modLed,dyn=null;
+var PX=0.254, TOPY=0.85, ZB2=8.0;
+var parts=[], wires=[], ledUnits=[], labels=[], stepItems={}, M={}, nStatic=0;
+
+function box(w,h,d,mat,x,y,z,parent,shadow){
+  var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); m.position.set(x,y,z);
+  if(shadow!==false){m.castShadow=true;m.receiveShadow=true;}
+  (parent||scene).add(m); return m;
+}
+function labelPlane(wcm,hcm,draw,ppc,opaque){
+  var c=document.createElement('canvas'); c.width=Math.round(wcm*ppc); c.height=Math.round(hcm*ppc);
+  var x=c.getContext('2d'); draw(x,ppc,c.width,c.height);
+  var t=new THREE.CanvasTexture(c); t.anisotropy=4;
+  var m=new THREE.Mesh(new THREE.PlaneGeometry(wcm,hcm),new THREE.MeshBasicMaterial({map:t,transparent:!opaque}));
+  m.rotation.x=-Math.PI/2; return m;
+}
+function sprite(text,x,y,z,bg,parent,step){
+  var size=44, c=document.createElement('canvas'), g=c.getContext('2d');
+  g.font='600 '+size+'px sans-serif'; var w=Math.ceil(g.measureText(text).width)+44; c.width=w; c.height=size+28;
+  g=c.getContext('2d'); g.font='600 '+size+'px sans-serif';
+  g.fillStyle=bg||'#14202b'; var r=c.height/2; g.beginPath();
+  g.moveTo(r,0); g.lineTo(w-r,0); g.arc(w-r,r,r,-Math.PI/2,Math.PI/2); g.lineTo(r,c.height); g.arc(r,r,r,Math.PI/2,Math.PI*1.5); g.fill();
+  g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(text,w/2,c.height/2+2);
+  var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  s.scale.set(w/150,c.height/150,1); s.position.set(x,y,z); s.renderOrder=20;
+  (parent||scene).add(s); labels.push({obj:s,step:step||1}); return s;
+}
+
+function initScene(){
+  try{ renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true}); }catch(e){ok=false;return;}
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  scene=new THREE.Scene();
+  camera=new THREE.PerspectiveCamera(40,1,0.1,300);
+  controls=new THREE.OrbitControls(camera,canvas);
+  controls.enableDamping=true; controls.dampingFactor=0.08; controls.maxPolarAngle=Math.PI*0.49;
+  controls.minDistance=4; controls.maxDistance=90;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7d8a96,0.5));
+  var sun=new THREE.DirectionalLight(0xffffff,0.62); sun.position.set(-8,24,14); sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  var sc=sun.shadow.camera; sc.left=-26; sc.right=16; sc.top=20; sc.bottom=-14; sc.near=1; sc.far=70; scene.add(sun);
+  ground=new THREE.Mesh(new THREE.PlaneGeometry(120,90),new THREE.MeshStandardMaterial({color:0xa88f68,roughness:.95}));
+  ground.rotation.x=-Math.PI/2; ground.position.set(-4,0,6); ground.receiveShadow=true; scene.add(ground);
+
+  M={
+    board:new THREE.MeshStandardMaterial({color:0xf0efec,roughness:.55}),
+    hole:new THREE.MeshBasicMaterial({color:0x2a2d31}),
+    chip:new THREE.MeshStandardMaterial({color:0x1d1d20,roughness:.45}),
+    metal:new THREE.MeshStandardMaterial({color:0xc4c9ce,metalness:.85,roughness:.3}),
+    gold:new THREE.MeshStandardMaterial({color:0xd6a936,metalness:.8,roughness:.3}),
+    pcb:new THREE.MeshStandardMaterial({color:0x14171b,roughness:.6}),
+    plastic:new THREE.MeshStandardMaterial({color:0x17181a,roughness:.5}),
+    yellow:new THREE.MeshStandardMaterial({color:0xf2c200,roughness:.5}),
+    grey:new THREE.MeshStandardMaterial({color:0xbcc1c6,roughness:.5}),
+    white:new THREE.MeshStandardMaterial({color:0xf5f5f5,roughness:.5}),
+    tan:new THREE.MeshStandardMaterial({color:0xd9b98a,roughness:.7}),
+    hous:new THREE.MeshStandardMaterial({color:0x151515,roughness:.5})
+  };
+
+  makeBoard(0);
+  buildModule();
+  sprite('+ 5V',-8.9,1.0,2.27,'#a31d1d'); sprite('− GND',-8.9,1.0,2.0+0.9,'#1d3a8a');
+  applyTheme(); nStatic=labels.length;
+}
+
+/* --- protoboard --- */
+function makeBoard(zc){
+  var g=new THREE.Group(); g.position.z=zc; scene.add(g);
+  box(16.6,0.85,5.5,M.board,0,0.425,0,g);
+  box(16.6,0.02,0.5,new THREE.MeshStandardMaterial({color:0xd3d4d0}),0,TOPY+0.002,0,g,false);
+  var hp=[],c,k,m,rz=[2.0,2.27];
+  for(c=0;c<63;c++){for(k=0;k<5;k++){hp.push([(c-31)*PX,0.381+k*PX]);hp.push([(c-31)*PX,-(0.381+k*PX)]);}}
+  for(m=0;m<59;m++){ if(m%6===5) continue; for(k=0;k<2;k++){hp.push([-7.5+m*PX,rz[k]]);hp.push([-7.5+m*PX,-rz[k]]);} }
+  var holes=new THREE.InstancedMesh(new THREE.BoxGeometry(0.1,0.03,0.1),M.hole,hp.length), dm=new THREE.Object3D();
+  hp.forEach(function(p,i){dm.position.set(p[0],TOPY+0.006,p[1]);dm.updateMatrix();holes.setMatrixAt(i,dm.matrix);});
+  g.add(holes);
+  [[1,0xd62828,2.5],[-1,0xd62828,2.5],[1,0x2563eb,1.77],[-1,0x2563eb,1.77]].forEach(function(s){
+    box(15.2,0.01,0.05,new THREE.MeshBasicMaterial({color:s[1]}),-0.1,TOPY+0.004,s[0]*s[2],g,false);
+  });
+}
+
+/* --- módulo de energía y USB (paso 1) --- */
+var modPos=new THREE.Vector3(-12.8,0,1.2);
+function buildModule(){
+  var mod=new THREE.Group(); mod.position.copy(modPos); scene.add(mod);
+  box(5.3,0.15,3.4,M.pcb,0,0.2,0,mod);
+  var tex=labelPlane(5.3,3.4,function(x,ppc){
+    function X(lx){return (lx+2.65)*ppc;} function Z(lz){return (lz+1.7)*ppc;}
+    x.fillStyle='#e8e8e8'; x.textAlign='center'; x.textBaseline='middle'; x.font='600 '+(0.2*ppc)+'px sans-serif';
+    x.fillText('HW-131',X(-1.2),Z(1.4));
+    x.font='600 '+(0.17*ppc)+'px sans-serif';
+    x.fillText('3.3V',X(1.15),Z(-0.57)); x.fillText('5V',X(1.15),Z(0.57)); x.fillText('GND',X(1.75),Z(0.0));
+  },90);
+  tex.position.set(0,0.2+0.076,0); mod.add(tex);
+  box(1.5,0.72,1.3,M.metal,-2.3,0.62,0.9,mod);
+  box(1.4,1.0,1.2,M.plastic,-1.95,0.77,-1.05,mod);
+  box(0.8,0.5,0.8,M.grey,-0.6,0.5,-1.0,mod); box(0.35,0.25,0.35,M.white,-0.6,0.8,-1.0,mod);
+  var cap=new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.38,0.75,18),new THREE.MeshStandardMaterial({color:0x222222,roughness:.5}));
+  cap.position.set(0.3,0.65,0.9); cap.castShadow=true; mod.add(cap);
+  box(0.6,0.16,0.5,M.plastic,0.2,0.35,-0.5,mod); box(0.6,0.16,0.5,M.plastic,0.2,0.35,-1.15,mod);
+  modLed=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshStandardMaterial({color:0x20c45a,emissive:0x20c45a,emissiveIntensity:1}));
+  modLed.position.set(-0.7,0.4,0.15); mod.add(modLed);
+  box(0.62,0.22,1.1,M.yellow,1.4,0.38,0,mod);
+  for(var cc=0;cc<4;cc++) for(var rr=0;rr<2;rr++) box(0.05,0.28,0.05,M.gold,1.4+(rr?-0.127:0.127),0.58,(cc-1.5)*PX,mod,false);
+  box(2.4,2.4,1.5,M.white,-20.5,1.2,3.6,scene);
+  var usbA=new THREE.Vector3(-15.9,0.65,2.1), usbB=new THREE.Vector3(-19.3,0.4,3.6);
+  var cur=new THREE.CatmullRomCurve3([usbA,new THREE.Vector3(-15.3,0.45,1.9),new THREE.Vector3(-17,0.3,4.2),usbB]);
+  var cab=new THREE.Mesh(new THREE.TubeGeometry(cur,40,0.12,8),M.plastic); cab.castShadow=true; scene.add(cab);
+  box(0.9,0.6,0.9,M.metal,-15.55,0.65,2.0,scene,false);
+  sprite('Módulo negro',-12.8,2.7,1.2); sprite('USB',-16.6,1.3,3.3);
+}
+function modPin(row,col){ return new THREE.Vector3(1.4+(row?-0.127:0.127),0.72,(col-1.5)*PX).add(modPos); }
+
+/* ---------- Circuito (se reconstruye al cambiar 4/5 bits) ---------- */
+var GATE=[[1,2,3],[4,5,6],[9,10,8],[12,13,11]];
+var AP=[5,3,14,12], BP=[6,2,15,11], SP=[4,1,13,10];
+var BUS=12, dipLevers=[], colUse={}, railUsed={}, swList=[];
+function netColor(n){
+  if(/^A/.test(n))return 0x3b9cff; if(/^B[0-9]/.test(n))return 0xc084fc; if(n==='M')return 0xf08a1c;
+  if(/^Bp/.test(n))return 0xb8d82a; if(/^S/.test(n))return 0xf2c200; return 0xe8e8e8;
+}
+function colX(c){return (c-31)*PX;}
+function pinCol(ch,pin){ var h=ch.N/2; return pin<=h?{c:ch.col0+pin-1,s:1}:{c:ch.col0+(ch.N-pin),s:-1}; }
+function pinXZ(ch,pin){ var q=pinCol(ch,pin); return {x:colX(q.c),z:q.s*0.381}; }
+function colHole(col,side){
+  var key=col+'|'+side, k=colUse[key]||0; colUse[key]=k+1;
+  return new THREE.Vector3(colX(col),TOPY+0.01,side*(0.381+PX*k));
+}
+function holeOf(ch,pin){ var q=pinCol(ch,pin); return colHole(q.c,q.s); }
+function railAt(side,kind,x){
+  var key=side+kind; railUsed[key]=railUsed[key]||{};
+  var m=Math.max(0,Math.round((x+7.5)/PX));
+  while(m%6===5||railUsed[key][m]) m++;
+  railUsed[key][m]=1;
+  return new THREE.Vector3(-7.5+m*PX,TOPY+0.01,side*(kind==='out'?2.27:2.0));
+}
+function geoFor(p0,p1,lift){
+  var top=Math.max(p0.y,p1.y)+lift;
+  var pts=[p0.clone(),new THREE.Vector3(p0.x,p0.y+0.4,p0.z),
+    new THREE.Vector3(p0.x*0.72+p1.x*0.28,top,p0.z*0.72+p1.z*0.28),
+    new THREE.Vector3(p0.x*0.28+p1.x*0.72,top,p0.z*0.28+p1.z*0.72),
+    new THREE.Vector3(p1.x,p1.y+0.4,p1.z),p1.clone()];
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,false,'catmullrom',0.45),48,0.045,8,false);
+}
+function addWire(o){
+  var lift=o.lift||1.2;
+  var mat=new THREE.MeshStandardMaterial({color:o.color,roughness:.45,emissive:o.color,emissiveIntensity:0});
+  var mesh=new THREE.Mesh(geoFor(o.p0,o.p1,lift),mat); mesh.castShadow=true; dyn.add(mesh);
+  var hs=[o.p0,o.p1].map(function(p){var h=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.3,0.26),M.hous);h.position.set(p.x,p.y+0.22,p.z);h.castShadow=true;dyn.add(h);return h;});
+  wires.push({mesh:mesh,mat:mat,hs:hs,net:o.net||null,cat:o.cat,step:o.step});
+  (stepItems[o.step]=stepItems[o.step]||[]).push(o.desc);
+}
+function rod(a,b,r,mat){
+  var d=b.clone().sub(a),L=d.length(); if(L<1e-4) return;
+  var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,6),mat);
+  m.position.copy(a).add(b).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); dyn.add(m); return m;
+}
+function addRes(p0,p1,step,desc){
+  var g=new THREE.Group(); dyn.add(g);
+  var dx=p1.x-p0.x, dz=p1.z-p0.z, L=Math.sqrt(dx*dx+dz*dz), bl=Math.min(0.62,L*0.6), u=new THREE.Vector3(dx/L,0,dz/L);
+  var mid=new THREE.Vector3((p0.x+p1.x)/2,TOPY+0.2,(p0.z+p1.z)/2);
+  var body=new THREE.Group(); body.position.copy(mid); body.rotation.y=-Math.atan2(dz,dx); g.add(body);
+  var rb=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.09,bl,10),M.tan); rb.rotation.z=Math.PI/2; rb.castShadow=true; body.add(rb);
+  [[0xf08a1c,-0.3],[0xf08a1c,-0.15],[0x7a4a1f,0.0],[0xd6a936,0.26]].forEach(function(b){
+    var br=new THREE.Mesh(new THREE.CylinderGeometry(0.098,0.098,0.04,10),new THREE.MeshStandardMaterial({color:b[0]}));
+    br.rotation.z=Math.PI/2; br.position.x=b[1]*bl/0.62; body.add(br);});
+  var ea=mid.clone().addScaledVector(u,-bl/2), eb=mid.clone().addScaledVector(u,bl/2);
+  [[p0,ea],[p1,eb]].forEach(function(s){ var m=rod(s[0],s[1],0.022,M.metal); g.add(m); });
+  parts.push({obj:g,step:step}); (stepItems[step]=stepItems[step]||[]).push(desc);
+}
+function makeChip(ch){
+  var N=ch.N,h=N/2, len=(h-1)*PX+0.41;
+  var g=new THREE.Group(); g.position.set(ch.cx,TOPY,0); dyn.add(g);
+  box(len,0.33,0.64,M.chip,0,0.28,0,g);
+  var lab=labelPlane(len,0.62,function(x,ppc,w,hh){
+    x.fillStyle='#d9dde0'; x.textAlign='center'; x.textBaseline='middle';
+    x.font='600 '+(0.2*ppc)+'px monospace'; x.fillText(ch.type,w/2+0.06*ppc,hh/2-0.03*ppc);
+    x.font='500 '+(0.13*ppc)+'px monospace'; x.fillStyle='#8f969c'; x.fillText(ch.name,w/2+0.06*ppc,hh/2+0.15*ppc);
+    x.font='500 '+(0.11*ppc)+'px monospace'; x.fillStyle='#b7bdc2';
+    for(var p=1;p<=N;p++){
+      var px=p<=h? (len/2+(p-1-(h-1)/2)*PX) : (len/2+((N-p)-(h-1)/2)*PX);
+      x.fillText(String(p),px*ppc,p<=h? hh-0.075*ppc : 0.075*ppc);
+    }
+    x.fillStyle='#3a3d42'; x.beginPath(); x.arc(0,hh/2,0.15*ppc,-Math.PI/2,Math.PI/2); x.fill();
+    x.fillStyle='#8f969c'; x.beginPath(); x.arc(0.1*ppc,hh-0.16*ppc,0.04*ppc,0,Math.PI*2); x.fill();
+  },220);
+  lab.position.set(0,0.28+0.166,0); g.add(lab);
+  for(var p=1;p<=N;p++){
+    var q=pinXZ(ch,p), lx=q.x-ch.cx, sz=Math.sign(q.z);
+    box(0.05,0.3,0.05,M.metal,lx,0.15,sz*0.381,g,false);
+    box(0.06,0.04,0.2,M.metal,lx,0.3,sz*0.35,g,false);
+  }
+  parts.push({obj:g,step:2});
+  sprite(ch.type+' ('+ch.name+')',ch.cx,1.5,2.4,'#14202b',dyn,2);
+}
+function makeDip(col0){
+  var cx=colX(col0+5.5), g=new THREE.Group(); g.position.set(cx,TOPY,0); dyn.add(g);
+  var blue=new THREE.MeshStandardMaterial({color:0x1f78c8,roughness:.45}), dark=new THREE.MeshStandardMaterial({color:0x0f3f6e,roughness:.6});
+  var W=12*PX+0.1;
+  box(W,0.5,0.86,blue,0,0.3,0,g);
+  var lab=labelPlane(W,0.86,function(x,ppc,w,h){
+    x.fillStyle='#e8f2fb'; x.textAlign='center'; x.textBaseline='middle';
+    x.font='700 '+(0.15*ppc)+'px sans-serif'; x.textAlign='left'; x.fillText('ON',0.06*ppc,0.12*ppc); x.textAlign='center';
+    x.font='600 '+(0.14*ppc)+'px sans-serif';
+    for(var i=0;i<12;i++) x.fillText(String(i+1),(0.05+(i+0.5)*PX)*ppc,h-0.13*ppc);
+  },200);
+  lab.position.set(0,0.3+0.252,0); g.add(lab);
+  dipLevers=[];
+  for(var i=0;i<12;i++){
+    var x=(i-5.5)*PX;
+    box(0.19,0.02,0.5,dark,x,0.553,0,g,false);
+    var lv=box(0.16,0.1,0.2,M.white,x,0.6,0.13,g,false); dipLevers.push(lv);
+    [-1,1].forEach(function(sd){ box(0.05,0.3,0.05,M.metal,x,0.15,sd*0.381,g,false); });
+  }
+  parts.push({obj:g,step:2});
+  var A=ch5?'A1–A5':'A1–A4', B=ch5?'B1–B5':'B1–B4';
+  sprite('Interruptor DIP',colX(col0+5.5),1.7,-1.6,'#0b4f86',dyn,2);
+  sprite(A,colX(col0+2),1.1,1.3,'#1f5fb3',dyn,2);
+  sprite(B,colX(col0+7),1.1,1.3,'#6b3fb0',dyn,2);
+  sprite('M',colX(col0+11),1.1,1.3,'#7a3b00',dyn,2);
+}
+var ch5=false;
+
+function makeLed(p,idx,name,isC){
+  var g=new THREE.Group(); dyn.add(g);
+  var col=isC?0x2ee06a:0xff4d3d, xa=colX(p), xc=colX(p+1), zz=0.381, xm=(xa+xc)/2;
+  var a=new THREE.Vector3(xa,TOPY+0.01,zz), c=new THREE.Vector3(xc,TOPY+0.01,zz);
+  var la=new THREE.Vector3(xm-0.07,TOPY+0.5,zz), lc=new THREE.Vector3(xm+0.07,TOPY+0.5,zz);
+  g.add(rod(a,la,0.02,M.metal)); g.add(rod(c,lc,0.02,M.metal));
+  var mat=new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0,transparent:true,opacity:0.78,roughness:.3});
+  var body=new THREE.Mesh(new THREE.CylinderGeometry(0.235,0.235,0.45,18),mat); body.position.set(xm,TOPY+0.75,zz); g.add(body);
+  var dome=new THREE.Mesh(new THREE.SphereGeometry(0.235,18,12,0,Math.PI*2,0,Math.PI/2),mat); dome.position.set(xm,TOPY+0.975,zz); g.add(dome);
+  var fl=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.05,18),mat); fl.position.set(xm,TOPY+0.52,zz); g.add(fl);
+  var hc=document.createElement('canvas'); hc.width=hc.height=128; var hg=hc.getContext('2d');
+  var gr=hg.createRadialGradient(64,64,4,64,64,64); gr.addColorStop(0,'rgba(255,255,255,0.9)'); gr.addColorStop(0.25,isC?'rgba(46,224,106,0.6)':'rgba(255,77,61,0.6)'); gr.addColorStop(1,'rgba(0,0,0,0)');
+  hg.fillStyle=gr; hg.fillRect(0,0,128,128);
+  var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(hc),blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));
+  halo.scale.set(1.8,1.8,1); halo.position.set(xm,TOPY+1.05,zz); halo.visible=false; g.add(halo);
+  parts.push({obj:g,step:7}); ledUnits[idx]={mat:mat,halo:halo};
+}
+
+var ledOrder=[];
+function buildCircuit(n){
+  if(dyn){ scene.remove(dyn); dyn.traverse(function(o){if(o.geometry)o.geometry.dispose();}); }
+  dyn=new THREE.Group(); scene.add(dyn);
+  parts=[]; wires=[]; ledUnits=[]; stepItems={}; labels.length=nStatic; colUse={}; railUsed={}; ch5=(n===5);
+  var two=(n===5);
+  var specs=two?[['7486','U1',14,14],['7486','U2',22,14],['74LS283','U3',30,16],['74LS283','U4',39,16]]
+               :[['7486','U1',14,14],['74LS283','U2',22,16]];
+  var chips=specs.map(function(s,i){var h=s[3]/2;return {id:i,type:s[0],name:s[1],N:s[3],col0:s[2],cx:colX(s[2]+(h-1)/2)};});
+  var x1=chips[0], x2=two?chips[1]:null, a1=two?chips[2]:chips[1], a2=two?chips[3]:null;
+  var tag=function(c){return c.name+' ('+c.type+')';};
+  chips.forEach(function(c){ for(var p=1;p<=c.N;p++){var q=pinCol(c,p); colUse[q.c+'|'+q.s]=1;} });
+  for(var s0=0;s0<12;s0++){ colUse[s0+'|1']=1; colUse[s0+'|-1']=1; }
+
+  // paso 1: energía
+  addWire({p0:new THREE.Vector3().copy(modPin(0,3)),p1:railAt(1,'out',-7.5),color:0xd62828,cat:'power',step:1,lift:2.2,desc:'Cable rojo: patita <b>5V</b> del módulo → tira + (adelante)'});
+  addWire({p0:modPin(1,3),p1:railAt(1,'in',-7.5+PX),color:0x1a1a1a,cat:'power',step:1,lift:1.8,desc:'Cable negro: patita <b>GND</b> del módulo → tira − (adelante)'});
+  addWire({p0:railAt(1,'out',-7.5+2*PX),p1:railAt(-1,'out',-7.5+2*PX),color:0xd62828,cat:'power',step:1,lift:2.6,desc:'Puente rojo: tira + de adelante → tira + de atrás'});
+  addWire({p0:railAt(1,'in',-7.5+3*PX),p1:railAt(-1,'in',-7.5+3*PX),color:0x1a1a1a,cat:'power',step:1,lift:2.2,desc:'Puente negro: tira − de adelante → tira − de atrás'});
+
+  // paso 2: interruptor y chips
+  makeDip(0);
+  (stepItems[2]=stepItems[2]||[]).push('Pon el <b>interruptor azul</b> cruzando la ranura, en las columnas <b>1 a 12</b> (cuenta desde el lado del módulo). Los números hacia ti.');
+  chips.forEach(makeChip);
+  chips.forEach(function(c){ var h=c.N/2; (stepItems[2]).push('Pon el chip <b>'+tag(c)+'</b> cruzando la ranura, columnas <b>'+(c.col0+1)+' a '+(c.col0+h)+'</b>, con la muesca a la izquierda.'); });
+
+  // paso 3: alimentación de chips
+  chips.forEach(function(c,i){
+    var vh=holeOf(c,c.N), gh=holeOf(c,c.N/2);
+    addWire({p0:vh,p1:railAt(-1,'out',vh.x),color:0xd62828,cat:'power',step:3,lift:0.8,desc:tag(c)+': pin <code>'+c.N+'</code> (VCC) → tira + de atrás'});
+    addWire({p0:gh,p1:railAt(1,'in',gh.x),color:0x1a1a1a,cat:'power',step:3,lift:0.8,desc:tag(c)+': pin <code>'+(c.N/2)+'</code> (GND) → tira − de adelante'});
+  });
+
+  // interruptores usados
+  swList=[]; var i;
+  for(i=0;i<n;i++) swList.push({idx:i,net:'A'+i,name:'A'+(i+1)});
+  for(i=0;i<n;i++) swList.push({idx:5+i,net:'B'+i,name:'B'+(i+1)});
+  swList.push({idx:11,net:'M',name:'M'});
+  // paso 4: 5 V y resistencia de cada interruptor
+  swList.forEach(function(sw){
+    var f=colHole(sw.idx,1), bk=colHole(sw.idx,-1);
+    addWire({p0:f,p1:railAt(1,'out',f.x),color:0xd62828,cat:'power',step:4,lift:0.6,desc:'Interruptor <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de los números: cable → tira + (adelante)'});
+    addRes(bk,railAt(-1,'in',bk.x),4,'Interruptor <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de ON: resistencia → tira − (atrás)');
+    sw.back=bk;
+  });
+  // paso 5: entradas
+  function hopB(sw,pinHole,desc,lift){ addWire({p0:sw.back,p1:pinHole,color:netColor(sw.net),cat:'in',net:sw.net,step:5,lift:lift,desc:desc}); }
+  var msw=swList[swList.length-1];
+  var busB=colHole(BUS,-1);
+  addWire({p0:msw.back,p1:busB,color:0xf08a1c,cat:'in',net:'M',step:5,lift:0.7,desc:'Interruptor <b>12</b> (M) → columna <b>'+(BUS+1)+'</b> (atrás), la <b>columna M</b>'});
+  addWire({p0:colHole(BUS,-1),p1:colHole(BUS,1),color:0xf08a1c,cat:'in',net:'M',step:5,lift:1.0,desc:'Une la columna M de atrás con la de adelante (misma columna <b>'+(BUS+1)+'</b>)'});
+  for(i=0;i<n;i++){
+    var ac=i<4?a1:a2, k=i%4, xc=i<4?x1:x2, g=GATE[i%4];
+    var sa=swList[i], sb=swList[n+i];
+    hopB(sa,holeOf(ac,AP[k]),'Interruptor <b>'+(sa.idx+1)+'</b> (A'+(i+1)+') → '+tag(ac)+' pin <code>'+AP[k]+'</code>',1.2+(i%3)*0.3);
+    hopB(sb,holeOf(xc,g[0]),'Interruptor <b>'+(sb.idx+1)+'</b> (B'+(i+1)+') → '+tag(xc)+' pin <code>'+g[0]+'</code>',1.5+(i%3)*0.3);
+    var side=Math.sign(pinXZ(xc,g[1]).z), st=colHole(BUS,side);
+    addWire({p0:st,p1:holeOf(xc,g[1]),color:0xf08a1c,cat:'in',net:'M',step:5,lift:1.3+(i%2)*0.3,desc:'Columna M → '+tag(xc)+' pin <code>'+g[1]+'</code>'});
+  }
+  addWire({p0:colHole(BUS,1),p1:holeOf(a1,7),color:0xf08a1c,cat:'in',net:'M',step:5,lift:1.3,desc:'Columna M → '+tag(a1)+' pin <code>7</code> (C0, acarreo de entrada)'});
+
+  // paso 6: XOR → sumador
+  for(i=0;i<n;i++){
+    var ac2=i<4?a1:a2, k2=i%4, xc2=i<4?x1:x2, g2=GATE[i%4];
+    addWire({p0:holeOf(xc2,g2[2]),p1:holeOf(ac2,BP[k2]),color:0xb8d82a,cat:'int',net:'Bp'+i,step:6,lift:1.5+(i%2)*0.4,
+      desc:'B'+(i+1)+' invertido: '+tag(xc2)+' pin <code>'+g2[2]+'</code> → '+tag(ac2)+' pin <code>'+BP[k2]+'</code> (B'+(k2+1)+')'});
+  }
+  if(two){
+    addWire({p0:holeOf(a1,9),p1:holeOf(a2,7),color:0xe8e8e8,cat:'int',net:'C4link',step:6,lift:2.0,desc:'Acarreo: '+tag(a1)+' pin <code>9</code> (C4) → '+tag(a2)+' pin <code>7</code> (C0)'});
+    [3,14,12,2,15,11].forEach(function(pn){
+      var hh=holeOf(a2,pn), sd2=Math.sign(pinXZ(a2,pn).z);
+      addWire({p0:hh,p1:railAt(sd2,'in',hh.x),color:0x1a1a1a,cat:'int',step:6,lift:0.8,desc:tag(a2)+': pin <code>'+pn+'</code> (no se usa) → tira − (0)'});
+    });
+  }
+
+  // paso 7: LED
+  var leds=[{name:two?'C5':'C4',isC:true,src:two?[a2,9]:[a1,9],net:'Cout'}];
+  for(i=n-1;i>=0;i--) leds.push({name:'S'+i,isC:false,src:i<4?[a1,SP[i]]:[a2,SP[0]],net:'S'+i,bit:i});
+  ledOrder=leds; var ls=two?48:32;
+  (stepItems[7]=stepItems[7]||[]).push('Pon <b>'+leds.length+' LED</b> en las columnas <b>'+(ls+1)+' a '+(ls+2*leds.length)+'</b>: pata larga (+) en la columna izquierda de cada pareja, pata corta en la derecha.');
+  leds.forEach(function(L,u){
+    var p=ls+2*u;
+    var aH=colHole(p,1), cH=colHole(p+1,1);
+    makeLed(p,u,L.name,L.isC);
+    var wH=colHole(p,1), rH=colHole(p+1,1);
+    addWire({p0:holeOf(L.src[0],L.src[1]),p1:wH,color:netColor(L.net),cat:'int',net:L.net,step:7,lift:1.2+(u%3)*0.3,desc:'Salida <b>'+L.name+'</b>: '+tag(L.src[0])+' pin <code>'+L.src[1]+'</code> → columna <b>'+(p+1)+'</b> (pata larga del LED)'});
+    addRes(rH,railAt(1,'in',rH.x),7,'LED '+L.name+': resistencia de 330 Ω, de la columna <b>'+(p+2)+'</b> (pata corta) → tira − (adelante)');
+  });
+  sprite('Columna M',colX(BUS)+0.3,2.0,-1.7,'#7a3b00',dyn,5);
+  sprite('LED (resultado)',colX(ls+leds.length),1.8,2.4,'#14202b',dyn,7);
+}
+
+function applyTheme(){
+  if(!ground) return;
+  var d=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+  ground.material.color.set(d?0x3d3228:0xa88f68);
+}
+
+/* ---------- Vistas ---------- */
+var VIEWS={
+  general:{c:[-6,0,0.5],w:40,d:[0,1.1,0.9]},
+  circuito:{c:[0,0,0],w:18,d:[0,1.8,0.5]},
+  energia:{c:[-10,0,1],w:15,d:[0.1,0.8,1]},
+  arriba:{c:[0,0,0],w:19,d:[0,1,0.02]}
+};
+var tween=null;
+function viewPose(v){
+  var asp=Math.max(0.35,camera.aspect), vf=camera.fov*Math.PI/180;
+  var dist=(v.w/2)/(Math.tan(vf/2)*Math.min(asp,1.9))*1.04;
+  var dir=new THREE.Vector3().fromArray(v.d).normalize(), tgt=new THREE.Vector3().fromArray(v.c);
+  return {pos:tgt.clone().add(dir.multiplyScalar(dist)),tgt:tgt};
+}
+function goView(name,instant){
+  var p=viewPose(VIEWS[name]);
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(instant||reduce){camera.position.copy(p.pos);controls.target.copy(p.tgt);controls.update();return;}
+  tween={t0:performance.now(),dur:650,p0:camera.position.clone(),g0:controls.target.clone(),p1:p.pos,g1:p.tgt};
+}
+
+/* ---------- Guía por pasos ---------- */
+var STEPS=[
+ ['Energía y puentes','Con el USB desconectado, lleva la energía del módulo a la protoboard con dos cables, y pasa la energía a las tiras de atrás con dos puentes.','Si tu protoboard tiene las tiras partidas por la mitad, une las dos mitades con un cable. El + es la tira marcada en rojo.'],
+ ['Pon el interruptor y los chips','El interruptor azul y los chips se montan igual: cruzando la ranura del centro, con una fila de patitas a cada lado. Todavía no hay cables.','Revisa la muesca de cada chip antes de seguir. Un chip al revés se puede dañar. El interruptor no tiene lado.'],
+ ['Alimenta los chips','Cada chip necesita su VCC a 5 V (pin de arriba a la izquierda del lado de atrás) y su GND (pin de abajo a la derecha del lado de adelante).',''],
+ ['Alimenta el interruptor','Cada palanca que uses lleva dos cosas. Un cable de 5 V por el lado de los números, y una resistencia a GND por el lado de ON. Con la palanca hacia ON pasa el 5 V y vale 1. Hacia abajo, la resistencia lo deja en 0.','Usa resistencias de 330 Ω a 1 kΩ. No uses de 10 kΩ: con estos chips el 0 no funciona.'],
+ ['Cables de las entradas','Cada palanca va con un cable al chip. A va directo al 74LS283, B entra al 7486 y M va a una columna especial que reparte la orden de sumar o restar.','M abajo suma. M arriba resta.'],
+ ['Del 7486 al sumador','Cada compuerta del 7486 da vuelta (o no) el bit de B según M, y su salida va al 74LS283.',''],
+ ['Los LED','Los LED muestran el resultado. Cada uno lleva su resistencia de 330 Ω hacia GND.','Si un LED no enciende nunca, dalo vuelta: la pata larga va al cable.'],
+];
+var LAST=STEPS.length;
+function renderSteps(){
+  var dots=document.getElementById('dots'); dots.innerHTML='';
+  for(var i=1;i<=LAST+1;i++){ (function(i){
+    var b=document.createElement('button'); b.type='button'; b.textContent=i===LAST+1?'✓':String(i);
+    b.setAttribute('aria-label',i===LAST+1?'Terminado':'Paso '+i);
+    if(i===STEP) b.setAttribute('aria-current','step'); else if(i<STEP) b.className='done';
+    b.addEventListener('click',function(){STEP=i;update();});
+    dots.appendChild(b);})(i); }
+  var t=$('stepTitle'), k=$('stepK'), tx=$('stepTxt'), ul=$('stepItems'), wr=$('stepWarn');
+  ul.innerHTML='';
+  if(STEP>LAST){
+    t.textContent='Terminado y funcionando'; k.textContent='Paso '+(LAST+1)+' de '+(LAST+1);
+    tx.textContent='Ya está todo armado. Mueve las palancas de abajo y mira cómo cambian los cables y los LED.';
+    wr.hidden=true;
+  } else {
+    t.textContent=STEPS[STEP-1][0]; k.textContent='Paso '+STEP+' de '+(LAST+1); tx.textContent=STEPS[STEP-1][1];
+    wr.hidden=!STEPS[STEP-1][2]; wr.textContent=STEPS[STEP-1][2]||'';
+    (stepItems[STEP]||[]).forEach(function(s,i){
+      var li=document.createElement('li'); var cb=document.createElement('input'); cb.type='checkbox'; cb.id='it'+STEP+'_'+i;
+      cb.addEventListener('change',function(){li.classList.toggle('chk',cb.checked);});
+      var lb=document.createElement('label'); lb.htmlFor=cb.id; lb.innerHTML=s;
+      li.appendChild(cb); li.appendChild(lb); ul.appendChild(li);
+    });
+  }
+  $('prev').disabled=STEP<=1; $('next').disabled=STEP>LAST; $('fin').disabled=STEP>LAST;
+}
+
+/* ---------- UI ---------- */
+function $(id){return document.getElementById(id);}
+function mkBits(host,key,pre){
+  host.innerHTML='';
+  for(var i=N-1;i>=0;i--){ (function(i){
+    var bt=document.createElement('button'); bt.className='bit'; bt.type='button';
+    bt.innerHTML='<span class="n">'+pre+(i+1)+'</span><b>0</b>'; bt.dataset.k=key; bt.dataset.i=i;
+    bt.addEventListener('click',function(){state[key][i]^=1;update();});
+    host.appendChild(bt);})(i); }
+}
+function mkLedsUI(){
+  var h=$('leds'); h.innerHTML='';
+  var names=['C'+(N===5?5:4)]; for(var i=N-1;i>=0;i--) names.push('S'+i);
+  names.forEach(function(n){var d=document.createElement('div');d.className='led'+(n[0]==='C'?' c4':'');d.dataset.n=n;d.innerHTML='<i></i>'+n;h.appendChild(d);});
+}
+function mkExamples(){
+  var h=$('exs'); h.innerHTML='';
+  var ex=N===4?[[11,6,0,'11 + 6'],[11,6,1,'11 − 6'],[3,6,1,'3 − 6'],[15,1,0,'15 + 1']]:[[21,9,0,'21 + 9'],[21,9,1,'21 − 9'],[5,9,1,'5 − 9'],[31,1,0,'31 + 1']];
+  ex.forEach(function(e){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=e[3];
+    b.addEventListener('click',function(){state.A=bitsOf(e[0]);state.B=bitsOf(e[1]);state.M=e[2];state.power=true;update();});h.appendChild(b);});
+}
+function setN(n){
+  N=n; $('n4').setAttribute('aria-pressed',n===4?'true':'false'); $('n5').setAttribute('aria-pressed',n===5?'true':'false');
+  state.A=bitsOf(n===4?11:21); state.B=bitsOf(n===4?6:9); state.M=0;
+  mkBits($('bitsA'),'A','A'); mkBits($('bitsB'),'B','B'); mkLedsUI(); mkExamples();
+  if(ok){ buildCircuit(n); }
+  update();
+}
+
+function update(){
+  var r=compute(N,state.A,state.B,state.M), pw=state.power, mask=(1<<N)-1;
+  var eq,note,top=N===4?'C4':'C5';
+  if(!pw){ eq='Sin energía'; note='El módulo está apagado, así que ningún LED enciende.'; }
+  else if(!state.M){ var t=r.S+(r.cout<<N); eq=r.a+' + '+r.b+' = '+t; note='LED: '+top+'='+r.cout+' y '+bin(r.S,N)+'. Juntos son '+bin(t,N+1)+' en binario.'; }
+  else if(r.cout){ eq=r.a+' − '+r.b+' = '+r.S; note=top+'=1 significa que no hubo préstamo. Los LED muestran '+bin(r.S,N)+'.'; }
+  else { eq=r.a+' − '+r.b+' = −'+(r.b-r.a); note=top+'=0 significa que hubo préstamo: el resultado es negativo. Los LED muestran '+bin(r.S,N)+' ('+r.S+'), que es '+(1<<N)+' − '+(r.b-r.a)+'.'; }
+  $('eq').textContent=eq; $('note').textContent=note;
+  document.querySelectorAll('#leds .led').forEach(function(d){
+    var n=d.dataset.n, v=n[0]==='C'?r.cout:((r.S>>(+n[1]))&1); d.classList.toggle('on',pw&&!!v);
+  });
+  document.querySelectorAll('.bit').forEach(function(bt){
+    var v=state[bt.dataset.k][+bt.dataset.i]; bt.setAttribute('aria-pressed',v?'true':'false'); bt.querySelector('b').textContent=v;
+  });
+  $('opAdd').setAttribute('aria-pressed',state.M?'false':'true'); $('opSub').setAttribute('aria-pressed',state.M?'true':'false');
+  $('pwr').setAttribute('aria-pressed',pw?'true':'false'); $('pwr').textContent=pw?'Encendido (5 V)':'Apagado';
+  renderSteps();
+  if(!ok||!dyn) return;
+  var fin=STEP>LAST, pulse=0.55;
+  parts.forEach(function(p){p.obj.visible=STEP>=p.step;});
+  labels.forEach(function(l){l.obj.visible=state.showLbl&&STEP>=l.step;});
+  var netVal={M:state.M,Cout:r.cout,C4link:r.c4};
+  for(var i=0;i<N;i++){netVal['Bp'+i]=(r.bp>>i)&1; netVal['S'+i]=(r.S>>i)&1; netVal['A'+i]=state.A[i]; netVal['B'+i]=state.B[i];}
+  dipLevers.forEach(function(lv,idx){
+    var v=idx<5?(idx<N?state.A[idx]:0):idx<10?((idx-5)<N?state.B[idx-5]:0):idx===11?state.M:0;
+    lv.position.z=v?-0.13:0.13;
+  });
+  wires.forEach(function(w){
+    var vis=STEP>=w.step && (w.cat==='in'?state.showIn:w.cat==='int'?state.showInt:true);
+    w.mesh.visible=vis; w.hs.forEach(function(h){h.visible=vis;});
+    var e=0;
+    if(!fin){ if(w.step===STEP) e=pulse; }
+    else if(pw){ if(w.cat==='power') e=0.3; else if(w.net) e=netVal[w.net]?0.9:0; }
+    w.mat.emissiveIntensity=e;
+  });
+  ledUnits.forEach(function(u,idx){
+    var L=ledOrder[idx]; if(!u||!L) return;
+    var v=L.isC?r.cout:((r.S>>L.bit)&1), on=fin&&pw&&!!v;
+    u.mat.emissiveIntensity=on?1.1:0; u.mat.opacity=on?1:0.78; u.halo.visible=on;
+  });
+  modLed.material.emissiveIntensity=pw?1:0; modLed.material.color.set(pw?0x20c45a:0x1b2b20);
+}
+
+/* ---------- Eventos ---------- */
+$('opAdd').addEventListener('click',function(){state.M=0;update();});
+$('opSub').addEventListener('click',function(){state.M=1;update();});
+$('pwr').addEventListener('click',function(){state.power=!state.power;update();});
+$('n4').addEventListener('click',function(){if(N!==4)setN(4);});
+$('n5').addEventListener('click',function(){if(N!==5)setN(5);});
+$('showIn').addEventListener('change',function(e){state.showIn=e.target.checked;update();});
+$('showInt').addEventListener('change',function(e){state.showInt=e.target.checked;update();});
+$('showLbl').addEventListener('change',function(e){state.showLbl=e.target.checked;update();});
+$('prev').addEventListener('click',function(){if(STEP>1){STEP--;update();}});
+$('next').addEventListener('click',function(){if(STEP<=LAST){STEP++;update();}});
+$('fin').addEventListener('click',function(){STEP=LAST+1;update();});
+document.querySelectorAll('[data-view]').forEach(function(bt){bt.addEventListener('click',function(){if(ok)goView(bt.dataset.view);});});
+
+function resize(){
+  if(!ok) return;
+  var w=stage.clientWidth, h=stage.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+function loop(now){
+  requestAnimationFrame(loop);
+  if(!ok||document.hidden) return;
+  if(tween){
+    var k=Math.min(1,(now-tween.t0)/tween.dur), e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    camera.position.lerpVectors(tween.p0,tween.p1,e); controls.target.lerpVectors(tween.g0,tween.g1,e);
+    if(k>=1) tween=null;
+  }
+  controls.update(); renderer.render(scene,camera);
+}
+
+if(ok) initScene();
+if(!ok){ $('nogl').style.display='flex'; canvas.style.display='none'; document.querySelector('.views').style.display='none'; }
+else{
+  resize(); goView(camera.aspect<1?'circuito':'general',true);
+  if(window.ResizeObserver) new ResizeObserver(function(){resize();}).observe(stage); else window.addEventListener('resize',resize);
+  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);}catch(e){}
+  new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+}
+setN(4);
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
