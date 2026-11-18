@@ -130,7 +130,11 @@ footer a{color:var(--mut)}
 <section id="comentarios"><div class="wrap">
   <h2>Comentarios para el profesor</h2>
   <p class="sub">Escribe aquí tus observaciones, preguntas o correcciones sobre el proyecto. Nos llegan directo y no necesitas iniciar sesión.</p>
-  <form id="cform" class="cbox" novalidate>
+  <form id="cform" class="cbox" action="https://formsubmit.co/Sofiygaby2019@gmail.com" method="POST">
+    <input type="hidden" name="_captcha" value="false">
+    <input type="hidden" name="_subject" value="Comentario del profesor · Entrega final">
+    <input type="hidden" name="_template" value="table">
+    <input type="hidden" name="_next" value="https://svzapatac.github.io/Algebra-Booleana/entrega-final/?enviado=1#comentarios">
     <label for="cnom">Tu nombre <span class="opt">(opcional)</span></label>
     <input id="cnom" name="name" type="text" autocomplete="name" maxlength="80">
     <label for="ctxt">Comentario</label>
@@ -265,22 +269,12 @@ footer a{color:var(--mut)}
 })();
 
 (function(){
-  var f=document.getElementById('cform'), est=document.getElementById('cest'), btn=document.getElementById('cbtn');
-  f.addEventListener('submit',function(e){
-    e.preventDefault();
-    var msg=f.message.value.trim();
-    if(!msg){est.className='err';est.textContent='Escribe un comentario antes de enviar.';f.message.focus();return;}
-    btn.disabled=true; est.className=''; est.textContent='Enviando…';
-    fetch('https://formsubmit.co/ajax/Sofiygaby2019@gmail.com',{
-      method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
-      body:JSON.stringify({name:f.name.value.trim()||'Sin nombre',message:msg,_subject:'Comentario del profesor · Entrega final',_captcha:'false',_template:'table',_honey:f._honey.value})
-    }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
-    .then(function(x){
-      if(x.ok&&String(x.j.success)!=='false'){est.className='ok';est.textContent='¡Gracias! Tu comentario fue enviado.';f.reset();}
-      else{var m=(x.j&&x.j.message)||''; throw new Error(/activat/i.test(m)?'activar':'fail');}
-    }).catch(function(e){est.className='err';est.textContent=(e&&e.message==='activar')?'Falta un paso: Sofía debe abrir el correo de FormSubmit y dar clic en el enlace para activar la caja. Después vuelve a enviar.':'No se pudo enviar. Intenta de nuevo en un momento.';})
-    .then(function(){btn.disabled=false;});
-  });
+  var est=document.getElementById('cest');
+  if(/[?&]enviado=1/.test(location.search)){
+    est.className='ok'; est.textContent='¡Gracias! Tu comentario fue enviado.';
+    try{history.replaceState(null,'',location.pathname+'#comentarios');}catch(e){}
+    var c=document.getElementById('comentarios'); if(c) c.scrollIntoView();
+  }
 })();
 </script>
 </body>
