@@ -193,7 +193,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
     <div class="leds" id="realLeds"></div>
     <p class="cmp" id="cmp" hidden></p>
     <details style="margin-top:12px"><summary>Qué debes medir en cada pin</summary>
-      <p class="foot" style="margin-top:8px">Multímetro en 20 V (V≂), punta negra en la tira −, punta roja en el pin. 1 es cerca de 5 V y 0 es cerca de 0 V.</p>
+      <p class="foot" style="margin-top:8px">Multímetro en 20 V (V≂), punta negra en la tira −, punta roja en el pin. 1 es entre 3 y 5 V (las salidas de los chips LS dan unos 3,4 V, y eso es un 1 normal). 0 es cerca de 0 V.</p>
       <div class="tw"><table><thead><tr><th>Chip</th><th>Pin</th><th>Señal</th><th>Debe marcar</th></tr></thead><tbody id="expRows"></tbody></table></div>
     </details>
   </section>
@@ -800,7 +800,7 @@ function renderLive(r){
   var tb=$('expRows'); tb.innerHTML='';
   expectedPins(r).forEach(function(x){
     var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+x.chip+'</td><td><code>'+x.pin+'</code></td><td>'+x.sig+'</td><td><b>'+x.v+'</b> ('+(x.v?'≈ 5 V':'≈ 0 V')+')</td>';
+    tr.innerHTML='<td>'+x.chip+'</td><td><code>'+x.pin+'</code></td><td>'+x.sig+'</td><td><b>'+x.v+'</b> ('+(x.v?'alto, 3 a 5 V':'≈ 0 V')+')</td>';
     tb.appendChild(tr);
   });
 }
