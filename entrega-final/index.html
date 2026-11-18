@@ -277,8 +277,8 @@ footer a{color:var(--mut)}
     }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
     .then(function(x){
       if(x.ok&&String(x.j.success)!=='false'){est.className='ok';est.textContent='¡Gracias! Tu comentario fue enviado.';f.reset();}
-      else{throw new Error('fail');}
-    }).catch(function(){est.className='err';est.textContent='No se pudo enviar. Intenta de nuevo en un momento.';})
+      else{var m=(x.j&&x.j.message)||''; throw new Error(/activat/i.test(m)?'activar':'fail');}
+    }).catch(function(e){est.className='err';est.textContent=(e&&e.message==='activar')?'Falta un paso: Sofía debe abrir el correo de FormSubmit y dar clic en el enlace para activar la caja. Después vuelve a enviar.':'No se pudo enviar. Intenta de nuevo en un momento.';})
     .then(function(){btn.disabled=false;});
   });
 })();
