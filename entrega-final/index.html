@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sumador y restador de 4 bits · Entrega final · Diseño lógico</title>
+<meta name="description" content="Video, preguntas frecuentes y comentarios del proyecto final: sumador y restador de 4 bits con chips TTL (74LS283 y 7486) y su simulador 3D.">
+<meta property="og:title" content="Sumador y restador de 4 bits · Entrega final">
+<meta property="og:description" content="Circuito físico con chips TTL y simulador 3D. Video, preguntas frecuentes y caja de comentarios.">
+<meta property="og:image" content="poster.jpg">
+<style>
+:root{
+  --bg:#0b1220; --bg2:#101a2e; --card:#131f36; --line:#243350; --tx:#f1f5fb; --mut:#a3b1c6;
+  --teal:#19c3b1; --teal-d:#0e7f75; --amb:#ffb03b; --red:#ff6b6b;
+  --r:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--teal)}
+a:hover{color:#5eead9}
+:focus-visible{outline:3px solid var(--amb);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header.top{background:radial-gradient(900px 380px at 80% -10%,#0f4a52 0%,transparent 70%),var(--bg);border-bottom:1px solid var(--line)}
+nav{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0}
+nav a{color:var(--mut);text-decoration:none;font-size:15px;padding:7px 14px;border-radius:999px;border:1px solid transparent}
+nav a:hover{color:var(--tx);border-color:var(--line);background:var(--bg2)}
+.hero{padding:34px 0 46px}
+.kick{color:var(--teal);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;margin:0 0 10px}
+h1{font-size:clamp(32px,6vw,58px);line-height:1.06;margin:0 0 14px;letter-spacing:-.02em;font-weight:800}
+h1 em{font-style:normal;color:var(--teal)}
+.lead{font-size:clamp(17px,2.4vw,20px);color:var(--mut);max-width:44em;margin:0 0 22px}
+.who{display:flex;gap:10px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-size:15px}
+.chip b{color:var(--tx)} .chip span{color:var(--mut)}
+section{padding:46px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{font-size:clamp(25px,4vw,34px);margin:0 0 8px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 24px;max-width:46em}
+.player{background:#000;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);box-shadow:0 22px 60px -20px #000}
+.player video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.vlinks{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:15px;color:var(--mut)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.card h3{margin:0 0 6px;font-size:19px}
+.card .tag{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin-bottom:8px}
+.card p{margin:0;color:var(--mut);font-size:16px}
+.card ul{margin:10px 0 0;padding-left:20px;color:var(--mut);font-size:16px}
+.btn{display:inline-block;margin-top:14px;background:var(--teal);color:#032421;font-weight:700;text-decoration:none;padding:11px 18px;border-radius:12px}
+.btn:hover{background:#5eead9;color:#032421}
+.btn.ghost{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.btn.ghost:hover{background:var(--bg2)}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-size:13px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+tr:last-child td{border-bottom:0}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px}
+.dot.on{background:#3ddc84;box-shadow:0 0 10px #3ddc84}
+.dot.off{background:#3a4660}
+.faqtools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.faqtools input{flex:1 1 240px;background:var(--bg2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px 16px;font:inherit}
+.faqtools input::placeholder{color:#7d8ca3}
+.faqtools button{background:var(--bg2);color:var(--mut);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font:inherit;cursor:pointer}
+.faqtools button:hover{color:var(--tx)}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+details[open]{border-color:#2f5d6a}
+summary{cursor:pointer;list-style:none;padding:16px 52px 16px 20px;font-weight:650;position:relative;font-size:17px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:26px;color:var(--teal);line-height:1;transition:transform .2s}
+details[open] summary::after{content:"−"}
+.ans{padding:0 20px 18px;color:#d3dcea}
+.ans p{margin:0 0 10px}.ans p:last-child{margin-bottom:0}
+.ans ul{margin:8px 0 10px;padding-left:22px}
+.ans .k{color:var(--amb);font-weight:700}
+.ans code{background:#0a1424;border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:.92em}
+.empty{display:none;color:var(--mut);padding:14px 4px}
+.note{background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--amb);border-radius:12px;padding:14px 18px;color:var(--mut);margin:0 0 22px;font-size:16px}
+.note b{color:var(--tx)}
+.utterances{max-width:100%}
+footer{padding:34px 0 60px;color:var(--mut);font-size:15px}
+footer a{color:var(--mut)}
+@media (max-width:560px){body{font-size:16px}.wrap{padding:0 16px}summary{padding-right:46px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <nav aria-label="Secciones">
+      <a href="#video">Video</a><a href="#proyecto">El proyecto</a><a href="#ejemplos">Ejemplos</a><a href="#faq">Preguntas frecuentes</a><a href="#comentarios">Comentarios</a>
+    </nav>
+    <div class="hero">
+      <p class="kick">Diseño lógico · Entrega final</p>
+      <h1>Sumador y restador <em>de 4 bits</em></h1>
+      <p class="lead">Un circuito real con chips TTL que suma y resta números de 4 bits, y un simulador 3D para planearlo, probarlo y encontrar errores de cableado.</p>
+      <div class="who">
+        <span class="chip"><b>Freddy</b><span>parte física</span></span>
+        <span class="chip"><b>Sofía</b><span>parte de software</span></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="video"><div class="wrap">
+  <h2>Video de la entrega</h2>
+  <p class="sub">Siete minutos: Freddy explica cada pieza del circuito y Sofía explica el software, el modelado 3D y las pruebas. Tiene subtítulos.</p>
+  <div class="player">
+    <video controls preload="metadata" poster="poster.jpg" playsinline>
+      <source src="video.mp4" type="video/mp4">
+      <track kind="subtitles" src="subtitulos.vtt" srclang="es" label="Español" default>
+      Tu navegador no puede reproducir el video. <a href="video.mp4">Descárgalo aquí</a>.
+    </video>
+  </div>
+  <div class="vlinks"><a href="video.mp4" download>Descargar el video</a><span aria-hidden="true">·</span><a href="subtitulos.vtt" download>Descargar subtítulos</a></div>
+</div></section>
+
+<section id="proyecto"><div class="wrap">
+  <h2>El proyecto en pocas palabras</h2>
+  <p class="sub">Una palanca decide si el circuito suma o resta. El resultado aparece en cuatro LED rojos, y un LED verde avisa del acarreo final.</p>
+  <div class="cards">
+    <article class="card"><span class="tag">Parte física · Freddy</span><h3>Circuito en una protoboard</h3>
+      <ul><li>Módulo de alimentación MB-102 (5 V por USB)</li><li>Interruptor DIP de 12 palancas</li><li>Chip 7486: cuatro compuertas XOR</li><li>Chip 74LS283: sumador de 4 bits</li><li>4 LED rojos + 1 LED verde, con resistencias</li></ul></article>
+    <article class="card"><span class="tag">Parte de software · Sofía</span><h3>Simulador, lógica y pruebas</h3>
+      <ul><li>Modelado 3D con HTML, JavaScript y three.js</li><li>La misma lógica del circuito escrita en código</li><li>Pruebas automáticas: 2560 casos, 0 errores</li><li>“Prueba en vivo” para comparar con los LED reales</li></ul></article>
+    <article class="card"><span class="tag">Pruébalo</span><h3>Simulador 3D del circuito</h3>
+      <p>Gira la maqueta, mueve las palancas y mira cómo cambian los LED. Incluye el armado paso a paso.</p>
+      <a class="btn" href="../circuito-fisico/">Abrir el simulador</a>
+      <a class="btn ghost" href="https://github.com/svzapatac/Algebra-Booleana" style="margin-left:6px">Ver el código</a></article>
+  </div>
+</div></section>
+
+<section id="ejemplos"><div class="wrap">
+  <h2>Cuatro ejemplos</h2>
+  <p class="sub">Así responde el circuito. Palanca de restar abajo = suma, arriba = resta.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Operación</th><th>LED rojos (resultado)</th><th>LED verde</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">5 + 3 = 8</td><td class="mono">1000</td><td><span class="dot off"></span>apagado</td><td>Suma normal, cabe en 4 bits</td></tr>
+      <tr><td class="mono">11 + 6 = 17</td><td class="mono">0001</td><td><span class="dot on"></span>encendido</td><td>Desbordamiento: 17 no cabe en 4 bits</td></tr>
+      <tr><td class="mono">9 − 4 = 5</td><td class="mono">0101</td><td><span class="dot on"></span>encendido</td><td>Resta con resultado positivo</td></tr>
+      <tr><td class="mono">3 − 5 = −2</td><td class="mono">1110</td><td><span class="dot off"></span>apagado</td><td>Resultado negativo, en complemento a dos</td></tr>
+    </tbody></table></div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>Preguntas frecuentes</h2>
+  <p class="sub">Lo que más nos preguntan sobre el proyecto. Toca una pregunta para ver la respuesta.</p>
+  <div class="faqtools">
+    <label for="q" style="position:absolute;left:-9999px">Buscar en las preguntas</label>
+    <input id="q" type="search" placeholder="Buscar: XOR, LED verde, desbordamiento…" autocomplete="off">
+    <button type="button" id="abrir">Abrir todas</button><button type="button" id="cerrar">Cerrar todas</button>
+  </div>
+  <div id="lista">
+
+  <details><summary>¿Qué hace el circuito?</summary><div class="ans">
+    <p>Suma y resta dos números de 4 bits, es decir, del 0 al 15. Con el interruptor de 12 palancas ponemos el número A, el número B y la orden de sumar o restar. El resultado se ve en cuatro LED rojos, y un LED verde muestra el acarreo final.</p>
+    <p>En el simulador también hicimos una versión de 5 bits.</p></div></details>
+
+  <details><summary>¿Qué piezas físicas usamos y para qué sirve cada una?</summary><div class="ans"><ul>
+    <li><span class="k">Protoboard:</span> la placa donde armamos todo sin soldar. Sus huecos están conectados por columnas y por tiras laterales.</li>
+    <li><span class="k">Módulo MB-102:</span> toma 5 V del USB y se los entrega a la protoboard, que es el voltaje que necesitan los chips TTL.</li>
+    <li><span class="k">Interruptor DIP de 12 palancas:</span> es nuestro teclado. Las palancas 1 a 4 son el número A, las 6 a 9 son el número B y la 12 elige sumar o restar.</li>
+    <li><span class="k">Chip 7486:</span> cuatro compuertas XOR. Invierten los bits de B cuando restamos.</li>
+    <li><span class="k">Chip 74LS283:</span> sumador de 4 bits. Suma A + B bit por bit y entrega 4 bits de resultado y un acarreo.</li>
+    <li><span class="k">LED y resistencias:</span> los LED muestran el resultado y cada uno lleva su resistencia para no quemarse.</li>
+    <li><span class="k">Cables jumper:</span> son los caminos de la alimentación, las entradas, las salidas y la señal de sumar o restar.</li></ul></div></details>
+
+  <details><summary>¿Cómo resta un circuito que solo sabe sumar?</summary><div class="ans">
+    <p>Usa la regla <code>A − B = A + (B negado) + 1</code>. Cuando la palanca 12 está arriba, el chip 7486 invierte los bits de B, y esa misma palanca entra al sumador como acarreo inicial (el “+ 1”). Así el mismo sumador sirve para las dos operaciones.</p>
+    <p>Esa forma de restar se llama complemento a dos.</p></div></details>
+
+  <details><summary>¿Para qué sirven las compuertas XOR del chip 7486?</summary><div class="ans">
+    <p>Una XOR deja pasar un bit tal cual si el otro valor es 0, y lo invierte si es 1. Ponemos una por cada bit de B y todas reciben la palanca de sumar o restar. Palanca abajo: B pasa igual. Palanca arriba: B se invierte.</p></div></details>
+
+  <details><summary>¿Qué significa el LED verde?</summary><div class="ans">
+    <p>Es el acarreo final del sumador (C4).</p>
+    <ul><li><span class="k">En una suma:</span> encendido significa desbordamiento. El resultado no cabe en 4 bits.</li>
+    <li><span class="k">En una resta:</span> encendido significa que el resultado es positivo o cero. Apagado significa que es negativo, y los LED rojos muestran el número en complemento a dos.</li></ul></div></details>
+
+  <details><summary>¿Qué es el desbordamiento?</summary><div class="ans">
+    <p>Con 4 bits el número más grande es el 15. Si una suma da más, no cabe. Por ejemplo, 11 + 6 = 17: los LED rojos muestran 0001 y el verde se enciende para avisar que “sobró” un bit.</p>
+    <p>Este tipo de error es real: en 1996 el cohete Ariane 5 explotó por un desbordamiento, cuando un número no cabía en los bits asignados.</p></div></details>
+
+  <details><summary>¿Por qué hay resistencias junto al interruptor?</summary><div class="ans">
+    <p>Se llaman resistencias de pull-down. Cuando una palanca está abajo, la resistencia mantiene la entrada firmemente en 0. Sin ella, la entrada quedaría “flotando” y el chip podría leer valores al azar.</p>
+    <p>Deben ser de unos 330 Ω a 1 kΩ. Con valores más altos (por ejemplo 10 kΩ) estos chips no leen bien el 0.</p></div></details>
+
+  <details><summary>¿Para qué sirve la resistencia de cada LED?</summary><div class="ans">
+    <p>Limita la corriente para que el LED no se queme. Es una protección.</p></div></details>
+
+  <details><summary>¿Cómo sabemos que la lógica es correcta?</summary><div class="ans">
+    <p>Hicimos un programa de pruebas que revisa todas las combinaciones de A, B y suma/resta, para 4 y 5 bits. Son 2560 casos en total (512 de 4 bits y 2048 de 5 bits) y dio 0 errores.</p>
+    <p>Esa prueba valida la lógica. Luego comparamos los LED del circuito real con lo que muestra el simulador.</p></div></details>
+
+  <details><summary>¿Por qué hicimos un simulador 3D?</summary><div class="ans">
+    <p>Porque necesitábamos ver en tiempo real en qué hueco de la protoboard iba cada cable, LED y resistencia, antes de armarlo. Todo debía quedar igual que en el dibujo que hicimos primero en el tablero.</p>
+    <p>Lo hicimos con HTML, JavaScript y la librería three.js. Además tiene una “Prueba en vivo”: pones las mismas palancas que en el circuito real y comparas qué LED deberían encender.</p></div></details>
+
+  <details><summary>¿Cómo se usa el simulador?</summary><div class="ans"><ul>
+    <li>Arrastra para girar la maqueta y pellizca (o usa la rueda) para acercar.</li>
+    <li>Toca las palancas azules del interruptor para cambiar los números.</li>
+    <li>Elige <b>Sumar</b> o <b>Restar</b> y mira los LED y la ecuación.</li>
+    <li>Sigue los pasos para ver el armado completo, cable por cable.</li></ul>
+    <p><a href="../circuito-fisico/">Abrir el simulador 3D</a></p></div></details>
+
+  <details><summary>¿Cuáles fueron las mayores dificultades?</summary><div class="ans">
+    <p>Sofía no tenía experiencia previa con componentes físicos. Lo resolvió dibujando el circuito primero, simulándolo en 3D y armándolo por pasos.</p>
+    <p>Los errores de cableado se encontraron comparando los LED reales con el simulador y midiendo voltajes con el multímetro, por ejemplo para revisar que las tiras de alimentación y tierra estuvieran bien conectadas.</p></div></details>
+
+  <details><summary>¿Por qué un 1 de salida mide cerca de 3,4 V y no 5 V?</summary><div class="ans">
+    <p>Es normal en los chips TTL de la familia LS: un 1 de salida suele medir entre 3 y 5 V, y las entradas TTL ya lo leen como 1 desde unos 2 V. Por eso medir 3,4 V no es una falla.</p></div></details>
+
+  <details><summary>¿Se puede quemar el circuito con alguna combinación?</summary><div class="ans">
+    <p>En nuestras pruebas no. Cada LED lleva su resistencia y las combinaciones de palancas no ponen en riesgo los chips. Lo peor que puede pasar es que el resultado no sea el esperado, por ejemplo si hay un cable mal puesto.</p></div></details>
+
+  <details><summary>¿Quiénes hicieron el proyecto y dónde está el código?</summary><div class="ans">
+    <p>Freddy se encargó de la parte física (armado y explicación de las piezas) y Sofía de la parte de software (simulador 3D, lógica y pruebas). El código está en <a href="https://github.com/svzapatac/Algebra-Booleana">el repositorio de GitHub</a>, dentro de la carpeta <code>circuito-fisico</code>.</p></div></details>
+
+  </div>
+  <p class="empty" id="vacio">No encontramos preguntas con esa palabra. Puedes escribirla en los comentarios de abajo.</p>
+</div></section>
+
+<section id="comentarios"><div class="wrap">
+  <h2>Comentarios para el profesor</h2>
+  <p class="sub">Este espacio es para sus observaciones, preguntas o correcciones sobre el proyecto. Quedan guardados en esta página.</p>
+  <p class="note"><b>Cómo comentar:</b> escribe en la caja de abajo y presiona <b>Comment</b>. La primera vez te pedirá iniciar sesión con una cuenta gratuita de GitHub.</p>
+  <script src="https://utteranc.es/client.js"
+    repo="svzapatac/Algebra-Booleana"
+    issue-term="Comentarios de la entrega final"
+    label="comentarios-profesor"
+    theme="github-dark"
+    crossorigin="anonymous"
+    async></script>
+  <noscript><p class="note">Para ver la caja de comentarios activa JavaScript, o escribe en <a href="https://github.com/svzapatac/Algebra-Booleana/issues">los Issues del repositorio</a>.</p></noscript>
+</div></section>
+</main>
+
+<footer><div class="wrap">Sofía y Freddy · Diseño lógico · Proyecto final · <a href="https://github.com/svzapatac/Algebra-Booleana">Código en GitHub</a></div></footer>
+
+<script>
+(function(){
+  var q=document.getElementById('q'), L=[].slice.call(document.querySelectorAll('#lista details')), vacio=document.getElementById('vacio');
+  function norm(s){return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+  var T=L.map(function(d){return norm(d.textContent);});
+  q.addEventListener('input',function(){
+    var v=norm(q.value.trim()), n=0;
+    L.forEach(function(d,i){var ok=!v||T[i].indexOf(v)>-1; d.style.display=ok?'':'none'; if(ok)n++; if(v&&ok)d.open=true; if(!v)d.open=false;});
+    vacio.style.display=(v&&!n)?'block':'none';
+  });
+  document.getElementById('abrir').onclick=function(){L.forEach(function(d){if(d.style.display!=='none')d.open=true;});};
+  document.getElementById('cerrar').onclick=function(){L.forEach(function(d){d.open=false;});};
+})();
+</script>
+</body>
+</html>

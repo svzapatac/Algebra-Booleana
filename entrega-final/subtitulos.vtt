@@ -1,0 +1,406 @@
+WEBVTT
+
+1
+00:00:03.420 --> 00:00:06.860
+Buenos días, mi nombre es Sofía y el de mi compañero es Freddy.
+
+2
+00:00:07.260 --> 00:00:10.440
+Antes de comenzar, quisiera decirles un dato curioso.
+
+3
+00:00:10.580 --> 00:00:17.100
+En 1996, el cohete Ariane 5 explotó a los 37 segundos de despegar,
+
+4
+00:00:17.240 --> 00:00:19.660
+con cientos de millones de dólares a bordo.
+
+5
+00:00:19.800 --> 00:00:21.960
+La causa fue un desbordamiento:
+
+6
+00:00:22.360 --> 00:00:25.030
+un número no cabía en los bits asignados.
+
+7
+00:00:25.430 --> 00:00:28.045
+Es exactamente lo que avisa el LED verde de
+
+8
+00:00:27.945 --> 00:00:30.150
+nuestro circuito: el desbordamiento.
+
+9
+00:00:31.060 --> 00:00:38.600
+Estamos viendo la materia de Diseño Lógico con nuestro profesor.
+
+10
+00:00:39.260 --> 00:00:43.980
+Para eso, quisimos hacer un sumador y restador de 4 bits,
+
+11
+00:00:44.120 --> 00:00:48.590
+que tenemos tanto en componente físico como en modelado 3D.
+
+12
+00:00:48.820 --> 00:00:52.123
+En este momento voy a explicar la parte física, un
+
+13
+00:00:52.023 --> 00:00:55.070
+poco más detallada, de nuestro proyecto final.
+
+14
+00:00:55.220 --> 00:00:59.977
+Utilizamos una protoboard genérica, la placa donde instalamos
+
+15
+00:00:59.877 --> 00:01:04.634
+los elementos. Sus huecos están conectados por columnas y por
+
+16
+00:01:04.534 --> 00:01:08.070
+tiras laterales, y así unimos los componentes
+
+17
+00:01:08.270 --> 00:01:09.410
+con los cables.
+
+18
+00:01:09.550 --> 00:01:14.020
+Utilizamos un módulo de alimentación de referencia MB-102,
+
+19
+00:01:14.670 --> 00:01:19.140
+que es nuestra fuente de energía: toma los 5 voltios del jack
+
+20
+00:01:19.540 --> 00:01:22.291
+y se los entrega a la protoboard, que es el
+
+21
+00:01:22.191 --> 00:01:24.510
+voltaje que necesitan los chips TTL.
+
+22
+00:01:24.910 --> 00:01:29.678
+Utilizamos un interruptor DIP de 12 palancas. Es nuestro
+
+23
+00:01:29.578 --> 00:01:33.930
+teclado, prácticamente: con él ponemos los números.
+
+24
+00:01:33.870 --> 00:01:38.878
+Las palancas 1 a 4 corresponden a los números de la
+
+25
+00:01:38.778 --> 00:01:44.170
+variable A; las palancas 6 a 9, a los de la variable B,
+
+26
+00:01:44.110 --> 00:01:49.090
+y la palanca 12 es la que elige si sumamos o restamos.
+
+27
+00:01:50.000 --> 00:01:54.980
+La palanca arriba significa que es uno, y si está abajo, es cero.
+
+28
+00:01:55.630 --> 00:01:58.268
+Las resistencias de pull-down que vemos
+
+29
+00:01:58.168 --> 00:02:00.350
+en el diseño, en el interruptor:
+
+30
+00:02:00.500 --> 00:02:03.487
+cuando una palanca está abajo, la resistencia
+
+31
+00:02:03.387 --> 00:02:05.990
+mantiene la entrada firmemente en cero;
+
+32
+00:02:06.130 --> 00:02:08.290
+sin ella, la entrada quedaría flotando
+
+33
+00:02:08.690 --> 00:02:11.750
+y el chip leería valores al azar.
+
+34
+00:02:11.750 --> 00:02:16.230
+En nuestro chip 7486, que es nuestra compuerta XOR,
+
+35
+00:02:17.140 --> 00:02:21.350
+tenemos cuatro compuertas XOR internamente.
+
+36
+00:02:21.490 --> 00:02:26.470
+Las usamos para invertir los bits de la variable B cuando restamos.
+
+37
+00:02:26.860 --> 00:02:30.310
+Si la palanca de restar está en cero,
+
+38
+00:02:30.450 --> 00:02:33.380
+la variable B pasa igual.
+
+39
+00:02:34.030 --> 00:02:36.710
+Si está en uno, la variable B se invierte.
+
+40
+00:02:37.870 --> 00:02:41.274
+El otro chip que utilizamos es el 74LS283,
+
+41
+00:02:41.174 --> 00:02:43.870
+que es nuestro sumador de 4 bits,
+
+42
+00:02:44.270 --> 00:02:45.920
+un sumador, prácticamente:
+
+43
+00:02:46.060 --> 00:02:50.020
+suma la variable A más la variable B
+
+44
+00:02:50.420 --> 00:02:54.880
+bit por bit y entrega 4 bits de resultado y un acarreo final.
+
+45
+00:02:55.790 --> 00:02:58.210
+Para restar usamos la regla
+
+46
+00:02:58.350 --> 00:03:05.630
+A menos B es igual a A más B negado, más 1,
+
+47
+00:03:05.780 --> 00:03:09.990
+que es la forma de la resta por complemento a dos.
+
+48
+00:03:10.900 --> 00:03:13.892
+Por eso, digamos, la misma palanca de restar
+
+49
+00:03:13.792 --> 00:03:16.390
+también entra como el acarreo inicial.
+
+50
+00:03:17.040 --> 00:03:21.760
+Los LED y sus resistencias: los LED rojos
+
+51
+00:03:21.900 --> 00:03:25.090
+muestran los bits del resultado, que son las salidas.
+
+52
+00:03:25.230 --> 00:03:27.910
+El LED verde muestra el acarreo final:
+
+53
+00:03:28.560 --> 00:03:32.000
+en una suma indica desbordamiento,
+
+54
+00:03:32.660 --> 00:03:36.350
+y en una resta, encendido, indica que el resultado es positivo.
+
+55
+00:03:38.800 --> 00:03:40.450
+La resistencia de cada LED
+
+56
+00:03:41.100 --> 00:03:43.780
+limita la corriente para que no se queme;
+
+57
+00:03:43.920 --> 00:03:45.570
+es una línea de protección.
+
+58
+00:03:46.220 --> 00:03:51.970
+Los cables jumper que pueden notar dentro de la protoboard son los
+
+59
+00:03:52.110 --> 00:03:56.468
+caminos que conectan toda la alimentación, las entradas, las salidas, los
+
+60
+00:03:56.368 --> 00:03:59.910
+puentes y la señal de sumar o restar hacia los demás chips.
+
+61
+00:04:00.300 --> 00:04:04.018
+Básicamente, este es todo el diseño que tenemos establecido
+
+62
+00:04:03.918 --> 00:04:07.330
+dentro de la protoboard: un proceso bastante riguroso,
+
+63
+00:04:07.470 --> 00:04:09.630
+pero bastante delicado también.
+
+64
+00:04:10.540 --> 00:04:12.190
+Y eso sería por mi parte.
+
+65
+00:04:12.150 --> 00:04:15.667
+Lo primero que quiero contarles es que yo no sabía
+
+66
+00:04:15.567 --> 00:04:19.903
+absolutamente nada de componentes físicos, como les comenté en
+
+67
+00:04:19.803 --> 00:04:23.730
+la clase pasada, y eso se volvió una dificultad para mí.
+
+68
+00:04:23.920 --> 00:04:30.041
+Sin embargo, no me quedé solamente ahí: busqué soluciones. Me ayudé mucho
+
+69
+00:04:29.941 --> 00:04:34.990
+dibujando lo que hago, plasmándolo primero antes de hacerlo.
+
+70
+00:04:34.930 --> 00:04:38.134
+Hice primero el dibujo sobre mi tablero, para saber
+
+71
+00:04:38.034 --> 00:04:40.751
+más o menos de qué forma lógicamente podría
+
+72
+00:04:40.651 --> 00:04:43.490
+funcionar el circuito, y les adjunto pruebas.
+
+73
+00:04:43.600 --> 00:04:48.141
+Luego empecé con las tecnologías que sabía en ese momento, a
+
+74
+00:04:48.041 --> 00:04:52.731
+ver de qué manera podría plasmarlo en un modelado 3D. ¿Por qué
+
+75
+00:04:52.631 --> 00:04:56.210
+3D? Porque necesitaba ver en tiempo real en qué
+
+76
+00:04:56.660 --> 00:05:01.927
+partes específicas de la protoboard necesitaba encajar tanto los
+
+77
+00:05:01.827 --> 00:05:06.529
+cables como los LED y las resistencias. Todo debía quedar
+
+78
+00:05:06.429 --> 00:05:11.050
+exactamente igual a como lo tenía plasmado en el dibujo.
+
+79
+00:05:11.760 --> 00:05:14.948
+Por eso utilicé HTML, JavaScript y una
+
+80
+00:05:14.848 --> 00:05:18.280
+librería muy importante, que es three.js.
+
+81
+00:05:18.930 --> 00:05:23.417
+Con esta hice el modelamiento de las piezas, para que se
+
+82
+00:05:23.317 --> 00:05:27.490
+pudiera ver con la calidad que vemos acá en persona.
+
+83
+00:05:27.570 --> 00:05:31.561
+Y nosotros programamos también la parte del hardware desde el
+
+84
+00:05:31.461 --> 00:05:35.515
+software; es decir, todo lo que pasa dentro del software es lo
+
+85
+00:05:35.415 --> 00:05:38.640
+que se ve reflejado en nuestro componente físico.
+
+86
+00:05:38.580 --> 00:05:43.300
+Por ejemplo, para restar, invertimos el B con XOR,
+
+87
+00:05:43.370 --> 00:05:46.810
+suma con acarreo y devuelve el resultado con el acarreo.
+
+88
+00:05:46.760 --> 00:05:49.180
+Les quiero comentar algo muy interesante:
+
+89
+00:05:49.580 --> 00:05:53.530
+desarrollamos un sandbox desde la terminal para nuestro software
+
+90
+00:05:53.930 --> 00:05:58.650
+que genera más de 2550
+
+91
+00:05:59.050 --> 00:06:01.210
+combinaciones del switch,
+
+92
+00:06:01.860 --> 00:06:05.814
+para ver en qué momento nuestro componente se podía dañar, o se
+
+93
+00:06:05.714 --> 00:06:09.545
+podía quemar, por decirlo así, o podía fallar. Y el resultado
+
+94
+00:06:09.445 --> 00:06:12.420
+fue bastante bueno, aunque no es una prueba tan
+
+95
+00:06:12.360 --> 00:06:19.130
+extensa: 2560 combinaciones para sacar un buen proyecto final.
+
+96
+00:06:20.300 --> 00:06:22.970
+Si se pasaba de ahí, empezaban los desbordamientos.
+
+97
+00:06:24.650 --> 00:06:29.166
+Pero en el componente físico no pasa absolutamente nada: los LED no se
+
+98
+00:06:29.066 --> 00:06:33.583
+van a quemar, pues está hecho con resistencias de las más bajitas para
+
+99
+00:06:33.483 --> 00:06:36.990
+que eso no pase, y tampoco le pasa nada al componente,
+
+100
+00:06:36.940 --> 00:06:39.593
+pero obviamente no da el resultado que esperamos, y se
+
+101
+00:06:39.493 --> 00:06:41.910
+quedan todos apagados, como está en este momento.
+

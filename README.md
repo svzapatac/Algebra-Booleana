@@ -9,3 +9,7 @@ Ver [`flujo.html`](flujo.html) (en la página publicada: `/flujo.html`).
 ## Lab 2 · Aritmética digital (`lab2.html`)
 
 Sumador, restador, multiplicador y divisor de 1 a 8 bits: paso a paso, editor tipo Logisim en la página, exportación `.circ` (cables, bloques, original y reducida por Quine-McCluskey), código Verilog/VHDL (estructural, comportamental y con reloj) y plano TTL chip por chip. Todo se genera en el navegador (sin servidor).
+
+## Entrega final · Sumador y restador de 4 bits
+
+Video del proyecto, preguntas frecuentes y caja de comentarios para el profesor: [`entrega-final/`](entrega-final/) (página publicada: `/entrega-final/`). El simulador 3D está en [`circuito-fisico/`](circuito-fisico/).
