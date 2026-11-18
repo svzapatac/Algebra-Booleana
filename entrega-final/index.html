@@ -78,7 +78,17 @@ details[open] summary::after{content:"−"}
 .empty{display:none;color:var(--mut);padding:14px 4px}
 .note{background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--amb);border-radius:12px;padding:14px 18px;color:var(--mut);margin:0 0 22px;font-size:16px}
 .note b{color:var(--tx)}
-.utterances{max-width:100%}
+.cbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;max-width:760px}
+.cbox label{display:block;font-weight:650;margin:0 0 6px}
+.cbox .opt{color:var(--mut);font-weight:400}
+.cbox input[type=text],.cbox textarea{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px 14px;font:inherit;margin-bottom:16px}
+.cbox textarea{resize:vertical;min-height:140px}
+.cbox input[type=text]:focus,.cbox textarea:focus{border-color:var(--teal)}
+.crow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+#cbtn{border:0;cursor:pointer;font:inherit;font-weight:700}
+#cbtn:disabled{opacity:.6;cursor:wait}
+#cest{font-size:16px;color:var(--mut)}
+#cest.ok{color:#3ddc84}#cest.err{color:var(--red)}
 footer{padding:34px 0 60px;color:var(--mut);font-size:15px}
 footer a{color:var(--mut)}
 @media (max-width:560px){body{font-size:16px}.wrap{padding:0 16px}summary{padding-right:46px}}
@@ -119,16 +129,15 @@ footer a{color:var(--mut)}
 
 <section id="comentarios"><div class="wrap">
   <h2>Comentarios para el profesor</h2>
-  <p class="sub">Este espacio es para sus observaciones, preguntas o correcciones sobre el proyecto. Quedan guardados en esta página.</p>
-  <p class="note"><b>Cómo comentar:</b> escribe en la caja de abajo y presiona <b>Comment</b>. La primera vez te pedirá iniciar sesión con una cuenta gratuita de GitHub.</p>
-  <script src="https://utteranc.es/client.js"
-    repo="svzapatac/Algebra-Booleana"
-    issue-term="Comentarios de la entrega final"
-    label="comentarios-profesor"
-    theme="github-dark"
-    crossorigin="anonymous"
-    async></script>
-  <noscript><p class="note">Para ver la caja de comentarios activa JavaScript, o escribe en <a href="https://github.com/svzapatac/Algebra-Booleana/issues">los Issues del repositorio</a>.</p></noscript>
+  <p class="sub">Escribe aquí tus observaciones, preguntas o correcciones sobre el proyecto. Nos llegan directo y no necesitas iniciar sesión.</p>
+  <form id="cform" class="cbox" novalidate>
+    <label for="cnom">Tu nombre <span class="opt">(opcional)</span></label>
+    <input id="cnom" name="name" type="text" autocomplete="name" maxlength="80">
+    <label for="ctxt">Comentario</label>
+    <textarea id="ctxt" name="message" rows="6" maxlength="3000" required placeholder="Escribe aquí tu comentario…"></textarea>
+    <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+    <div class="crow"><button type="submit" class="btn" id="cbtn" style="margin-top:0">Enviar comentario</button><span id="cest" role="status" aria-live="polite"></span></div>
+  </form>
 </div></section>
 
 <section id="proyecto"><div class="wrap">
@@ -253,6 +262,25 @@ footer a{color:var(--mut)}
   });
   document.getElementById('abrir').onclick=function(){L.forEach(function(d){if(d.style.display!=='none')d.open=true;});};
   document.getElementById('cerrar').onclick=function(){L.forEach(function(d){d.open=false;});};
+})();
+
+(function(){
+  var f=document.getElementById('cform'), est=document.getElementById('cest'), btn=document.getElementById('cbtn');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var msg=f.message.value.trim();
+    if(!msg){est.className='err';est.textContent='Escribe un comentario antes de enviar.';f.message.focus();return;}
+    btn.disabled=true; est.className=''; est.textContent='Enviando…';
+    fetch('https://formsubmit.co/ajax/Sofiygaby2019@gmail.com',{
+      method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({name:f.name.value.trim()||'Sin nombre',message:msg,_subject:'Comentario del profesor · Entrega final',_captcha:'false',_template:'table',_honey:f._honey.value})
+    }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j};});})
+    .then(function(x){
+      if(x.ok&&String(x.j.success)!=='false'){est.className='ok';est.textContent='¡Gracias! Tu comentario fue enviado.';f.reset();}
+      else{throw new Error('fail');}
+    }).catch(function(){est.className='err';est.textContent='No se pudo enviar. Intenta de nuevo en un momento.';})
+    .then(function(){btn.disabled=false;});
+  });
 })();
 </script>
 </body>
