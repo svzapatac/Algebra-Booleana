@@ -137,6 +137,12 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
     </div>
   </section>
 
+  <section class="card">
+    <h2>Todo el circuito: qué va con qué</h2>
+    <p class="steptxt" style="margin-top:0">Esta es la lista completa de conexiones. Abajo está la guía paso a paso con una prueba en cada paso, para armarlo sin perderte.</p>
+    <div id="allConn"></div>
+  </section>
+
   <section class="card" aria-live="polite">
     <div class="stephead">
       <h2 id="stepTitle" style="margin:0">Paso</h2>
@@ -244,7 +250,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 
 /* ---------- Estado y lógica ---------- */
 var state={A:[1,1,0,1,0],B:[0,1,1,0,0],M:0,power:true,showIn:true,showInt:true,showLbl:true};
-var N=4, STEP=1;
+var N=4, STEP=7;
 function valBits(a,n){var s=0;for(var i=0;i<n;i++)s+=(a[i]<<i);return s;}
 function bin(x,l){var s=x.toString(2);while(s.length<l)s='0'+s;return s;}
 function bitsOf(x){return [x&1,(x>>1)&1,(x>>2)&1,(x>>3)&1,(x>>4)&1];}
@@ -667,10 +673,20 @@ function mkExamples(){
   ex.forEach(function(e){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=e[3];
     b.addEventListener('click',function(){state.A=bitsOf(e[0]);state.B=bitsOf(e[1]);state.M=e[2];state.power=true;live();});h.appendChild(b);});
 }
+function fillAll(){
+  var h=$('allConn'); if(!h) return; var out='';
+  for(var k=1;k<=LAST;k++){
+    out+='<details'+(k<=2?' open':'')+' style="margin-top:8px"><summary>'+k+'. '+STEPS[k-1][0]+'</summary><ul class="items" style="margin-top:8px">';
+    (stepItems[k]||[]).forEach(function(t){out+='<li style="grid-template-columns:1fr"><span>'+t+'</span></li>';});
+    out+='</ul><p class="foot" style="margin-top:8px"><b>Prueba:</b> '+STEPS[k-1][3]+'</p></details>';
+  }
+  h.innerHTML=out;
+}
 function setN(n){
   N=4; state.A=bitsOf(11); state.B=bitsOf(6); state.M=0;
   mkBits($('bitsA'),'A','A'); mkBits($('bitsB'),'B','B'); mkLedsUI(); mkExamples(); mkRealLeds();
   if(ok){ buildCircuit(4); }
+  fillAll();
   update();
 }
 
@@ -829,7 +845,7 @@ canvas.addEventListener('pointerup',function(e){
 });
 if(!ok){ $('nogl').style.display='flex'; canvas.style.display='none'; document.querySelector('.views').style.display='none'; }
 else{
-  resize(); goView(camera.aspect<1?'energia':'general',true);
+  resize(); goView(camera.aspect<1?'circuito':'general',true);
   if(window.ResizeObserver) new ResizeObserver(function(){resize();}).observe(stage); else window.addEventListener('resize',resize);
   try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);}catch(e){}
   new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
