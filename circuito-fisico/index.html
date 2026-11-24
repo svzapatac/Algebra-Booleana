@@ -145,7 +145,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 
 <section class="card">
     <h2>Posiciones en tu protoboard</h2>
-    <p class="steptxt" style="margin-top:0">Pon el número 1 arriba (hacia el módulo). Izquierda y derecha son los dos lados de la ranura. Todos los huecos de un mismo número y lado están unidos, usa cualquiera de los 5.</p>
+    <p class="steptxt" style="margin-top:0">Pon el número 1 arriba (hacia el módulo). Izquierda (letras F a J) y derecha (letras A a E) son los dos lados de la ranura. En las tiras de energía, de cada par la columna de la izquierda es − (azul) y la de la derecha es + (roja), como las marcaste. Todos los huecos de un mismo número y lado están unidos, usa cualquiera de los 5.</p>
     <div class="tw"><table>
       <thead><tr><th>Pieza</th><th>Números</th><th>Detalle</th></tr></thead>
       <tbody>
@@ -154,9 +154,9 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
         <tr><td>B1, B2, B3, B4</td><td><code>16, 17, 18, 19</code></td><td>Palancas 6 a 9</td></tr>
         <tr><td>M</td><td><code>22</code></td><td>Palanca 12</td></tr>
         <tr><td>Columna M</td><td><code>23</code></td><td>Izquierda y derecha unidas con un cable</td></tr>
-        <tr><td>7486</td><td><code>25 a 31</code></td><td>Pines 1 a 7 a la izquierda (25 a 31). Pines 14 a 8 a la derecha (25 a 31)</td></tr>
-        <tr><td>74LS283</td><td><code>33 a 40</code></td><td>Pines 1 a 8 a la izquierda (33 a 40). Pines 16 a 9 a la derecha (33 a 40)</td></tr>
-        <tr><td>LED verde C4</td><td><code>44 y 45</code></td><td>Izquierda. Pata larga en el 44</td></tr>
+        <tr><td>7486</td><td><code>25 a 31</code></td><td>Pines 1 a 7 a la izquierda, letras F a J (25 a 31). Pines 14 a 8 a la derecha, letras A a E (25 a 31)</td></tr>
+        <tr><td>74LS283</td><td><code>33 a 40</code></td><td>Pines 1 a 8 a la izquierda, letras F a J (33 a 40). Pines 16 a 9 a la derecha, letras A a E (33 a 40)</td></tr>
+        <tr><td>LED verde C4</td><td><code>44 y 45</code></td><td>Izquierda (F a J). Pata larga en el 44</td></tr>
         <tr><td>LED rojo S3</td><td><code>46 y 47</code></td><td>Pata larga en el 46</td></tr>
         <tr><td>LED rojo S2</td><td><code>48 y 49</code></td><td>Pata larga en el 48</td></tr>
         <tr><td>LED rojo S1</td><td><code>50 y 51</code></td><td>Pata larga en el 50</td></tr>
@@ -351,7 +351,7 @@ function initScene(){
 
   makeBoard(0);
   buildModule();
-  sprite('+ 5V',-8.9,1.0,2.27,'#a31d1d'); sprite('− GND',-8.9,1.0,2.0+0.9,'#1d3a8a');
+  sprite('+ 5V',-8.9,1.0,1.7,'#a31d1d'); sprite('− GND',-8.9,1.0,2.9,'#1d3a8a');
   applyTheme(); nStatic=labels.length;
 }
 
@@ -366,7 +366,19 @@ function makeBoard(zc){
   var holes=new THREE.InstancedMesh(new THREE.BoxGeometry(0.1,0.03,0.1),M.hole,hp.length), dm=new THREE.Object3D();
   hp.forEach(function(p,i){dm.position.set(p[0],TOPY+0.006,p[1]);dm.updateMatrix();holes.setMatrixAt(i,dm.matrix);});
   g.add(holes);
-  [[1,0xd62828,2.5],[-1,0xd62828,2.5],[1,0x2563eb,1.77],[-1,0x2563eb,1.77]].forEach(function(s){
+  var nums=labelPlane(16.6,0.5,function(x,ppc,w,h){
+    x.fillStyle='#d3d4d0'; x.fillRect(0,0,w,h); x.textAlign='center'; x.textBaseline='middle'; x.fillStyle='#3a4550'; x.font='700 '+(0.26*ppc)+'px sans-serif';
+    for(var n=1;n<=63;n++){ if(n===1||n%5===0){ x.fillText(String(n),(colX(n-1)+8.3)*ppc,h/2); } else { x.beginPath(); x.arc((colX(n-1)+8.3)*ppc,h/2,0.025*ppc,0,6.3); x.fill(); } }
+  },90,true);
+  nums.position.set(0,TOPY+0.012,0); g.add(nums);
+  var lets=labelPlane(0.5,2.9,function(x,ppc,w,h){
+    x.fillStyle='#f0efec'; x.fillRect(0,0,w,h); x.textAlign='center'; x.textBaseline='middle'; x.font='700 '+(0.2*ppc)+'px sans-serif';
+    var F=['F','G','H','I','J'], A=['E','D','C','B','A'];
+    for(var k=0;k<5;k++){ x.fillStyle='#1f5fb3'; x.fillText(F[k],w/2,h/2+(0.381+k*PX)*ppc); x.fillStyle='#8a3fb0'; x.fillText(A[k],w/2,h/2-(0.381+k*PX)*ppc); }
+  },120,true);
+  lets.position.set(-8.12,TOPY+0.013,0); g.add(lets);
+  [[1,'#2563eb','−'],[1,'#d62828','+'],[-1,'#2563eb','−'],[-1,'#d62828','+']].forEach(function(r){});
+  [[1,0x2563eb,2.5],[-1,0xd62828,2.5],[1,0xd62828,1.77],[-1,0x2563eb,1.77]].forEach(function(s){
     box(15.2,0.01,0.05,new THREE.MeshBasicMaterial({color:s[1]}),-0.1,TOPY+0.004,s[0]*s[2],g,false);
   });
 }
@@ -424,7 +436,7 @@ function railAt(side,kind,x){
   var m=Math.max(0,Math.round((x+7.5)/PX));
   while(m%6===5||railUsed[key][m]) m++;
   railUsed[key][m]=1;
-  return new THREE.Vector3(-7.5+m*PX,TOPY+0.01,side*(kind==='out'?2.27:2.0));
+  return new THREE.Vector3(-7.5+m*PX,TOPY+0.01,side>0?(kind==='out'?2.0:2.27):-(kind==='out'?2.27:2.0));
 }
 function geoFor(p0,p1,lift){
   var top=Math.max(p0.y,p1.y)+lift;
@@ -483,7 +495,7 @@ function makeChip(ch){
     box(0.06,0.04,0.2,M.metal,lx,0.3,sz*0.35,g,false);
   }
   parts.push({obj:g,step:2});
-  sprite(ch.type+' ('+ch.name+')',ch.cx,1.5,2.4,'#14202b',dyn,2);
+  sprite(ch.type+' ('+(ch.col0+1)+'–'+(ch.col0+ch.N/2)+')',ch.cx,1.5,2.4,'#14202b',dyn,2);
 }
 var ch5=false;
 
@@ -545,7 +557,7 @@ function makeDip(col0){
   }
   parts.push({obj:g,step:2});
   var A='A1–A4', B='B1–B4';
-  sprite('Interruptor DIP',colX(col0+5.5),1.7,-1.6,'#0b4f86',dyn,2);
+  sprite('DIP ('+(col0+1)+'–'+(col0+12)+')',colX(col0+5.5),1.7,-1.6,'#0b4f86',dyn,2);
   sprite(A,colX(col0+2),1.1,1.3,'#1f5fb3',dyn,2);
   sprite(B,colX(col0+7),1.1,1.3,'#6b3fb0',dyn,2);
   sprite('M',colX(col0+11),1.1,1.3,'#7a3b00',dyn,2);
@@ -600,7 +612,7 @@ function buildCircuit(n){
     addWire({p0:holeOf(L.src[0],L.src[1]),p1:wH,color:netColor(L.net),cat:'int',net:L.net,step:4,lift:1.2+(u%3)*0.3,desc:'Salida <b>'+L.name+'</b>: '+tag(L.src[0])+' pin <code>'+L.src[1]+'</code> → número <b>'+(p+1)+'</b> (pata larga del LED)'});
     addRes(rH,railAt(1,'in',rH.x),4,'LED '+L.name+': resistencia de 330 Ω a 1 kΩ, del número <b>'+(p+2)+'</b> (pata corta) → tira − (adelante)');
   });
-  sprite('LED (resultado)',colX(ls+leds.length),1.8,2.4,'#14202b',dyn,4);
+  sprite('LED ('+(ls+1)+'–'+(ls+2*leds.length)+')',colX(ls+leds.length),1.8,2.4,'#14202b',dyn,4);
 
   // paso 5: alimentar las palancas (5 V y resistencia)
   swList=[];
@@ -639,7 +651,7 @@ function buildCircuit(n){
     hopB(swList[4+i],holeOf(x1,g[0]),'Palanca <b>'+(swList[4+i].idx+1)+'</b> (B'+(i+1)+') → '+tag(x1)+' pin <code>'+g[0]+'</code>',1.5+(i%3)*0.3,7);
   }
   addWire({p0:colHole(BUS,1),p1:holeOf(a1,7),color:0xf08a1c,cat:'in',net:'M',step:7,lift:1.3,desc:'Columna M → '+tag(a1)+' pin <code>7</code> (C0, acarreo de entrada)'});
-  sprite('Columna M',colX(BUS)+0.3,2.0,-1.7,'#7a3b00',dyn,7);
+  sprite('M ('+(BUS+1)+')',colX(BUS)+0.3,2.0,-1.7,'#7a3b00',dyn,7);
 }
 
 function applyTheme(){
@@ -671,7 +683,7 @@ function goView(name,instant){
 
 /* ---------- Guía por pasos ---------- */
 var STEPS=[
- ['Energía','Con el USB desconectado, lleva la energía del módulo negro a la protoboard con dos cables. Luego pasa la energía a las tiras de atrás con dos puentes.','Si tu protoboard tiene las tiras partidas por la mitad, une las dos mitades con un cable. Rojo = +, negro = −.','Conecta el USB. Se enciende el LED del módulo. Con el multímetro en 20 V, punta negra en la tira − y roja en la tira +, debe marcar de 4,7 a 5,2 V. Mide adelante y atrás. Si marca 0, revisa los dos cables del módulo y los puentes.'],
+ ['Energía','Con el USB desconectado, lleva la energía del módulo negro a la protoboard con dos cables. Luego pasa la energía a las tiras de atrás con dos puentes.','Si tu protoboard tiene las tiras partidas por la mitad, une las dos mitades con un cable. Con tus marcas: la columna roja (+) y la azul (−). Cable rojo al +, cable negro al −.','Conecta el USB. Se enciende el LED del módulo. Con el multímetro en 20 V, punta negra en la tira − y roja en la tira +, debe marcar de 4,7 a 5,2 V. Mide adelante y atrás. Si marca 0, revisa los dos cables del módulo y los puentes.'],
  ['Pon el interruptor y los chips','El interruptor azul y los chips van cruzando la ranura del centro. Todavía no pongas cables.','Mira la muesca de cada chip antes de apretar: hacia el número 1. Un chip al revés se puede dañar. El interruptor no tiene lado.','Revisa que ninguna patita quedó doblada hacia afuera y que todas entraron en su hueco. Aprieta cada chip y el interruptor con el dedo, parejo.'],
  ['Energía de los chips y condensadores','Cada chip necesita 5 V y GND. Los condensadores evitan que el circuito falle al mover la protoboard.','El condensador grande tiene una raya: esa pata va a la tira −. Los pequeños (104) no tienen lado.','Con el USB conectado, mide el pin 16 del 74LS283 contra la tira −: 5 V. Mide el pin 14 del 7486: 5 V. Si un chip se calienta mucho, desconecta el USB: está al revés.'],
  ['Los LED','Cinco LED muestran el resultado: el verde es el acarreo C4 y los rojos son S3, S2, S1 y S0. Cada uno lleva su resistencia hacia −.','Si un LED no enciende nunca, dalo vuelta: la pata larga va al cable.','Toca con la punta de un cable la tira + y el número de la pata larga de cada LED: ese LED debe encender. Si alguno no enciende, dalo vuelta o revisa su resistencia.'],
