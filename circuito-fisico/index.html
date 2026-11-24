@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sumador y restador 4 bits · circuito nuevo</title>
+<title>Sumador y restador 4 bits · con interruptor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -121,12 +121,12 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 <main>
   <header>
     <h1>Circuito nuevo: sumador y restador</h1>
-    <p class="lead">Versión más simple: sin interruptor y sin resistencias de entrada. Los números A, B y M se ponen moviendo la punta de un cable entre la tira + (vale 1) y la tira − (vale 0). Hay una prueba al final de cada paso. Arrastra para girar y pellizca para acercar.</p>
+    <p class="lead">Versión con interruptor DIP, hecha para que no falle: un solo interruptor, cables cortos, condensadores y una prueba al final de cada paso. Sigue la guía y mueve las palancas para probar. Arrastra para girar y pellizca para acercar.</p>
   </header>
 
   <section id="stage" aria-label="Maqueta 3D del circuito">
     <canvas id="c"></canvas>
-    <div class="ovl"><div class="eqb"><span id="ovEq"></span><small>Toca la punta de un cable en la tira para pasarlo de + a −</small></div>
+    <div class="ovl"><div class="eqb"><span id="ovEq"></span><small>Toca las palancas azules del interruptor</small></div>
       <div class="seg" role="group" aria-label="Operación"><button id="ovAdd" aria-pressed="true">Sumar</button><button id="ovSub" aria-pressed="false">Restar</button></div></div>
     <div id="nogl">Este navegador no pudo abrir la vista 3D. La guía y las pruebas de abajo sí funcionan.</div>
     <div class="views" role="group" aria-label="Vistas de la maqueta">
@@ -176,14 +176,14 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
           <button id="opSub" aria-pressed="false">Restar</button>
         </div>
       </div>
-      <div class="row"><span class="lab">Número A (cable en + = 1, en − = 0)</span><div id="bitsA" class="row" style="margin:0"></div></div>
+      <div class="row"><span class="lab">Número A (palanca arriba = 1, abajo = 0)</span><div id="bitsA" class="row" style="margin:0"></div></div>
       <div class="row"><span class="lab">Número B</span><div id="bitsB" class="row" style="margin:0"></div></div>
       <div class="row"><span class="lab">Ejemplos</span><span id="exs" class="row" style="margin:0"></span></div>
       <div class="row"><span class="lab">Módulo negro</span>
         <button class="chip" id="pwr" aria-pressed="true">Encendido (5 V)</button>
       </div>
       <div class="row" style="margin-bottom:0"><span class="lab">Mostrar</span>
-        <label class="chk"><input type="checkbox" id="showIn" checked> Cables de entrada (A, B y M)</label>
+        <label class="chk"><input type="checkbox" id="showIn" checked> Cables del interruptor al chip</label>
         <label class="chk"><input type="checkbox" id="showInt" checked> Otros cables</label>
         <label class="chk"><input type="checkbox" id="showLbl" checked> Etiquetas</label>
       </div>
@@ -192,7 +192,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 
   <section class="card" id="live">
     <h2>Compara con tu circuito real</h2>
-    <p class="lead" style="margin-bottom:10px">1) Pon los cables de arriba igual que los tienes en tu protoboard. 2) Toca aquí los LED que ves encendidos en tu protoboard. Te digo si coincide con lo que debería pasar.</p>
+    <p class="lead" style="margin-bottom:10px">1) Pon las palancas de arriba igual que las tienes en tu interruptor. 2) Toca aquí los LED que ves encendidos en tu protoboard. Te digo si coincide con lo que debería pasar.</p>
     <div class="leds" id="realLeds"></div>
     <p class="cmp" id="cmp" hidden></p>
     <details style="margin-top:12px"><summary>Qué debes medir en cada pin</summary>
@@ -204,11 +204,12 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
   <section class="card">
     <h2>Qué es cada cosa</h2>
     <ul class="legend">
-      <li><i style="background:#3b9cff"></i><span><b>Cable de entrada (A, B, M):</b> va del pin del chip a una tira. En la tira <b>+</b> vale 1. En la tira <b>−</b> vale 0. Para cambiar el bit, solo mueves la punta del cable.</span></li>
+      <li><i style="background:#1f78c8"></i><span><b>Interruptor DIP:</b> cada palanca es un interruptor. Hacia ON deja pasar el 5 V (vale 1). Hacia abajo queda en 0. Palancas 1 a 4 son A, 6 a 9 son B, la 12 es M (abajo suma, arriba resta).</span></li>
+      <li><i style="background:#d9b98a"></i><span><b>Resistencia de cada palanca:</b> deja la entrada en 0 cuando la palanca está abajo. Debe ser de <b>1 kΩ</b> (café, negro, rojo).</span></li>
       <li><i style="background:#2c2c30"></i><span><b>7486:</b> cuatro compuertas XOR. Dan vuelta los bits de B cuando restas. <b>74LS283:</b> suma 4 bits.</span></li>
-      <li><i style="background:#f08a1c"></i><span><b>Columna M:</b> una columna que reparte M (suma o resta) a las cuatro compuertas y al acarreo de entrada.</span></li>
-      <li><i style="background:#d9b98a"></i><span><b>Condensadores:</b> el grande (100 µF) va entre + y − cerca del módulo. Los pequeños (104) van entre + y − junto a cada chip. Hacen que el circuito no falle al mover la protoboard.</span></li>
-      <li><i style="background:#ff4d3d"></i><span><b>LED:</b> muestran el resultado, cada uno con su resistencia de 330 Ω a 1 kΩ hacia −. Pata larga hacia el cable, pata corta hacia la resistencia.</span></li>
+      <li><i style="background:#f08a1c"></i><span><b>Columna M:</b> reparte M (suma o resta) a las cuatro compuertas y al acarreo de entrada.</span></li>
+      <li><i style="background:#d9b98a"></i><span><b>Condensadores:</b> el grande (100 µF) entre + y − cerca del módulo, y uno pequeño (104) junto a cada chip. Evitan fallas al mover la protoboard.</span></li>
+      <li><i style="background:#ff4d3d"></i><span><b>LED:</b> muestran el resultado, cada uno con su resistencia de 330 Ω a 1 kΩ hacia −. Pata larga hacia el cable.</span></li>
     </ul>
   </section>
 
@@ -239,7 +240,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
     </div>
   </details>
 
-  <p class="foot">En la maqueta, el pin 1 de cada chip es la patita pegada a la muesca, abajo a la izquierda. Los números de los pines están dibujados sobre cada chip. Cada cable de entrada en + no gasta casi nada, así que el USB aguanta sin problema.</p>
+  <details style="margin-top:12px"><summary>Pines del interruptor</summary><div class="tw"><table><thead><tr><th>Interruptor DIP de 12</th><th>Qué hace</th></tr></thead><tbody><tr><td>Palancas 1 a 4</td><td>A1 a A4</td></tr><tr><td>Palanca 5</td><td>No se usa</td></tr><tr><td>Palancas 6 a 9</td><td>B1 a B4</td></tr><tr><td>Palancas 10 y 11</td><td>No se usan</td></tr><tr><td>Palanca 12</td><td>M: abajo suma, arriba resta</td></tr></tbody></table></div></details>
+  <p class="foot">En la maqueta, el pin 1 de cada chip es la patita pegada a la muesca, abajo a la izquierda. Los números de los pines están dibujados sobre cada chip. Con resistencias de 1 kΩ, cada palanca en ON gasta unos 5 mA, así que el USB aguanta sin problema.</p>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -250,7 +252,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
 
 /* ---------- Estado y lógica ---------- */
 var state={A:[1,1,0,1,0],B:[0,1,1,0,0],M:0,power:true,showIn:true,showInt:true,showLbl:true};
-var N=4, STEP=7;
+var N=4, STEP=8;
 function valBits(a,n){var s=0;for(var i=0;i<n;i++)s+=(a[i]<<i);return s;}
 function bin(x,l){var s=x.toString(2);while(s.length<l)s='0'+s;return s;}
 function bitsOf(x){return [x&1,(x>>1)&1,(x>>2)&1,(x>>3)&1,(x>>4)&1];}
@@ -381,7 +383,7 @@ function modPin(row,col){ return new THREE.Vector3(1.4+(row?-0.127:0.127),0.72,(
 /* ---------- Circuito (se reconstruye al cambiar 4/5 bits) ---------- */
 var GATE=[[1,2,3],[4,5,6],[9,10,8],[12,13,11]];
 var AP=[5,3,14,12], BP=[6,2,15,11], SP=[4,1,13,10];
-var BUS=18, inHits=[], colUse={}, railUsed={};
+var BUS=12, dipLevers=[], dipHits=[], swList=[], inHits=[], colUse={}, railUsed={};
 function netColor(n){
   if(/^A/.test(n))return 0x3b9cff; if(/^B[0-9]/.test(n))return 0xc084fc; if(n==='M')return 0xf08a1c;
   if(/^Bp/.test(n))return 0xb8d82a; if(/^S/.test(n))return 0xf2c200; return 0xe8e8e8;
@@ -497,25 +499,44 @@ function addCap(p0,p1,kind,step,desc){
   }
   parts.push({obj:g,step:step}); (stepItems[step]=stepItems[step]||[]).push(desc);
 }
-function inputPair(key,i,pinHole,side,step,lift,desc){
-  var net=(key==='M')?'M':key+i, col=netColor(net);
-  var hi=railAt(side,'out',pinHole.x), lo=railAt(side,'in',pinHole.x);
-  addWire({p0:pinHole,p1:hi,color:col,cat:'in',net:net,step:step,lift:lift,desc:desc,sel:{k:key,i:i,v:1}});
-  addWire({p0:pinHole,p1:lo,color:col,cat:'in',net:net,step:step,lift:lift,sel:{k:key,i:i,v:0}});
-  [hi,lo].forEach(function(p){
-    var hb=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.9,0.36),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-    hb.position.set(p.x,p.y+0.3,p.z); hb.userData={k:key,i:i,step:step}; dyn.add(hb); inHits.push(hb);
-  });
+function makeDip(col0){
+  var cx=colX(col0+5.5), g=new THREE.Group(); g.position.set(cx,TOPY,0); dyn.add(g);
+  var blue=new THREE.MeshStandardMaterial({color:0x1f78c8,roughness:.45}), dark=new THREE.MeshStandardMaterial({color:0x0f3f6e,roughness:.6});
+  var W=12*PX+0.1;
+  box(W,0.5,0.86,blue,0,0.3,0,g);
+  var lab=labelPlane(W,0.86,function(x,ppc,w,h){
+    x.fillStyle='#e8f2fb'; x.textAlign='center'; x.textBaseline='middle';
+    x.font='700 '+(0.15*ppc)+'px sans-serif'; x.textAlign='left'; x.fillText('ON',0.06*ppc,0.12*ppc); x.textAlign='center';
+    x.font='600 '+(0.14*ppc)+'px sans-serif';
+    for(var i=0;i<12;i++) x.fillText(String(i+1),(0.05+(i+0.5)*PX)*ppc,h-0.13*ppc);
+  },200);
+  lab.position.set(0,0.3+0.252,0); g.add(lab);
+  dipLevers=[]; dipHits=[];
+  for(var i=0;i<12;i++){
+    var x=(i-5.5)*PX;
+    box(0.19,0.02,0.5,dark,x,0.553,0,g,false);
+    var lv=box(0.16,0.1,0.2,M.white,x,0.6,0.13,g,false); dipLevers.push(lv);
+    [-1,1].forEach(function(sd){ box(0.05,0.3,0.05,M.metal,x,0.15,sd*0.381,g,false); });
+    var hb=new THREE.Mesh(new THREE.BoxGeometry(0.25,0.5,0.9),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+    hb.position.set(x,0.65,0); hb.userData.sw=i; g.add(hb); dipHits.push(hb);
+  }
+  parts.push({obj:g,step:2});
+  var A='A1–A4', B='B1–B4';
+  sprite('Interruptor DIP',colX(col0+5.5),1.7,-1.6,'#0b4f86',dyn,2);
+  sprite(A,colX(col0+2),1.1,1.3,'#1f5fb3',dyn,2);
+  sprite(B,colX(col0+7),1.1,1.3,'#6b3fb0',dyn,2);
+  sprite('M',colX(col0+11),1.1,1.3,'#7a3b00',dyn,2);
 }
 function buildCircuit(n){
   if(dyn){ scene.remove(dyn); dyn.traverse(function(o){if(o.geometry)o.geometry.dispose();}); }
   dyn=new THREE.Group(); scene.add(dyn);
   parts=[]; wires=[]; ledUnits=[]; stepItems={}; labels.length=nStatic; colUse={}; railUsed={}; inHits=[];
-  var specs=[['7486','U1',10,14],['74LS283','U2',21,16]];
+  var specs=[['7486','U1',14,14],['74LS283','U2',22,16]];
   var chips=specs.map(function(s,i){var h=s[3]/2;return {id:i,type:s[0],name:s[1],N:s[3],col0:s[2],cx:colX(s[2]+(h-1)/2)};});
-  var x1=chips[0], a1=chips[1], i, side;
+  var x1=chips[0], a1=chips[1], i;
   var tag=function(c){return c.name+' ('+c.type+')';};
   chips.forEach(function(c){ for(var p=1;p<=c.N;p++){var q=pinCol(c,p); colUse[q.c+'|'+q.s]=1;} });
+  for(var s0=0;s0<12;s0++){ colUse[s0+'|1']=1; colUse[s0+'|-1']=1; }
   var sd=function(ch,p){return Math.sign(pinXZ(ch,p).z);};
 
   // paso 1: energía
@@ -524,9 +545,11 @@ function buildCircuit(n){
   addWire({p0:railAt(1,'out',-7.5+2*PX),p1:railAt(-1,'out',-7.5+2*PX),color:0xd62828,cat:'power',step:1,lift:2.6,desc:'Puente rojo: tira + de adelante → tira + de atrás'});
   addWire({p0:railAt(1,'in',-7.5+3*PX),p1:railAt(-1,'in',-7.5+3*PX),color:0x1a1a1a,cat:'power',step:1,lift:2.2,desc:'Puente negro: tira − de adelante → tira − de atrás'});
 
-  // paso 2: chips
+  // paso 2: interruptor y chips
+  makeDip(0);
+  (stepItems[2]=stepItems[2]||[]).push('Pon el <b>interruptor azul</b> cruzando la ranura, en los números <b>1 a 12</b>, con los números de las palancas hacia ti.');
   chips.forEach(makeChip);
-  chips.forEach(function(c){ var h=c.N/2; (stepItems[2]=stepItems[2]||[]).push('Pon el chip <b>'+tag(c)+'</b> cruzando la ranura, columnas <b>'+(c.col0+1)+' a '+(c.col0+h)+'</b>, con la muesca a la izquierda.'); });
+  chips.forEach(function(c){ var h=c.N/2; stepItems[2].push('Pon el chip <b>'+tag(c)+'</b> cruzando la ranura, números <b>'+(c.col0+1)+' a '+(c.col0+h)+'</b>, con la muesca hacia el número 1.'); });
 
   // paso 3: energía de chips y condensadores
   chips.forEach(function(c){
@@ -546,44 +569,54 @@ function buildCircuit(n){
   var leds=[{name:'C4',isC:true,src:[a1,9],net:'Cout'}];
   for(i=3;i>=0;i--) leds.push({name:'S'+i,isC:false,src:[a1,SP[i]],net:'S'+i,bit:i});
   ledOrder=leds; var ls=33;
-  (stepItems[4]=stepItems[4]||[]).push('Pon <b>'+leds.length+' LED</b> en las columnas <b>'+(ls+1)+' a '+(ls+2*leds.length)+'</b>: pata larga (+) en la columna izquierda de cada pareja, pata corta en la derecha. El verde va primero.');
+  (stepItems[4]=stepItems[4]||[]).push('Pon <b>'+leds.length+' LED</b> en los números <b>'+(ls+1)+' a '+(ls+2*leds.length)+'</b>: pata larga (+) en el número izquierdo de cada pareja, pata corta en el derecho. El verde va primero.');
   leds.forEach(function(L,u){
     var p=ls+2*u;
     makeLed(p,u,L.name,L.isC);
     var wH=colHole(p,1), rH=colHole(p+1,1);
-    addWire({p0:holeOf(L.src[0],L.src[1]),p1:wH,color:netColor(L.net),cat:'int',net:L.net,step:4,lift:1.2+(u%3)*0.3,desc:'Salida <b>'+L.name+'</b>: '+tag(L.src[0])+' pin <code>'+L.src[1]+'</code> → columna <b>'+(p+1)+'</b> (pata larga del LED)'});
-    addRes(rH,railAt(1,'in',rH.x),4,'LED '+L.name+': resistencia de 330 Ω a 1 kΩ, de la columna <b>'+(p+2)+'</b> (pata corta) → tira − (adelante)');
+    addWire({p0:holeOf(L.src[0],L.src[1]),p1:wH,color:netColor(L.net),cat:'int',net:L.net,step:4,lift:1.2+(u%3)*0.3,desc:'Salida <b>'+L.name+'</b>: '+tag(L.src[0])+' pin <code>'+L.src[1]+'</code> → número <b>'+(p+1)+'</b> (pata larga del LED)'});
+    addRes(rH,railAt(1,'in',rH.x),4,'LED '+L.name+': resistencia de 330 Ω a 1 kΩ, del número <b>'+(p+2)+'</b> (pata corta) → tira − (adelante)');
   });
   sprite('LED (resultado)',colX(ls+leds.length),1.8,2.4,'#14202b',dyn,4);
 
-  // paso 5: entradas A y prueba del sumador solo
+  // paso 5: alimentar las palancas (5 V y resistencia)
+  swList=[];
+  for(i=0;i<4;i++) swList.push({idx:i,net:'A'+i,name:'A'+(i+1)});
+  for(i=0;i<4;i++) swList.push({idx:5+i,net:'B'+i,name:'B'+(i+1)});
+  swList.push({idx:11,net:'M',name:'M'});
+  swList.forEach(function(sw){
+    var f=colHole(sw.idx,1), bk=colHole(sw.idx,-1);
+    addWire({p0:f,p1:railAt(1,'out',f.x),color:0xd62828,cat:'power',step:5,lift:0.6,desc:'Palanca <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de los números: cable corto → tira + (adelante)'});
+    addRes(bk,railAt(-1,'in',bk.x),5,'Palanca <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de ON: resistencia de <b>1 kΩ</b> → tira − (atrás)');
+    sw.back=bk;
+  });
+  function hopB(sw,pinHole,desc,lift,step){ addWire({p0:sw.back,p1:pinHole,color:netColor(sw.net),cat:'in',net:sw.net,step:step,lift:lift,desc:desc}); }
+
+  // paso 6: A al sumador solo
   for(i=0;i<4;i++){
-    var ph=holeOf(a1,AP[i]);
-    inputPair('A',i,ph,sd(a1,AP[i]),5,1.2+(i%3)*0.3,'<b>A'+(i+1)+'</b>: pin <code>'+AP[i]+'</code> del '+tag(a1)+' → cable a la tira <b>+</b> (1) o a la tira <b>−</b> (0)');
+    hopB(swList[i],holeOf(a1,AP[i]),'Palanca <b>'+(swList[i].idx+1)+'</b> (A'+(i+1)+') → '+tag(a1)+' pin <code>'+AP[i]+'</code>',1.2+(i%3)*0.3,6);
   }
   BP.forEach(function(pn,k){
     var h=holeT(a1,pn);
-    addWire({p0:h,p1:railAt(sd(a1,pn),'in',h.x),color:0x1a1a1a,cat:'int',step:5,until:6,lift:0.7,desc:'Cable corto <b>temporal</b>: pin <code>'+pn+'</code> (B'+(k+1)+') → tira − (así B vale 0 en la prueba)'});
+    addWire({p0:h,p1:railAt(sd(a1,pn),'in',h.x),color:0x1a1a1a,cat:'int',step:6,until:7,lift:0.7,desc:'Cable corto <b>temporal</b>: pin <code>'+pn+'</code> (B'+(k+1)+') → tira − (así B vale 0 en la prueba)'});
   });
   var c0t=holeT(a1,7);
-  addWire({p0:c0t,p1:railAt(sd(a1,7),'in',c0t.x),color:0x1a1a1a,cat:'int',step:5,until:6,lift:0.7,desc:'Cable corto <b>temporal</b>: pin <code>7</code> (C0) → tira − (así no hay acarreo de entrada)'});
+  addWire({p0:c0t,p1:railAt(sd(a1,7),'in',c0t.x),color:0x1a1a1a,cat:'int',step:6,until:7,lift:0.7,desc:'Cable corto <b>temporal</b>: pin <code>7</code> (C0) → tira − (así no hay acarreo de entrada)'});
 
-  // paso 6: 7486, columna M y B
-  (stepItems[6]=stepItems[6]||[]).push('<b>Quita</b> los 5 cables cortos temporales del paso 5 (los 4 de B y el de C0). Los cables de A se quedan.');
-  var busB=colHole(BUS,-1), busF=colHole(BUS,1);
-  addWire({p0:busB,p1:busF,color:0xf08a1c,cat:'in',net:'M',step:6,lift:1.0,desc:'Une la columna <b>'+(BUS+1)+'</b> de atrás con la de adelante: es la <b>columna M</b>'});
+  // paso 7: 7486, columna M y B
+  (stepItems[7]=stepItems[7]||[]).push('<b>Quita</b> los 5 cables cortos temporales del paso 6 (los 4 de B y el de C0). Los cables de A se quedan.');
+  var msw=swList[swList.length-1], busB=colHole(BUS,-1), busF=colHole(BUS,1);
+  addWire({p0:msw.back,p1:busB,color:0xf08a1c,cat:'in',net:'M',step:7,lift:0.7,desc:'Palanca <b>12</b> (M) → número <b>'+(BUS+1)+'</b> (atrás): la <b>columna M</b>'});
+  addWire({p0:colHole(BUS,-1),p1:busF,color:0xf08a1c,cat:'in',net:'M',step:7,lift:1.0,desc:'Une la columna M de atrás con la de adelante (mismo número <b>'+(BUS+1)+'</b>)'});
   for(i=0;i<4;i++){
     var g=GATE[i];
-    var xo=holeOf(x1,g[2]);
-    addWire({p0:xo,p1:holeOf(a1,BP[i]),color:0xb8d82a,cat:'int',net:'Bp'+i,step:6,lift:1.5+(i%2)*0.4,desc:'B'+(i+1)+' invertido: '+tag(x1)+' pin <code>'+g[2]+'</code> → '+tag(a1)+' pin <code>'+BP[i]+'</code>'});
+    addWire({p0:holeOf(x1,g[2]),p1:holeOf(a1,BP[i]),color:0xb8d82a,cat:'int',net:'Bp'+i,step:7,lift:1.5+(i%2)*0.4,desc:'B'+(i+1)+' invertido: '+tag(x1)+' pin <code>'+g[2]+'</code> → '+tag(a1)+' pin <code>'+BP[i]+'</code>'});
     var st=colHole(BUS,sd(x1,g[1]));
-    addWire({p0:st,p1:holeOf(x1,g[1]),color:0xf08a1c,cat:'in',net:'M',step:6,lift:1.3+(i%2)*0.3,desc:'Columna M → '+tag(x1)+' pin <code>'+g[1]+'</code>'});
-    var bh=holeOf(x1,g[0]);
-    inputPair('B',i,bh,sd(x1,g[0]),6,1.5+(i%3)*0.3,'<b>B'+(i+1)+'</b>: pin <code>'+g[0]+'</code> del '+tag(x1)+' → cable a la tira <b>+</b> (1) o a la tira <b>−</b> (0)');
+    addWire({p0:st,p1:holeOf(x1,g[1]),color:0xf08a1c,cat:'in',net:'M',step:7,lift:1.3+(i%2)*0.3,desc:'Columna M → '+tag(x1)+' pin <code>'+g[1]+'</code>'});
+    hopB(swList[4+i],holeOf(x1,g[0]),'Palanca <b>'+(swList[4+i].idx+1)+'</b> (B'+(i+1)+') → '+tag(x1)+' pin <code>'+g[0]+'</code>',1.5+(i%3)*0.3,7);
   }
-  addWire({p0:colHole(BUS,1),p1:holeOf(a1,7),color:0xf08a1c,cat:'in',net:'M',step:6,lift:1.3,desc:'Columna M → '+tag(a1)+' pin <code>7</code> (C0, acarreo de entrada)'});
-  inputPair('M',0,colHole(BUS,1),1,6,1.8,'<b>M</b>: columna <b>'+(BUS+1)+'</b> (adelante) → cable a la tira <b>−</b> (suma) o a la tira <b>+</b> (resta)');
-  sprite('Columna M',colX(BUS),2.0,-1.7,'#7a3b00',dyn,6);
+  addWire({p0:colHole(BUS,1),p1:holeOf(a1,7),color:0xf08a1c,cat:'in',net:'M',step:7,lift:1.3,desc:'Columna M → '+tag(a1)+' pin <code>7</code> (C0, acarreo de entrada)'});
+  sprite('Columna M',colX(BUS)+0.3,2.0,-1.7,'#7a3b00',dyn,7);
 }
 
 function applyTheme(){
@@ -595,7 +628,7 @@ function applyTheme(){
 /* ---------- Vistas ---------- */
 var VIEWS={
   general:{c:[-6,0,0.5],w:31,d:[0,1.3,0.9]},
-  circuito:{c:[-0.5,0,0],w:15,d:[0,1.8,0.5]},
+  circuito:{c:[-0.8,0,0],w:17,d:[0,1.8,0.5]},
   energia:{c:[-10,0,1],w:15,d:[0.1,0.8,1]},
   arriba:{c:[0,0,0],w:19,d:[0,1,0.02]}
 };
@@ -616,11 +649,12 @@ function goView(name,instant){
 /* ---------- Guía por pasos ---------- */
 var STEPS=[
  ['Energía','Con el USB desconectado, lleva la energía del módulo negro a la protoboard con dos cables. Luego pasa la energía a las tiras de atrás con dos puentes.','Si tu protoboard tiene las tiras partidas por la mitad, une las dos mitades con un cable. Rojo = +, negro = −.','Conecta el USB. Se enciende el LED del módulo. Con el multímetro en 20 V, punta negra en la tira − y roja en la tira +, debe marcar de 4,7 a 5,2 V. Mide adelante y atrás. Si marca 0, revisa los dos cables del módulo y los puentes.'],
- ['Pon los chips','Los dos chips van cruzando la ranura del centro, con la muesca hacia la izquierda. Todavía no pongas cables.','Mira la muesca antes de apretar. Un chip al revés se puede dañar.','Revisa que ninguna patita quedó doblada hacia afuera y que todas entraron en su hueco.'],
+ ['Pon el interruptor y los chips','El interruptor azul y los chips van cruzando la ranura del centro. Todavía no pongas cables.','Mira la muesca de cada chip antes de apretar: hacia el número 1. Un chip al revés se puede dañar. El interruptor no tiene lado.','Revisa que ninguna patita quedó doblada hacia afuera y que todas entraron en su hueco. Aprieta cada chip y el interruptor con el dedo, parejo.'],
  ['Energía de los chips y condensadores','Cada chip necesita 5 V y GND. Los condensadores evitan que el circuito falle al mover la protoboard.','El condensador grande tiene una raya: esa pata va a la tira −. Los pequeños (104) no tienen lado.','Con el USB conectado, mide el pin 16 del 74LS283 contra la tira −: 5 V. Mide el pin 14 del 7486: 5 V. Si un chip se calienta mucho, desconecta el USB: está al revés.'],
- ['Los LED','Cinco LED muestran el resultado: el verde es el acarreo C4 y los rojos son S3, S2, S1 y S0. Cada uno lleva su resistencia hacia −.','Si un LED no enciende nunca, dalo vuelta: la pata larga va al cable.','Toca con la punta de un cable la tira + y la columna de la pata larga de cada LED: ese LED debe encender. Si alguno no enciende, dalo vuelta o revisa su resistencia.'],
- ['Entradas A (prueba del sumador solo)','A entra por 4 cables. Cada cable va del pin del chip a la tira + (vale 1) o a la tira − (vale 0). Para cambiar un bit, mueve la punta del cable. Por ahora B y C0 quedan en − con cables cortos.','','Pon A = 0101 (A1 y A3 en +, A2 y A4 en −). Deben encender S2 y S0, y nada más. Cambia A y los LED deben copiarlo. Si un LED no cambia, ahí hay un cable flojo.'],
- ['7486, columna M y B','Quita los cables cortos temporales. El 7486 da vuelta los bits de B cuando restas. B entra por 4 cables a las tiras, y M por un cable a la columna M. M en − suma. M en + resta.','','Con A = 0101 y B = 0011: M en − da 1000 (suma, 5 + 3 = 8). M en + da 0010 y el verde encendido (resta, 5 − 3 = 2). Con A = 1111, B = 0001 y M en −: verde encendido y los rojos apagados (15 + 1 desborda).'],
+ ['Los LED','Cinco LED muestran el resultado: el verde es el acarreo C4 y los rojos son S3, S2, S1 y S0. Cada uno lleva su resistencia hacia −.','Si un LED no enciende nunca, dalo vuelta: la pata larga va al cable.','Toca con la punta de un cable la tira + y el número de la pata larga de cada LED: ese LED debe encender. Si alguno no enciende, dalo vuelta o revisa su resistencia.'],
+ ['Alimenta las palancas','Cada palanca que uses lleva dos cosas: un cable corto de 5 V por el lado de los números y una resistencia de 1 kΩ a − por el lado de ON. Usa las palancas 1 a 4 (A), 6 a 9 (B) y 12 (M).','Corta las patas de las resistencias para que queden pegadas a la protoboard. Las patas largas se aflojan y esa era la causa de las fallas al azar. Usa 1 kΩ (café, negro, rojo). No uses 10 kΩ.','Con el USB conectado, mide en el hueco del lado de ON de cada palanca (contra −): palanca hacia ON marca unos 4 a 5 V, hacia abajo marca 0 V. Si alguna marca otra cosa, revisa su cable y su resistencia antes de seguir.'],
+ ['Entradas A (prueba del sumador solo)','Cada palanca de A va con un cable al pin de A del 74LS283. Por ahora B y C0 quedan en − con cables cortos.','','Pon A = 0101 (palancas 1 y 3 arriba, 2 y 4 abajo). Deben encender S2 y S0, y nada más. Cambia las palancas y los LED deben copiar A. Si un LED no cambia, ahí hay un cable flojo.'],
+ ['7486, columna M y B','Quita los cables cortos temporales. El 7486 da vuelta los bits de B cuando restas. Las palancas de B entran al 7486 y la palanca 12 (M) va a una columna que reparte la orden. M abajo suma. M arriba resta.','','Con A = 0101 y B = 0011: M abajo da 1000 (suma, 5 + 3 = 8). M arriba da 0010 y el verde encendido (resta, 5 − 3 = 2). Con A = 1111, B = 0001 y M abajo: verde encendido y los rojos apagados (15 + 1 desborda).'],
 ];
 var LAST=STEPS.length;
 function renderSteps(){
@@ -701,7 +735,7 @@ function update(){
   else if(r.cout){ eq=r.a+' − '+r.b+' = '+r.S; note=top+'=1 significa que no hubo préstamo. Los LED muestran '+bin(r.S,N)+'.'; }
   else { eq=r.a+' − '+r.b+' = −'+(r.b-r.a); note=top+'=0 significa que hubo préstamo: el resultado es negativo. Los LED muestran '+bin(r.S,N)+' ('+r.S+'), que es '+(1<<N)+' − '+(r.b-r.a)+'.'; }
   var ee=r;
-  if(STEP===5&&pw){ ee=compute(4,state.A,[0,0,0,0],0); eq='A = '+ee.a+' (B vale 0)'; note='Todavía no está el 7486: B vale 0 y el sumador solo copia A en los LED ('+bin(ee.S,N)+').'; }
+  if(STEP===6&&pw){ ee=compute(4,state.A,[0,0,0,0],0); eq='A = '+ee.a+' (B vale 0)'; note='Todavía no está el 7486: B vale 0 y el sumador solo copia A en los LED ('+bin(ee.S,N)+').'; }
   $('eq').textContent=eq; $('note').textContent=note; $('ovEq').textContent=eq;
   $('ovAdd').setAttribute('aria-pressed',state.M?'false':'true'); $('ovSub').setAttribute('aria-pressed',state.M?'true':'false');
   document.querySelectorAll('#leds .led').forEach(function(d){
@@ -720,6 +754,10 @@ function update(){
   labels.forEach(function(l){l.obj.visible=state.showLbl&&STEP>=l.step;});
   var netVal={M:state.M,Cout:r.cout,C4link:r.c4};
   for(var i=0;i<N;i++){netVal['Bp'+i]=(r.bp>>i)&1; netVal['S'+i]=(r.S>>i)&1; netVal['A'+i]=state.A[i]; netVal['B'+i]=state.B[i];}
+  dipLevers.forEach(function(lv,idx){
+    var v=idx<4?state.A[idx]:(idx>=5&&idx<9)?state.B[idx-5]:idx===11?state.M:0;
+    lv.position.z=v?-0.13:0.13;
+  });
   wires.forEach(function(w){
     var vis=STEP>=w.step && STEP<w.until && (w.cat==='in'?state.showIn:w.cat==='int'?state.showInt:true);
     if(vis&&w.sel){ var cv=w.sel.k==='M'?state.M:state[w.sel.k][w.sel.i]; vis=(cv?1:0)===w.sel.v; }
@@ -731,7 +769,7 @@ function update(){
   });
   ledUnits.forEach(function(u,idx){
     var L=ledOrder[idx]; if(!u||!L) return;
-    var v=L.isC?ee.cout:((ee.S>>L.bit)&1), on=STEP>=5&&pw&&!!v;
+    var v=L.isC?ee.cout:((ee.S>>L.bit)&1), on=STEP>=6&&pw&&!!v;
     u.mat.emissiveIntensity=on?1.1:0; u.mat.opacity=on?1:0.78; u.halo.visible=on;
   });
   modLed.material.emissiveIntensity=pw?1:0; modLed.material.color.set(pw?0x20c45a:0x1b2b20);
@@ -812,13 +850,13 @@ document.querySelectorAll('[data-view]').forEach(function(bt){bt.addEventListene
 
 var downAt=null, ray=null;
 function pickSwitch(ev){
-  if(!ok||!inHits.length) return;
+  if(!ok||!dipHits.length||STEP<5) return;
   var rc=canvas.getBoundingClientRect();
   var v=new THREE.Vector2(((ev.clientX-rc.left)/rc.width)*2-1,-((ev.clientY-rc.top)/rc.height)*2+1);
   ray=ray||new THREE.Raycaster(); ray.setFromCamera(v,camera);
-  var h=ray.intersectObjects(inHits,false).filter(function(x){return STEP>=x.object.userData.step;}); if(!h.length) return;
-  var u=h[0].object.userData;
-  if(u.k==='M') state.M^=1; else state[u.k][u.i]^=1;
+  var h=ray.intersectObjects(dipHits,false); if(!h.length) return;
+  var i=h[0].object.userData.sw;
+  if(i<4) state.A[i]^=1; else if(i>=5&&i<9) state.B[i-5]^=1; else if(i===11) state.M^=1; else return;
   update();
 }
 function resize(){
