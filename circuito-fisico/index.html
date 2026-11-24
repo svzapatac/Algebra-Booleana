@@ -143,6 +143,29 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid
     <div id="allConn"></div>
   </section>
 
+<section class="card">
+    <h2>Posiciones en tu protoboard</h2>
+    <p class="steptxt" style="margin-top:0">Pon el número 1 arriba (hacia el módulo). Izquierda y derecha son los dos lados de la ranura. Todos los huecos de un mismo número y lado están unidos, usa cualquiera de los 5.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Pieza</th><th>Números</th><th>Detalle</th></tr></thead>
+      <tbody>
+        <tr><td>Interruptor DIP</td><td><code>11 a 22</code></td><td>Palanca 1 en el 11, palanca 12 en el 22</td></tr>
+        <tr><td>A1, A2, A3, A4</td><td><code>11, 12, 13, 14</code></td><td>Palancas 1 a 4</td></tr>
+        <tr><td>B1, B2, B3, B4</td><td><code>16, 17, 18, 19</code></td><td>Palancas 6 a 9</td></tr>
+        <tr><td>M</td><td><code>22</code></td><td>Palanca 12</td></tr>
+        <tr><td>Columna M</td><td><code>23</code></td><td>Izquierda y derecha unidas con un cable</td></tr>
+        <tr><td>7486</td><td><code>25 a 31</code></td><td>Pines 1 a 7 a la izquierda (25 a 31). Pines 14 a 8 a la derecha (25 a 31)</td></tr>
+        <tr><td>74LS283</td><td><code>33 a 40</code></td><td>Pines 1 a 8 a la izquierda (33 a 40). Pines 16 a 9 a la derecha (33 a 40)</td></tr>
+        <tr><td>LED verde C4</td><td><code>44 y 45</code></td><td>Izquierda. Pata larga en el 44</td></tr>
+        <tr><td>LED rojo S3</td><td><code>46 y 47</code></td><td>Pata larga en el 46</td></tr>
+        <tr><td>LED rojo S2</td><td><code>48 y 49</code></td><td>Pata larga en el 48</td></tr>
+        <tr><td>LED rojo S1</td><td><code>50 y 51</code></td><td>Pata larga en el 50</td></tr>
+        <tr><td>LED rojo S0</td><td><code>52 y 53</code></td><td>Pata larga en el 52</td></tr>
+      </tbody>
+    </table></div>
+    <p class="foot">Cómo sacar el número de un pin: en el 7486, pines 1 a 7 es 24 + pin, y pines 8 a 14 es 39 − pin. En el 74LS283, pines 1 a 8 es 32 + pin, y pines 9 a 16 es 49 − pin. Cada palanca va con su cable a la tira + por la izquierda, y por la derecha con su resistencia a la tira − y el cable al chip.</p>
+  </section>
+
   <section class="card" aria-live="polite">
     <div class="stephead">
       <h2 id="stepTitle" style="margin:0">Paso</h2>
@@ -383,7 +406,7 @@ function modPin(row,col){ return new THREE.Vector3(1.4+(row?-0.127:0.127),0.72,(
 /* ---------- Circuito (se reconstruye al cambiar 4/5 bits) ---------- */
 var GATE=[[1,2,3],[4,5,6],[9,10,8],[12,13,11]];
 var AP=[5,3,14,12], BP=[6,2,15,11], SP=[4,1,13,10];
-var BUS=12, dipLevers=[], dipHits=[], swList=[], inHits=[], colUse={}, railUsed={};
+var OFF=10, BUS=12+OFF, dipLevers=[], dipHits=[], swList=[], inHits=[], colUse={}, railUsed={};
 function netColor(n){
   if(/^A/.test(n))return 0x3b9cff; if(/^B[0-9]/.test(n))return 0xc084fc; if(n==='M')return 0xf08a1c;
   if(/^Bp/.test(n))return 0xb8d82a; if(/^S/.test(n))return 0xf2c200; return 0xe8e8e8;
@@ -531,12 +554,12 @@ function buildCircuit(n){
   if(dyn){ scene.remove(dyn); dyn.traverse(function(o){if(o.geometry)o.geometry.dispose();}); }
   dyn=new THREE.Group(); scene.add(dyn);
   parts=[]; wires=[]; ledUnits=[]; stepItems={}; labels.length=nStatic; colUse={}; railUsed={}; inHits=[];
-  var specs=[['7486','U1',14,14],['74LS283','U2',22,16]];
+  var specs=[['7486','U1',14+OFF,14],['74LS283','U2',22+OFF,16]];
   var chips=specs.map(function(s,i){var h=s[3]/2;return {id:i,type:s[0],name:s[1],N:s[3],col0:s[2],cx:colX(s[2]+(h-1)/2)};});
   var x1=chips[0], a1=chips[1], i;
   var tag=function(c){return c.name+' ('+c.type+')';};
   chips.forEach(function(c){ for(var p=1;p<=c.N;p++){var q=pinCol(c,p); colUse[q.c+'|'+q.s]=1;} });
-  for(var s0=0;s0<12;s0++){ colUse[s0+'|1']=1; colUse[s0+'|-1']=1; }
+  for(var s0=OFF;s0<OFF+12;s0++){ colUse[s0+'|1']=1; colUse[s0+'|-1']=1; }
   var sd=function(ch,p){return Math.sign(pinXZ(ch,p).z);};
 
   // paso 1: energía
@@ -546,8 +569,8 @@ function buildCircuit(n){
   addWire({p0:railAt(1,'in',-7.5+3*PX),p1:railAt(-1,'in',-7.5+3*PX),color:0x1a1a1a,cat:'power',step:1,lift:2.2,desc:'Puente negro: tira − de adelante → tira − de atrás'});
 
   // paso 2: interruptor y chips
-  makeDip(0);
-  (stepItems[2]=stepItems[2]||[]).push('Pon el <b>interruptor azul</b> cruzando la ranura, en los números <b>1 a 12</b>, con los números de las palancas hacia ti.');
+  makeDip(OFF);
+  (stepItems[2]=stepItems[2]||[]).push('Pon el <b>interruptor azul</b> cruzando la ranura, en los números <b>'+(OFF+1)+' a '+(OFF+12)+'</b>, con los números de las palancas hacia ti.');
   chips.forEach(makeChip);
   chips.forEach(function(c){ var h=c.N/2; stepItems[2].push('Pon el chip <b>'+tag(c)+'</b> cruzando la ranura, números <b>'+(c.col0+1)+' a '+(c.col0+h)+'</b>, con la muesca hacia el número 1.'); });
 
@@ -568,7 +591,7 @@ function buildCircuit(n){
   // paso 4: LED
   var leds=[{name:'C4',isC:true,src:[a1,9],net:'Cout'}];
   for(i=3;i>=0;i--) leds.push({name:'S'+i,isC:false,src:[a1,SP[i]],net:'S'+i,bit:i});
-  ledOrder=leds; var ls=33;
+  ledOrder=leds; var ls=33+OFF;
   (stepItems[4]=stepItems[4]||[]).push('Pon <b>'+leds.length+' LED</b> en los números <b>'+(ls+1)+' a '+(ls+2*leds.length)+'</b>: pata larga (+) en el número izquierdo de cada pareja, pata corta en el derecho. El verde va primero.');
   leds.forEach(function(L,u){
     var p=ls+2*u;
@@ -585,7 +608,7 @@ function buildCircuit(n){
   for(i=0;i<4;i++) swList.push({idx:5+i,net:'B'+i,name:'B'+(i+1)});
   swList.push({idx:11,net:'M',name:'M'});
   swList.forEach(function(sw){
-    var f=colHole(sw.idx,1), bk=colHole(sw.idx,-1);
+    var f=colHole(sw.idx+OFF,1), bk=colHole(sw.idx+OFF,-1);
     addWire({p0:f,p1:railAt(1,'out',f.x),color:0xd62828,cat:'power',step:5,lift:0.6,desc:'Palanca <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de los números: cable corto → tira + (adelante)'});
     addRes(bk,railAt(-1,'in',bk.x),5,'Palanca <b>'+(sw.idx+1)+'</b> ('+sw.name+'), lado de ON: resistencia de <b>1 kΩ</b> → tira − (atrás)');
     sw.back=bk;
@@ -628,7 +651,7 @@ function applyTheme(){
 /* ---------- Vistas ---------- */
 var VIEWS={
   general:{c:[-6,0,0.5],w:31,d:[0,1.3,0.9]},
-  circuito:{c:[-0.8,0,0],w:17,d:[0,1.8,0.5]},
+  circuito:{c:[0,0,0],w:19,d:[0,1.8,0.5]},
   energia:{c:[-10,0,1],w:15,d:[0.1,0.8,1]},
   arriba:{c:[0,0,0],w:19,d:[0,1,0.02]}
 };
